@@ -78,13 +78,27 @@ logged in the manifest.
   "pair": "BTCUSDT", "tf": "15m",
   "download_date": "2026-09-27",
   "files": [{"name": "BTCUSDT-15m-2020-01.zip", "sha256": "...", "rows": 2976, "source": "bulk_monthly"}],
-  "ccxt_ranges": [{"start_ms": 1572566400000, "end_ms": 1577836800000, "rows": 5856}],
+  "missing": [{"name": "BTCUSDT-15m-2026-09-26.zip", "checked": "2026-09-27"}],
+  "ccxt_ranges": [{"start_ms": 1572566400000, "end_ms": 1577836800000, "rows": 5856, "purpose": "head"}],
+  "rows": 236000,
   "first_open_ms": 1572566400000, "last_open_ms": 1790000000000,
   "gaps": [{"start_ms": ..., "end_ms": ..., "missing": 3}],
   "overlap_mismatches": 0,
-  "consistency_1m_15m": {"months_checked": 81, "mismatching_candles": 0}
+  "consistency_1m_15m": {"months_checked": 81, "candles_compared": 233000, "mismatching_candles": 0, "mismatch_fields": {"open": 0, "high": 0, "low": 0, "close": 0, "volume": 0}}
 }
 ```
+
+`missing` records 404s with the date they were checked; entries whose
+period ended recently are retried on the next `fetch` (see §1.5), older
+ones are final. Gap `end_ms` is exclusive (the open time of the next
+present candle), so `missing == (end_ms - start_ms) / step`. The funding
+manifest (`data/funding/<PAIR>/manifest.json`) has `pair, download_date,
+files, missing, ccxt_ranges, rows, first_funding_ms, last_funding_ms,
+last_interval_h, intervals` (count per interval value), `bad_intervals`
+(values outside {1, 4, 8}) and `overlap_mismatches` (on `rate`).
+`consistency_1m_15m` lives in the 15m manifest only and is written by
+`validate`. Manifests are JSON with sorted keys and two-space indentation
+so diffs stay small.
 
 ## 1.3 Interfaces
 
@@ -99,7 +113,7 @@ class Candles:                 # one pair, one timeframe, UTC, sorted, unique
     def slice(self, start_ms: int, end_ms: int) -> Candles   # [start, end)
     def step_ms(self) -> int                            # 60_000 or 900_000
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)   # same reason as Candles
 class Funding:
     pair: str
     ts: np.ndarray             # int64 ms, minute-rounded
@@ -120,6 +134,16 @@ class CandleStore:
 class FundingStore:                                          # same guard and layout
     def load(self, pair, start_ms, end_ms, *, allow_holdout=False) -> Funding
 ```
+
+Arrays returned by `load` are read-only (`flags.writeable` is false) and
+`slice` views inherit the flag, so a strategy cannot mutate shared data.
+`CandleStore.write` returns a `MergeStats(added, replaced, kept,
+mismatches)`; `read_frame(pair, tf, start_ms=None, end_ms=None)` (and the
+funding equivalent) is the storage layer that `data fetch` and `data
+validate` use to see every stored row including the holdout years. It has
+no guard and is off limits to analysis code; the Phase 8 review greps for
+it outside `perpbt/data/`. `write` and `read_frame` never need
+`allow_holdout`.
 
 The guard is API-level. The Parquet files for 2026 exist on disk after
 `data fetch`; the human rule is that nothing reads them except through
