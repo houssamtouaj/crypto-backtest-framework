@@ -187,9 +187,15 @@ summer). For `utc` the window is the UTC day and every day qualifies.
 ## 1.5 CLI
 
 ```
-perpbt data fetch   [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head]
-perpbt data validate [--pairs ...]
+perpbt data fetch   [--config configs/data.yaml] [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head]
+perpbt data validate [--config configs/data.yaml] [--pairs ...]
 ```
+
+Both commands read a `DataConfig` from `configs/data.yaml` (committed;
+`data_dir`, the in-sample and holdout dates, `warmup_start` and the
+listing dates). `--pairs` defaults to every pair in `listing`; `--from`
+defaults to `warmup_start`; `--to` to today (UTC). Exit codes: 0 success,
+1 a download, checksum or validation failure, 2 a usage or config error.
 
 `fetch` (`perpbt/data/fetch.py`) works per pair and timeframe. Months run
 from `max(--from, listing[pair], 2020-01-01)` to `--to` (default: today,

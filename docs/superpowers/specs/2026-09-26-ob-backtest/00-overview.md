@@ -198,6 +198,7 @@ tests/
 configs/
   prereg.yaml          the pre-registered primary, grid, costs, and verdict rule
   prereg.lock          hash + commit recorded at freeze (Phase 8)
+  data.yaml            DataConfig for `perpbt data fetch` / `validate` (Phase 1)
 data/                  Parquet cache (git-ignored); manifest.json per pair/tf is committed
 runs/                  per-variant outputs (git-ignored), registry.jsonl
 ```
