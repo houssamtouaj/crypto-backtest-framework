@@ -164,6 +164,19 @@ def test_assert_causal_fails_on_non_causal_function():
         assert_causal(reversed_cumsum, cd, cuts=[200], seeds=[1])
 
 
+def test_assert_causal_accepts_one_shot_iterables():
+    cd = random_walk(400, seed=2, start_ms=T0_MS)
+    with pytest.raises(AssertionError, match="not causal"):
+        assert_causal(reversed_cumsum, cd, cuts=(c for c in [399, 200]), seeds=(s for s in [1, 2, 3]))
+
+
+@pytest.mark.parametrize("cuts, seeds", [([], [1]), ([100], []), ([], [])])
+def test_assert_causal_rejects_empty_cuts_or_seeds(cuts, seeds):
+    cd = random_walk(50, seed=2, start_ms=T0_MS)
+    with pytest.raises(ValueError, match="non-empty"):
+        assert_causal(cumsum, cd, cuts=cuts, seeds=seeds)
+
+
 def test_assert_causal_handles_nan_warmup():
     def lagged_mean(cd: Candles) -> np.ndarray:
         out = np.full(len(cd), np.nan)
