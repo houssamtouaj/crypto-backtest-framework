@@ -89,7 +89,7 @@ logged in the manifest.
 ## 1.3 Interfaces
 
 ```python
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)   # eq=False: the generated __eq__ raises on ndarray fields
 class Candles:                 # one pair, one timeframe, UTC, sorted, unique
     pair: str; tf: str
     ts: np.ndarray             # int64 ms, open time
