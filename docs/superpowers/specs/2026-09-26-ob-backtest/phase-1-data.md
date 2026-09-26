@@ -191,9 +191,32 @@ perpbt data fetch   [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today
 perpbt data validate [--pairs ...]
 ```
 
-`fetch` downloads what the manifest does not already have, verifies each
-checksum, parses, merges, writes Parquet, deletes the zip, and updates the
-manifest. Re-running is a no-op unless new daily files exist.
+`fetch` (`perpbt/data/fetch.py`) works per pair and timeframe. Months run
+from `max(--from, listing[pair], 2020-01-01)` to `--to` (default: today,
+UTC). A month before the current one gets its monthly zip; the current
+month, and any past month whose monthly zip is 404, falls back to daily
+zips for the days `>= listing`, `<= --to` and `< today`. Every zip is
+fetched with its `.CHECKSUM`, verified and parsed in memory (nothing is
+written to disk but Parquet and the manifest), merged into the year files
+by source precedence, and recorded in `files`. A 404 is recorded in
+`missing` with the check date and retried on later runs only while the
+file's period ended less than 35 days (monthly) or 3 days (daily) ago, so
+pre-listing days and months before the archive are requested once. The
+manifest is rewritten after every file, so an interrupted run resumes
+without re-downloading; deleting a manifest forces the series to be
+re-ingested. Re-running is a no-op apart from retrying recent 404s.
+Funding files are monthly only (daily ones do not exist), so the current
+month's funding comes from the ccxt tail or waits for the monthly file.
+
+`--ccxt-head` fetches 15m candles for `[--from, 2020-01-01)` for pairs
+listed before 2020-01-01 (skipped when a recorded `ccxt_ranges` entry
+already covers the range). `--ccxt-tail` extends each stored series from
+its last row to the last candle closed before the download instant
+(`floor(now / step) * step`, so the open candle is never stored) and
+funding from the last stored event to now; ccxt's funding history carries
+no interval, so tail events take `last_interval_h` from the manifest (8 if
+none). Both use `binanceusdm` with rate limiting and are skipped for a
+series with nothing stored.
 
 ## 1.6 Tasks and tests
 

@@ -6,15 +6,18 @@ drives them over the stores and writes the results into the manifests.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from perpbt.data.store import Candles
+from perpbt.config import DataConfig
+from perpbt.data.store import _STEP_MS, Candles, CandleStore, FundingStore
 
 STEP_15M_MS = 900_000
 STEP_1M_MS = 60_000
 ALLOWED_INTERVALS = (1, 4, 8)
+TIMEFRAMES = ("1m", "15m")
 
 
 @dataclass(frozen=True)
@@ -118,3 +121,55 @@ def check_funding(ts: np.ndarray, interval_h: np.ndarray) -> dict:
         "intervals": intervals,
         "bad_intervals": sorted(v for v in intervals if v not in ALLOWED_INTERVALS),
     }
+
+
+def run_validate(data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[str] = TIMEFRAMES) -> dict:
+    """Validate every stored series of ``pairs`` and write the reports into the manifests.
+
+    Grid violations and duplicate funding timestamps raise ValueError (hard
+    failures). Gaps, 1m→15m mismatches and unusual intervals are reported,
+    never fixed. Returns ``{pair: {tf: {...}, "funding": {...}}}``; a pair with
+    nothing stored maps to ``{}``.
+    """
+    cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
+    report: dict = {}
+    for pair in pairs:
+        entry: dict = {}
+        loaded: dict[str, Candles] = {}
+        for tf in sorted(tfs, key=lambda t: _STEP_MS[t]):  # 1m before 15m
+            if not cstore.dir(pair, tf).is_dir():
+                continue
+            frame = cstore.read_frame(pair, tf)
+            ts = frame["open_ms"].to_numpy()
+            gaps = gap_report(ts, _STEP_MS[tf])
+            manifest = cstore.manifest(pair, tf)
+            manifest["rows"] = int(len(ts))
+            manifest["first_open_ms"] = int(ts[0]) if len(ts) else None
+            manifest["last_open_ms"] = int(ts[-1]) if len(ts) else None
+            manifest["gaps"] = [g.as_dict() for g in gaps]
+            candles = Candles(
+                pair, tf, ts, frame["open"].to_numpy(), frame["high"].to_numpy(), frame["low"].to_numpy(),
+                frame["close"].to_numpy(), frame["volume"].to_numpy(),
+            )
+            loaded[tf] = candles
+            entry[tf] = {"rows": int(len(ts)), "gaps": len(gaps), "missing_slots": int(sum(g.missing for g in gaps))}
+            if tf == "15m" and "1m" in loaded:
+                consistency = consistency_1m_15m(loaded["1m"], candles)
+                manifest["consistency_1m_15m"] = consistency
+                entry[tf]["consistency_1m_15m"] = consistency
+            cstore.write_manifest(pair, tf, manifest)
+        if fstore.dir(pair).is_dir():
+            frame = fstore.read_frame(pair)
+            ts = frame["funding_ms"].to_numpy()
+            funding = check_funding(ts, frame["interval_h"].to_numpy())
+            manifest = fstore.manifest(pair)
+            manifest["rows"] = int(len(ts))
+            manifest["first_funding_ms"] = int(ts[0]) if len(ts) else None
+            manifest["last_funding_ms"] = int(ts[-1]) if len(ts) else None
+            manifest["last_interval_h"] = int(frame["interval_h"].iloc[-1]) if len(ts) else None
+            manifest["intervals"] = {str(k): v for k, v in funding["intervals"].items()}
+            manifest["bad_intervals"] = funding["bad_intervals"]
+            fstore.write_manifest(pair, manifest)
+            entry["funding"] = {"rows": int(len(ts)), **funding}
+        report[pair] = entry
+    return report

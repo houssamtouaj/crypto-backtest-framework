@@ -151,6 +151,7 @@ perpbt/
   data/
     bulk.py            download + checksum verify + parse data.binance.vision files
     ccxt_fetch.py      head backfill (2019 warmup) and tail fetch via ccxt
+    fetch.py           the `data fetch` pipeline: bulk sync, ccxt head/tail, manifest upkeep
     store.py           CandleStore / FundingStore: Parquet cache, holdout guard
     validate.py        monotonic/unique timestamps, gap report, 1m→15m consistency
     sessions.py        SessionCalendar: per-candle session id, window flags, DST-aware
