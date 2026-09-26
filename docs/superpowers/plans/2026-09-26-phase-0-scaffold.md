@@ -185,12 +185,13 @@ markers = [
 
 - [ ] **Step 6: Git housekeeping files**
 
-Append to `.gitignore` (keep the existing lines):
+Append to `.gitignore` (keep the existing lines), and anchor the two pre-existing `data/` and `runs/` patterns to the repo root (`/data/`, `/runs/`): unanchored, `data/` also matches `perpbt/data/` and silently drops that subpackage from every commit.
 
 ```
 *.egg-info/
 build/
 dist/
+.superpowers/
 ```
 
 Create `.gitattributes` so `code_version()` hashes the same bytes on every OS (this machine has `core.autocrlf=true`, which would otherwise check out `.py` files with CRLF and change the hash relative to a Linux checkout):
@@ -2048,14 +2049,15 @@ def test_assert_causal_pair_form_compares_values_of_confirmed_rows():
 
 def test_assert_causal_pair_form_detects_changed_row_set():
     def rows_depend_on_future(cd: Candles):
-        # the number of "confirmed" rows depends on the whole series: non-causal
-        count = int(np.sum(cd.c > cd.c.mean()))
-        return cd.c[:count], np.arange(count)
+        # the "confirmed" rows are the candles above the series-wide mean; the mean
+        # depends on the future, so the set of rows at indices <= cut changes
+        idx = np.flatnonzero(cd.c > cd.c.mean())
+        return cd.c[idx], idx
 
     cd = random_walk(300, seed=6, start_ms=T0_MS)
-    # Several seeds: one perturbation could leave the count unchanged by chance.
+    # Several seeds: one perturbation could leave the visible row set unchanged by chance.
     with pytest.raises(AssertionError, match="not causal"):
-        assert_causal(rows_depend_on_future, cd, cuts=[100], seeds=[1, 2, 3, 4, 5, 6])
+        assert_causal(rows_depend_on_future, cd, cuts=[50, 100], seeds=[1, 2, 3, 4, 5, 6])
 
 
 def test_assert_causal_rejects_bad_return_shape():
