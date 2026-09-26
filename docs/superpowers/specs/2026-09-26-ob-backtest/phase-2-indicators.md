@@ -1,0 +1,122 @@
+# Phase 2 — Indicators and the look-ahead guard
+
+Read with `00-overview.md`. Delivers the three causal indicators the
+strategy uses and the `MarketView` guard that makes look-ahead impossible in
+strategy code. Depends on Phase 0 (synthetic builders); real data is used
+only in slow tests.
+
+Every indicator returns arrays aligned to the 15m index, NaN (or -1 for
+integer arrays) before warmup, and states its confirmation lag: the number
+of candles after `i` that must be closed before the value at `i` is known.
+A value with lag 0 is usable at the close of `i`.
+
+## 2.1 Wilder ATR(n) — `indicators/atr.py`
+
+```python
+def atr(candles: Candles, n: int = 14) -> np.ndarray     # lag 0
+```
+
+`TR_i = max(h_i − l_i, |h_i − c_{i−1}|, |l_i − c_{i−1}|)` with `TR_0 = h_0 − l_0`.
+`ATR_{n−1} = mean(TR_0..TR_{n−1})`; then `ATR_i = (ATR_{i−1} × (n−1) + TR_i) / n`.
+NaN for `i < n−1`. Gaps in the series are ignored (the previous available
+candle is "previous").
+
+## 2.2 Swing highs — `indicators/swings.py`
+
+```python
+@dataclass(frozen=True)
+class Swings:
+    idx: np.ndarray            # candle index s of each swing high
+    level: np.ndarray          # high[s]
+    confirmed_at: np.ndarray   # s + k
+    # arrays sorted by confirmed_at (equivalently by idx)
+
+def swing_highs(candles: Candles, k: int) -> Swings       # lag k
+```
+
+Candle `s` is a swing high iff `high[s] > high[s ± j]` for all `j = 1..k`,
+strict on both sides; equal highs do not qualify. It is confirmed as of
+`i = s + k`. Candles within `k` of either end of the series cannot be swing
+highs. No two swing highs share an index, and because `s + k` is injective
+no two share a `confirmed_at`.
+
+Consumers never index `Swings` directly; they go through
+`MarketView.swings_confirmed_by(i)`.
+
+## 2.3 Daily SMA and ADX aligned to 15m — `indicators/daily.py`
+
+```python
+def daily_bars(candles15: Candles) -> DailyBars     # UTC days; o/h/l/c/v from the day's 15m candles
+def daily_sma_aligned(candles15: Candles, n: int = 50) -> np.ndarray    # lag 0 at the 15m level
+def daily_adx_aligned(candles15: Candles, n: int = 14) -> np.ndarray    # lag 0 at the 15m level
+```
+
+A UTC day `D` is *completed* once the candle opening at `D+1 00:00` exists
+or, at the series end, never. The daily close of `D` is the close of the
+last 15m candle of `D` present in the data (outage gaps do not disqualify a
+day). For any 15m candle `i` on day `D`, the aligned value is the indicator
+computed on the completed days `≤ D − 1` only. So the value is constant
+across all candles of a day and changes at 00:00 UTC. Days before the first
+`n` completed days give NaN.
+
+ADX is the standard Wilder construction: `+DM`, `−DM`, `TR` per day; Wilder
+RMA(n) smoothing of each; `DI± = 100 × RMA(±DM) / RMA(TR)`;
+`DX = 100 × |DI+ − DI−| / (DI+ + DI−)`; `ADX = RMA(n)(DX)`. Warmup is `2n − 1`
+days; with the 2019-11-01 backfill both SMA(50) and ADX(14) are valid on
+2020-01-01 for BTC and ETH. For SOL they are valid from listing plus warmup.
+
+## 2.4 MarketView and AccountView — `strategy/base.py`
+
+```python
+class LookaheadError(RuntimeError): ...
+
+@dataclass(frozen=True)
+class SessionInfo:
+    id: int; open_ms: int; end_ms: int; in_window: bool; is_last: bool
+
+class MarketView:
+    """Window ending at candle i. Any access beyond i raises LookaheadError."""
+    i: int                             # the view never reveals how many candles follow i
+    def ts(self, j) / open(self, j) / high(self, j) / low(self, j) / close(self, j) -> float
+    def lows(self, a, b) -> np.ndarray     # low[a..b] inclusive, b <= i; same for highs/closes/opens
+    def atr(self, j) -> float
+    def daily_sma(self, j) -> float
+    def daily_adx(self, j) -> float
+    def swings_confirmed_by(self, j) -> Swings      # only rows with confirmed_at <= j; j <= i
+    session: SessionInfo
+    def is_bearish(self, j) -> bool                 # close[j] < open[j]
+
+class AccountView:                     # read-only, this variant only
+    equity_mtm: float
+    open_positions: tuple[PositionView, ...]
+    pending_orders: tuple[OrderView, ...]
+```
+
+`MarketView` is constructed once per simulation with references to the
+full arrays and mutated by advancing `i`; it never copies. Every accessor
+checks `j <= self.i` (and `a <= b <= i` for ranges) and raises
+`LookaheadError` otherwise. Negative `j` is an error too, so warmup NaNs
+are the only signal of "not yet available".
+
+## 2.5 Tasks and tests
+
+- **2.1 ATR.** Tests: matches a hand-computed 20-candle example to 1e-12;
+  NaN for the first `n−1`; `assert_causal` over 20 seeds × 3 cuts.
+- **2.2 Swing highs.** Tests: synthetic series with known swing highs for
+  `k = 1, 2, 3`; equal highs excluded; `confirmed_at == idx + k` exactly;
+  candles within `k` of the series end are never swings; `assert_causal`
+  on `(level, confirmed_at)` pairs (a swing confirmed at `≤ cut` is
+  identical under perturbation; swings confirmed after `cut` may differ).
+- **2.3 Daily SMA/ADX.** Tests: the value on any 15m candle equals the
+  SMA/ADX of the previous `n` completed days computed independently with
+  pandas; changing any candle of day `D` never changes the value on day
+  `D`; a day with an outage gap still counts as completed with its last
+  available close; `assert_causal`. Slow: BTC 2020-01-01 has a non-NaN
+  SMA(50) and ADX(14) after the backfill.
+- **2.4 MarketView guard.** Tests: `view.close(view.i + 1)` raises;
+  `view.lows(i − 3, i + 1)` raises; `view.swings_confirmed_by(i)` never
+  returns a swing with `confirmed_at > i`; the same view advanced to `i+1`
+  then exposes exactly one more candle; a fuzz test over random `(i, j)`
+  pairs confirms access succeeds iff `0 <= j <= i`.
+
+Exit criterion: all tests green; every indicator's docstring states its lag.
