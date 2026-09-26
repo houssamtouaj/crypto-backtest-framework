@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perpbt"
+description = "Backtest framework for Binance USDT-M perpetuals (ICT order-block strategy)"
+requires-python = ">=3.11"
+dynamic = ["version"]
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=15",
+    "scipy>=1.13",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+ccxt = ["ccxt>=4.0"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+perpbt = "perpbt.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["perpbt*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "perpbt.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: uses real downloaded market data; deselect with -m 'not slow'",
+]
