@@ -403,3 +403,43 @@ def test_funding_store_rejects_unsorted_and_unknown_pair(data_cfg):
     with pytest.raises(FileNotFoundError, match="XRPUSDT"):
         store.load("XRPUSDT", T0, T0 + H)
     assert store.manifest("BTCUSDT") == new_funding_manifest("BTCUSDT")
+
+
+# --- Windows file locks ------------------------------------------------------------------
+
+
+def test_manifest_and_parquet_writes_retry_a_transient_permission_error(data_cfg, monkeypatch):
+    from perpbt.data import store as store_mod
+
+    real_replace = store_mod.os.replace
+    failures = {"left": 2}
+
+    def flaky_replace(src, dst):
+        if failures["left"] > 0:
+            failures["left"] -= 1
+            raise PermissionError(5, "Access is denied", str(src))
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(store_mod.os, "replace", flaky_replace)
+    monkeypatch.setattr(store_mod.time, "sleep", lambda s: None)
+    store = CandleStore(data_cfg)
+    m = new_candle_manifest("BTCUSDT", "15m")
+    m["rows"] = 7
+    store.write_manifest("BTCUSDT", "15m", m)
+    assert store.manifest("BTCUSDT", "15m")["rows"] == 7
+    assert not store.manifest_path("BTCUSDT", "15m").with_name("manifest.json.tmp").exists()
+    failures["left"] = 2
+    assert store.write("BTCUSDT", "15m", cframe(kline_rows(T0, 2, STEP))) == MergeStats(2, 0, 0, 0)
+    assert len(store.read_frame("BTCUSDT", "15m")) == 2
+
+
+def test_persistent_permission_error_still_raises(data_cfg, monkeypatch):
+    from perpbt.data import store as store_mod
+
+    def always_denied(src, dst):
+        raise PermissionError(5, "Access is denied", str(src))
+
+    monkeypatch.setattr(store_mod.os, "replace", always_denied)
+    monkeypatch.setattr(store_mod.time, "sleep", lambda s: None)
+    with pytest.raises(PermissionError):
+        CandleStore(data_cfg).write_manifest("BTCUSDT", "15m", new_candle_manifest("BTCUSDT", "15m"))
