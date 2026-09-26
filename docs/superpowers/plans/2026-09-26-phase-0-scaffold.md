@@ -2327,6 +2327,19 @@ git branch -a                # expected: no phase/0-scaffold locally or on origi
 
 ---
 
+## Post-review amendments (applied on `phase/0-scaffold`)
+
+The whole-branch review asked for these before merge; they are in the code and tests, and the code blocks above are the pre-amendment text:
+
+- `config.py` float coercion rejects `nan`, `inf` and overflow with a `ConfigError` naming the field, and normalises `-0.0` to `0.0` so equal configs hash equal (`test_float_field_rejects_non_finite`, `test_negative_zero_hashes_like_zero`).
+- `SessionSpec.tz` also catches `OSError` (a directory-like key such as `America` raised a raw `PermissionError` on Windows).
+- `_check_hhmm` / `_check_iso_date` use `fullmatch`, so a trailing newline is rejected.
+- `code_version` raises `FileNotFoundError` for a missing root and only counts files whose suffix is exactly `.py` (Windows `rglob` is case-insensitive).
+- `assert_causal` docstring states that the perturbation holds `ts` and the series length fixed, so it proves independence from future o/h/l/c/v only.
+- `test_assert_causal_pair_form_compares_confirmed_at` isolates the `confirmed_at` comparison.
+
+Deferred items and rulings from the reviews live in the merge commit message and the ledger summary reported at the end of the phase.
+
 ## Self-review notes
 
 - **Spec coverage.** §0.2 deliverables: `pyproject.toml` (T1), `__init__.py` with `__version__` (T1), `config.py` (T4, T5), `version.py` (T6), `cli.py` (T2), seven subpackage inits (T1), `tests/conftest.py` and `tests/synthetic.py` (T7), `tests/test_config.py` (T4, T5), `tests/test_version.py` (T6), `tests/test_synthetic.py` (T7). §0.3 types and methods (T4, T5). §0.4 hash format and `git_commit` (T6). §0.5 builders and `Candles` with `index_at`/`slice` (T3, T7). §0.6 tests: every listed test has a named test function above. Exit criterion and branch rules (T1 step 1, T8). Additions beyond the spec, each stated where it happens: `perpbt/__main__.py` (needed for `python -m perpbt`), `tests/__init__.py` (so `tests.synthetic` imports from any test), `tests/test_package.py`, `tests/test_cli.py`, `tests/test_store.py` (one test file per module, overview §6), `.gitattributes` (byte-stable `.py` files under `core.autocrlf=true`), value validation in the dataclasses beyond the two cases the spec names (cheap, and Review Focus items 3 and 4 need it).
