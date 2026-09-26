@@ -1,7 +1,10 @@
 """Configuration types: construction, coercion, validation, from_dict/to_dict."""
+import copy
 import dataclasses
+import hashlib
 import json
-from datetime import date
+import re
+from datetime import date, timedelta
 
 import pytest
 
@@ -15,7 +18,11 @@ from perpbt.config import (
     StopBuffer,
     StrategyParams,
     VariantConfig,
+    canonical_json,
+    config_hash,
+    dump_yaml,
     from_dict,
+    load_yaml,
     to_dict,
 )
 
@@ -287,3 +294,196 @@ def test_to_dict_is_plain_json_serialisable():
     assert d["params"]["hold_rule"] == {"kind": "none", "hours": None}
     assert d["exec"]["start_equity"] == 10_000.0
     json.dumps(d)  # must not raise
+
+
+# --- YAML round-trip --------------------------------------------------------
+
+SAMPLES = [
+    UTC,
+    NY,
+    StopBuffer("pct", 0.0025),
+    HoldRule("max_hold", 24.0),
+    HoldRule("none"),
+    StrategyParams(swing_k=3, hold_rule=HoldRule("session_end"), pierce=0.0005, structure_break="literal"),
+    ExecConfig(slippage=0.0005),
+    StatsConfig(bootstrap_n=100, reprice_maker=(0.0,)),
+    data_config(),
+    data_config(holdout_end="2026-09-27"),
+    primary_variant(),
+    primary_variant(session=UTC, is_holdout=True),
+]
+
+
+@pytest.mark.parametrize("obj", SAMPLES, ids=lambda o: type(o).__name__)
+def test_yaml_round_trip_is_identity(obj, tmp_path):
+    path = tmp_path / "cfg.yaml"
+    dump_yaml(obj, path)
+    loaded = load_yaml(path, type(obj))
+    assert loaded == obj
+    assert config_hash(loaded) == config_hash(obj)
+
+
+def test_load_yaml_unquoted_date_is_accepted(tmp_path):
+    path = tmp_path / "d.yaml"
+    path.write_text(
+        "data_dir: data\n"
+        "insample_start: 2020-01-01\n"
+        "insample_end: 2025-12-31\n"
+        "holdout_start: 2026-01-01\n"
+        "holdout_end: null\n"
+        "warmup_start: 2019-11-01\n"
+        "listing: {BTCUSDT: 2019-09-08, ETHUSDT: 2019-11-27, SOLUSDT: 2020-09-14}\n",
+        encoding="utf-8",
+    )
+    assert load_yaml(path, DataConfig) == data_config()
+
+
+def test_load_yaml_unquoted_2400_gives_quoting_hint(tmp_path):
+    path = tmp_path / "s.yaml"
+    path.write_text("name: utc\ntz: UTC\nopen: '00:00'\nclose: 24:00\ndays: [0, 1]\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="quote"):
+        load_yaml(path, SessionSpec)
+
+
+def test_load_yaml_unknown_key_raises(tmp_path):
+    path = tmp_path / "p.yaml"
+    path.write_text("swing_k: 2\nconfirm_m: 3\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="unknown.*confirm_m"):
+        load_yaml(path, StrategyParams)
+
+
+def test_load_yaml_empty_file_gives_defaults(tmp_path):
+    path = tmp_path / "e.yaml"
+    path.write_text("", encoding="utf-8")
+    assert load_yaml(path, StrategyParams) == StrategyParams()
+    with pytest.raises(ConfigError, match="missing"):
+        load_yaml(path, StopBuffer)
+
+
+# --- canonical JSON and hashes ---------------------------------------------
+
+
+def test_config_hash_ignores_yaml_key_order(tmp_path):
+    a = tmp_path / "a.yaml"
+    b = tmp_path / "b.yaml"
+    a.write_text("swing_k: 3\nr_target: 1.5\nstop_buffer:\n  kind: pct\n  value: 0.001\n", encoding="utf-8")
+    b.write_text("stop_buffer:\n  value: 0.001\n  kind: pct\nr_target: 1.5\nswing_k: 3\n", encoding="utf-8")
+    pa, pb = load_yaml(a, StrategyParams), load_yaml(b, StrategyParams)
+    assert pa == pb
+    assert config_hash(pa) == config_hash(pb)
+
+
+@pytest.mark.parametrize("text", ["value: 0.1\n", "value: 0.10\n", "value: 1.0e-1\n", "value: 0.1000000\n"])
+def test_float_text_forms_hash_same(text, tmp_path):
+    path = tmp_path / "sb.yaml"
+    path.write_text("kind: atr\n" + text, encoding="utf-8")
+    assert config_hash(load_yaml(path, StopBuffer)) == config_hash(StopBuffer("atr", 0.1))
+
+
+@pytest.mark.parametrize("text", ["r_target: 2\n", "r_target: 2.0\n", "r_target: 2.00\n"])
+def test_int_and_float_literals_hash_same(text, tmp_path):
+    path = tmp_path / "p.yaml"
+    path.write_text(text, encoding="utf-8")
+    assert config_hash(load_yaml(path, StrategyParams)) == config_hash(StrategyParams())
+
+
+def test_canonical_json_is_compact_sorted_repr_floats():
+    assert canonical_json(StopBuffer("atr", 0.10)) == '{"kind":"atr","value":0.1}'
+    assert canonical_json(HoldRule("none")) == '{"hours":null,"kind":"none"}'
+    cj = primary_variant().canonical_json()
+    assert cj.startswith('{"exec":{"fee_maker":0.0002,')
+    assert " " not in cj and "\n" not in cj
+    keys = re.findall(r'"([a-z_0-9]+)":', cj.split('"session"')[0])
+    assert keys[:1] == ["exec"]
+
+
+def test_canonical_json_accepts_plain_mapping():
+    assert canonical_json({"b": (1, 2), "a": {"y": 0.10, "x": None}}) == '{"a":{"x":null,"y":0.1},"b":[1,2]}'
+
+
+def test_config_hash_is_sha256_of_canonical_json():
+    v = primary_variant()
+    expected = hashlib.sha256(v.canonical_json().encode("utf-8")).hexdigest()
+    assert v.config_hash() == expected == config_hash(v)
+    assert len(expected) == 64
+
+
+def test_variant_id_combines_config_and_code_version():
+    v = primary_variant()
+    cj = v.canonical_json()
+    assert v.variant_id("abc") == hashlib.sha256((cj + "abc").encode("utf-8")).hexdigest()
+    assert v.variant_id("abc") != v.variant_id("abd")
+    assert v.variant_id("abc") != v.config_hash()
+
+
+# --- every field participates in the hash ----------------------------------
+
+_ALT_STR = {
+    "kind": {"atr": "pct", "pct": "atr", "none": "session_end", "session_end": "none", "max_hold": "none"},
+    "zone": {"full": "body", "body": "full"},
+    "entry_level": {"top": "mid", "mid": "top"},
+    "structure_break": {"fresh": "literal", "literal": "fresh"},
+    "skip_mitigated": {"continue": "stop", "stop": "continue"},
+}
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_HHMM = re.compile(r"^(\d{2}):(\d{2})$")
+
+
+def _alternative(key, value):
+    """A different valid value for a leaf, so the config still constructs."""
+    if isinstance(value, bool):
+        return not value
+    if isinstance(value, int):
+        return value + 1
+    if isinstance(value, float):
+        return value + 0.25
+    if isinstance(value, list):
+        return value[:-1]
+    if isinstance(value, str):
+        if key in _ALT_STR:
+            return _ALT_STR[key][value]
+        if key == "tz":
+            return "Europe/London" if value != "Europe/London" else "UTC"
+        if _ISO.match(value):
+            return (date.fromisoformat(value) + timedelta(days=1)).isoformat()
+        m = _HHMM.match(value)
+        if m:
+            return "23:00" if value == "24:00" else f"{m[1]}:{(int(m[2]) + 1) % 60:02d}"
+        return value + "x"
+    raise TypeError(f"no alternative for {key}={value!r}")
+
+
+def _leaf_paths(d, prefix=()):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            yield from _leaf_paths(v, prefix + (k,))
+        else:
+            yield prefix + (k,), v
+
+
+def _with_leaf(d, path, value):
+    d = copy.deepcopy(d)
+    node = d
+    for k in path[:-1]:
+        node = node[k]
+    node[path[-1]] = value
+    return d
+
+
+def test_changing_any_single_field_changes_the_hash():
+    base = primary_variant()
+    base_dict = to_dict(base)
+    checked = 0
+    for path, value in _leaf_paths(base_dict):
+        if value is None:
+            continue  # hold_rule.hours is coupled to kind; covered by the test below
+        changed = from_dict(VariantConfig, _with_leaf(base_dict, path, _alternative(path[-1], value)))
+        assert changed.config_hash() != base.config_hash(), path
+        checked += 1
+    assert checked >= 36  # every leaf of VariantConfig except hold_rule.hours
+
+
+def test_hold_rule_hours_changes_the_hash():
+    a = primary_variant(params=StrategyParams(hold_rule=HoldRule("max_hold", 24)))
+    b = primary_variant(params=StrategyParams(hold_rule=HoldRule("max_hold", 72)))
+    assert a.config_hash() != b.config_hash()
