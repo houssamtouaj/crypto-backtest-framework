@@ -70,6 +70,18 @@ def test_moving_a_file_between_directories_changes_hash(tmp_path):
     assert code_version(tmp_path) != before
 
 
+def test_missing_root_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        code_version(tmp_path / "nope")
+
+
+def test_upper_case_py_extension_does_not_count(tmp_path):
+    make_tree(tmp_path)
+    before = code_version(tmp_path)
+    (tmp_path / "UPPER.PY").write_bytes(b"z = 3\n")
+    assert code_version(tmp_path) == before
+
+
 def test_real_package_hash_is_hex64():
     cv = code_version()
     assert len(cv) == 64 and int(cv, 16) >= 0

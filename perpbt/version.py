@@ -22,8 +22,10 @@ def code_version(root: Path | str = PACKAGE_DIR) -> str:
     ``.pyc``, docs, tests, and configs leave the hash unchanged.
     """
     root = Path(root)
+    if not root.is_dir():
+        raise FileNotFoundError(f"code_version: {root} is not a directory")
     entries = sorted(
-        (p.relative_to(root).as_posix(), p) for p in root.rglob("*.py") if p.is_file()
+        (p.relative_to(root).as_posix(), p) for p in root.rglob("*.py") if p.is_file() and p.suffix == ".py"
     )
     h = hashlib.sha256()
     for rel, path in entries:

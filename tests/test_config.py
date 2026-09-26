@@ -146,6 +146,18 @@ def test_float_field_rejects_bool_str_none(bad):
         ExecConfig(fee_maker=bad)
 
 
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), 10**400])
+def test_float_field_rejects_non_finite(bad):
+    with pytest.raises(ConfigError, match="value"):
+        StopBuffer("atr", bad)
+
+
+def test_negative_zero_hashes_like_zero():
+    assert StopBuffer("atr", -0.0) == StopBuffer("atr", 0.0)
+    assert config_hash(StopBuffer("atr", -0.0)) == config_hash(StopBuffer("atr", 0.0))
+    assert canonical_json(StopBuffer("atr", -0.0)) == '{"kind":"atr","value":0.0}'
+
+
 def test_optional_field_accepts_none_and_value():
     assert data_config(holdout_end=None).holdout_end is None
     assert data_config(holdout_end="2026-09-27").holdout_end == "2026-09-27"
@@ -214,6 +226,11 @@ def test_session_tz_validated():
         SessionSpec("x", "Mars/Olympus_Mons", "00:00", "24:00", (0,))
 
 
+def test_session_tz_directory_like_key_is_rejected():
+    with pytest.raises(ConfigError, match="tz"):
+        SessionSpec("x", "America", "00:00", "24:00", (0,))
+
+
 @pytest.mark.parametrize("field, value", [("insample_start", "2020/01/01"), ("warmup_start", "20191101"), ("holdout_end", "yesterday")])
 def test_data_config_dates_validated(field, value):
     with pytest.raises(ConfigError, match=field):
@@ -235,6 +252,13 @@ def test_variant_period_validated():
         primary_variant(period_start="2025-12-31", period_end="2020-01-01")
     with pytest.raises(ConfigError, match="period_end"):
         primary_variant(period_end="2025-13-01")
+
+
+def test_trailing_newline_in_time_and_date_is_rejected():
+    with pytest.raises(ConfigError, match="open"):
+        SessionSpec("x", "UTC", "09:30\n", "16:00", (0,))
+    with pytest.raises(ConfigError, match="period_end"):
+        primary_variant(period_end="2025-12-31\n")
 
 
 @pytest.mark.parametrize(

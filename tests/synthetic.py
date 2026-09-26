@@ -158,8 +158,11 @@ def assert_causal(
     ``fn`` returns either an array aligned to the candle index (rows ``[:cut+1]``
     are compared) or a ``(values, confirmed_at)`` pair (only rows with
     ``confirmed_at <= cut`` are compared, values and ``confirmed_at`` both).
-    NaNs compare equal to NaNs. Both ``cuts`` and ``seeds`` are materialised up
-    front; an empty one raises ValueError so the check can never pass vacuously.
+    NaNs compare equal to NaNs. The perturbation holds ``ts`` and the series
+    length fixed, so this proves independence from future o/h/l/c/v only, not
+    from the series length or future timestamps. Both ``cuts`` and ``seeds``
+    are materialised up front; an empty one raises ValueError so the check can
+    never pass vacuously.
     """
     cuts = list(cuts)
     seeds = list(seeds)

@@ -13,6 +13,7 @@ import dataclasses
 import functools
 import hashlib
 import json
+import math
 import re
 import types
 import typing
@@ -72,7 +73,13 @@ def _coerce(tp: Any, value: Any, where: str) -> Any:
         if tp is float:
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise ConfigError(f"{where}: expected a number, got {value!r}")
-            return float(value)
+            try:
+                v = float(value)
+            except OverflowError:
+                raise ConfigError(f"{where}: number too large, got {value!r}") from None
+            if not math.isfinite(v):
+                raise ConfigError(f"{where}: must be finite, got {value!r}")
+            return v + 0.0  # normalises -0.0 to 0.0 so equal configs hash equal
         if tp is int:
             if isinstance(value, bool) or not isinstance(value, int):
                 raise ConfigError(f"{where}: expected an integer, got {value!r}")
@@ -169,7 +176,7 @@ _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _check_hhmm(value: str, where: str, *, allow_24: bool) -> None:
-    m = _HHMM.match(value)
+    m = _HHMM.fullmatch(value)
     if not m:
         raise ConfigError(f"{where}: expected 'HH:MM', got {value!r}")
     hh, mm = int(m[1]), int(m[2])
@@ -178,7 +185,7 @@ def _check_hhmm(value: str, where: str, *, allow_24: bool) -> None:
 
 
 def _check_iso_date(value: str, where: str) -> None:
-    if not _ISO_DATE.match(value):
+    if not _ISO_DATE.fullmatch(value):
         raise ConfigError(f"{where}: expected an ISO date 'YYYY-MM-DD', got {value!r}")
     try:
         date.fromisoformat(value)
@@ -230,7 +237,7 @@ class SessionSpec(_Config):
     def _validate(self) -> None:
         try:
             ZoneInfo(self.tz)
-        except (ZoneInfoNotFoundError, ValueError):
+        except (ZoneInfoNotFoundError, ValueError, OSError):
             raise ConfigError(f"SessionSpec.tz: unknown IANA zone {self.tz!r}") from None
         _check_hhmm(self.open, "SessionSpec.open", allow_24=False)
         _check_hhmm(self.close, "SessionSpec.close", allow_24=True)

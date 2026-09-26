@@ -232,6 +232,21 @@ def test_assert_causal_pair_form_detects_changed_row_set():
         assert_causal(rows_depend_on_future, cd, cuts=[50, 100], seeds=[1, 2, 3, 4, 5, 6])
 
 
+def test_assert_causal_pair_form_compares_confirmed_at():
+    def shifted_confirmation(cd: Candles):
+        # values and row count never change; only the confirmation index of the first
+        # row moves depending on the last close, which is non-causal
+        n = len(cd)
+        values = np.ones(n)
+        confirmed_at = np.arange(n)
+        confirmed_at[0] = 0 if cd.c[-1] > cd.c[0] else 1
+        return values, confirmed_at
+
+    cd = random_walk(300, seed=8, start_ms=T0_MS)
+    with pytest.raises(AssertionError, match="not causal"):
+        assert_causal(shifted_confirmation, cd, cuts=[0], seeds=[1, 2, 3, 4, 5, 6, 7, 8])
+
+
 def test_assert_causal_rejects_bad_return_shape():
     cd = random_walk(20, seed=6, start_ms=T0_MS)
     with pytest.raises(TypeError):
