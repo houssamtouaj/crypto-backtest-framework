@@ -11,6 +11,7 @@ import calendar
 import hashlib
 import io
 import re
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -119,18 +120,31 @@ def days_of_month(ym: str, *, first: date, until: date) -> list[str]:
 # --- HTTP and checksums --------------------------------------------------------------
 
 
-def urllib_get(url: str, *, timeout: float = 120.0) -> bytes | None:
-    """GET ``url``; None on 404; DownloadError on any other failure."""
+def urllib_get(url: str, *, timeout: float = 120.0, attempts: int = 3) -> bytes | None:
+    """GET ``url``; None on 404; DownloadError after ``attempts`` transient failures.
+
+    Network errors, timeouts and 5xx responses are retried with a short
+    backoff (a DNS hiccup must not abort a 20-minute run); 404 and other
+    4xx responses are not.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": "perpbt/0.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None
-        raise DownloadError(f"GET {url}: HTTP {e.code}") from e
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise DownloadError(f"GET {url}: {e}") from e
+    last: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            if e.code < 500:
+                raise DownloadError(f"GET {url}: HTTP {e.code}") from e
+            last = DownloadError(f"GET {url}: HTTP {e.code}")
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last = DownloadError(f"GET {url}: {e}")
+        if attempt < attempts:
+            time.sleep(2.0 * attempt)
+    assert last is not None
+    raise last
 
 
 def sha256_bytes(data: bytes) -> str:

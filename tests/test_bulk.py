@@ -135,6 +135,7 @@ def test_urllib_get_maps_404_to_none_and_other_errors_to_download_error(monkeypa
 
         return opener
 
+    monkeypatch.setattr(bulk.time, "sleep", lambda s: None)
     monkeypatch.setattr(bulk.urllib.request, "urlopen", raise_http(404))
     assert bulk.urllib_get("https://x/y.zip") is None
     monkeypatch.setattr(bulk.urllib.request, "urlopen", raise_http(500))
@@ -246,3 +247,52 @@ def test_funding_interval_out_of_int8_range_raises():
 def test_header_only_funding_csv_is_empty():
     frame = parse_funding_csv(funding_csv([], header=True))
     assert len(frame) == 0 and list(frame.columns) == bulk.FUNDING_FRAME_COLUMNS
+
+
+def test_urllib_get_retries_transient_failures_but_not_404(monkeypatch):
+    import urllib.error
+
+    attempts = []
+
+    def flaky(req, timeout):
+        attempts.append(req.full_url)
+        if len(attempts) < 3:
+            raise urllib.error.URLError("getaddrinfo failed")
+
+        class Resp:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def read(self):
+                return b"payload"
+
+        return Resp()
+
+    monkeypatch.setattr(bulk.urllib.request, "urlopen", flaky)
+    monkeypatch.setattr(bulk.time, "sleep", lambda s: None)
+    assert bulk.urllib_get("https://x/y.zip") == b"payload"
+    assert len(attempts) == 3
+
+    attempts.clear()
+
+    def always_404(req, timeout):
+        attempts.append(req.full_url)
+        raise urllib.error.HTTPError(req.full_url, 404, "msg", {}, None)
+
+    monkeypatch.setattr(bulk.urllib.request, "urlopen", always_404)
+    assert bulk.urllib_get("https://x/y.zip") is None
+    assert len(attempts) == 1
+
+    attempts.clear()
+
+    def always_down(req, timeout):
+        attempts.append(req.full_url)
+        raise urllib.error.URLError("still down")
+
+    monkeypatch.setattr(bulk.urllib.request, "urlopen", always_down)
+    with pytest.raises(DownloadError, match="still down"):
+        bulk.urllib_get("https://x/y.zip", attempts=4)
+    assert len(attempts) == 4
