@@ -144,6 +144,10 @@ def from_dict(cls: type[T], data: Mapping[str, Any]) -> T:
 
 
 def _plain(x: Any) -> Any:
+    if isinstance(x, datetime):
+        raise ConfigError("canonical_json: datetime values are not allowed; use an ISO date string")
+    if isinstance(x, date):
+        return x.isoformat()
     if is_dataclass(x) and not isinstance(x, type):
         return _plain(dataclasses.asdict(x))
     if isinstance(x, Mapping):

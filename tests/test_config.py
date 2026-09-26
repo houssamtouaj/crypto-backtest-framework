@@ -4,9 +4,10 @@ import dataclasses
 import hashlib
 import json
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
+import yaml
 
 from perpbt.config import (
     ConfigError,
@@ -399,6 +400,20 @@ def test_canonical_json_is_compact_sorted_repr_floats():
 
 def test_canonical_json_accepts_plain_mapping():
     assert canonical_json({"b": (1, 2), "a": {"y": 0.10, "x": None}}) == '{"a":{"x":null,"y":0.1},"b":[1,2]}'
+
+
+def test_canonical_json_plain_mapping_with_unquoted_yaml_date():
+    loaded = yaml.safe_load("warmup_start: 2019-11-01\nlisting: {BTCUSDT: 2019-09-08}\n")
+    expected = '{"listing":{"BTCUSDT":"2019-09-08"},"warmup_start":"2019-11-01"}'
+    assert canonical_json(loaded) == expected
+    assert canonical_json(loaded) == canonical_json(
+        {"warmup_start": "2019-11-01", "listing": {"BTCUSDT": "2019-09-08"}}
+    )
+
+
+def test_canonical_json_rejects_datetime():
+    with pytest.raises(ConfigError):
+        canonical_json({"t": datetime(2020, 1, 1, 0, 0)})
 
 
 def test_config_hash_is_sha256_of_canonical_json():
