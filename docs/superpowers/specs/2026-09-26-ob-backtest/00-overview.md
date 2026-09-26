@@ -274,6 +274,49 @@ Fills and exits for candle `i` are evaluated before the strategy sees candle
 Each phase ends with its tests green before the next begins. Phases 1 and 2
 can proceed in parallel after 0.
 
+### 8.1 Branches: one per phase
+
+`main` holds reviewed, merged work only. `dev` is the integration branch.
+Every phase is built on its own branch, created from `dev` when the phase
+starts and merged back into `dev` when the phase's exit criterion is met.
+Branch names match the spec file names.
+
+| Phase | Branch | Merges into |
+|---|---|---|
+| 0 Scaffold | `phase/0-scaffold` | `dev` |
+| 1 Data | `phase/1-data` | `dev` |
+| 2 Indicators | `phase/2-indicators` | `dev` |
+| 3 Strategy | `phase/3-strategy` | `dev` |
+| 4 Execution | `phase/4-execution` | `dev` |
+| 5 Statistics | `phase/5-statistics` | `dev` |
+| 6 Experiments | `phase/6-experiments` | `dev` |
+| 7 Reporting | `phase/7-reporting` | `dev` |
+| 8 Runs | `phase/8-runs` | `dev`, then `dev` into `main` |
+
+Rules:
+
+- **Start a phase.** Update `dev` (`git pull`), then
+  `git switch -c phase/<n>-<name> dev`. Push the branch to `origin` on the
+  first commit so the work is visible. Commit only that phase's work
+  there, in small commits, each with tests.
+- **Finish a phase.** All of the phase's tests are green, the spec and the
+  code agree, and the exit criterion in the phase file is met. Merge into
+  `dev` with `git merge --no-ff phase/<n>-<name>` (or a pull request from
+  the phase branch into `dev`) so the phase boundary stays visible in the
+  history. Push `dev`. Delete the phase branch locally and on `origin`.
+- **Next phase** branches from the updated `dev`. Phases 1 and 2 may run
+  at the same time on their two branches, each in its own worktree; Phase
+  3 starts only after both are merged.
+- **Fixes to an earlier phase** discovered later go on the current phase
+  branch when small and covered by a test. Anything larger goes on a
+  `fix/<topic>` branch from `dev`, is merged into `dev`, and `dev` is then
+  merged into the open phase branch before work continues.
+- **Spec changes** are made on the phase branch where the deviation was
+  found, in the same commit as the code that deviates, so the spec and
+  the code never disagree on `dev`.
+- **`main`** receives `dev` once, at the end of Phase 8 (Phase 8 §8.2
+  step 8). Nothing else merges into `main`.
+
 ## 9. Grid and runtime
 
 ### 9.1 Grid (per pair × session; other parameters at primary values)

@@ -5,6 +5,10 @@ pessimistic 15m fills with optional 1m resolution, costs, funding, sizing,
 leverage cap, liquidation assertion, ledger, daily marks, and the trades
 table that every statistic consumes. Depends on Phase 3.
 
+**Branch:** `phase/4-execution`, created from `dev` after Phase 3 is
+merged; merged into `dev` with `--no-ff` when the exit criterion below is
+met (overview §8.1).
+
 ## 4.1 Simulator loop (`execution/simulator.py`)
 
 ```python
@@ -271,4 +275,5 @@ candles.
   logged and eyeballed.
 
 Exit criterion: all tests green; the smoke run's trade list is spot-checked
-by hand against the chart for three trades.
+by hand against the chart for three trades. Then merge into `dev` and
+delete the branch.

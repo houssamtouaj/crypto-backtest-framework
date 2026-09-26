@@ -5,6 +5,10 @@ loader, variant identity, the append-only registry, grid enumeration, the
 multiprocessing runner with resume, the baselines runner, and the one-shot
 holdout runner. Depends on Phase 5.
 
+**Branch:** `phase/6-experiments`, created from `dev` after Phase 5 is
+merged; merged into `dev` with `--no-ff` when the exit criterion below is
+met (overview §8.1).
+
 ## 6.1 Pre-registration (`experiments/prereg.py`)
 
 `configs/prereg.yaml` (full text in §6.8) declares the periods, pairs,
@@ -236,4 +240,5 @@ verdict_rule:                        # D11; inlined so it is part of the hash
   globally disabled).
 
 Exit criterion: `perpbt grid --dry-run` prints 324; the full pipeline
-runs end to end on a synthetic data directory in the test suite.
+runs end to end on a synthetic data directory in the test suite. Then
+merge into `dev` and delete the branch.

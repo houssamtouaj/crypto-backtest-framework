@@ -4,6 +4,11 @@ Read with `00-overview.md`. Delivers candles and funding in Parquet with a
 manifest, validation, the session calendar, the holdout guard, and the ccxt
 head/tail fetch. Depends on Phase 0.
 
+**Branch:** `phase/1-data`, created from `dev` after Phase 0 is merged; may
+run in parallel with `phase/2-indicators` in a separate worktree; merged
+into `dev` with `--no-ff` when the exit criterion below is met (overview
+§8.1).
+
 ## 1.1 Sources (verified 2026-09-26)
 
 **Bulk archive** `https://data.binance.vision/data/futures/um/`:
@@ -203,4 +208,4 @@ manifest. Re-running is a no-op unless new daily files exist.
 
 Exit criterion: `perpbt data fetch` and `validate` run end to end on the
 real archive (slow test), manifests committed, gap and consistency counts
-reviewed.
+reviewed. Then merge into `dev` and delete the branch.

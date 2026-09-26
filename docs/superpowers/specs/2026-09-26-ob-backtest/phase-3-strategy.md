@@ -5,6 +5,10 @@ ICT order-block rule as a pure function from `MarketView` to intents, with
 every skip reason counted. Depends on Phases 1 and 2. Execution of intents
 is Phase 4.
 
+**Branch:** `phase/3-strategy`, created from `dev` after both Phase 1 and
+Phase 2 are merged; merged into `dev` with `--no-ff` when the exit
+criterion below is met (overview §8.1).
+
 This section is the contract for the rule. If anything here differs from
 the intended strategy, that is an ambiguity to raise before Phase 4.
 
@@ -206,4 +210,5 @@ and assert the exact intent list (prices, expiry, tag) or the skip reason.
   3 cuts. Repeated for NY with weekday rule.
 
 Exit criterion: all scenarios green; the rule text above and the code
-agree line by line (reviewer reads both).
+agree line by line (reviewer reads both). Then merge into `dev` and delete
+the branch.

@@ -5,6 +5,11 @@ strategy uses and the `MarketView` guard that makes look-ahead impossible in
 strategy code. Depends on Phase 0 (synthetic builders); real data is used
 only in slow tests.
 
+**Branch:** `phase/2-indicators`, created from `dev` after Phase 0 is
+merged; may run in parallel with `phase/1-data` in a separate worktree;
+merged into `dev` with `--no-ff` when the exit criterion below is met
+(overview §8.1).
+
 Every indicator returns arrays aligned to the 15m index, NaN (or -1 for
 integer arrays) before warmup, and states its confirmation lag: the number
 of candles after `i` that must be closed before the value at `i` is known.
@@ -120,3 +125,4 @@ are the only signal of "not yet available".
   pairs confirms access succeeds iff `0 <= j <= i`.
 
 Exit criterion: all tests green; every indicator's docstring states its lag.
+Then merge into `dev` and delete the branch.

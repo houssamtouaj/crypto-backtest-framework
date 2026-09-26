@@ -5,10 +5,16 @@ protocol for running the pre-registered experiment once Phases 0–7 are
 green. The order matters: nothing in a later step may inform an earlier
 one, and the holdout is touched exactly once.
 
+**Branch:** `phase/8-runs`, created from `dev` after Phase 7 is merged.
+Every commit of this phase (manifests, the freeze, results, the summary)
+lands on this branch. It is merged into `dev` at step 8, and `dev` is then
+merged into `main`. This is the only time `main` moves (overview §8.1).
+
 ## 8.1 Preconditions
 
 - All non-slow tests green on `dev`; slow tests green at least once on
   real data.
+- Phases 0–7 merged into `dev`; `phase/8-runs` created from that `dev`.
 - `git status` clean; the code that will run is committed.
 - Disk: at least 3 GB free on D: (1.2 GB data, transient zips, run
   outputs).
@@ -44,8 +50,10 @@ one, and the holdout is touched exactly once.
    nine primary `report.md` files, `runs/registry.jsonl`, and
    `runs/results.parquet` (the Parquet trade tables stay git-ignored;
    they are reproducible from the code, data manifests, and seeds).
-8. **Merge.** Open a pull request from `dev` to `main` containing the
-   code, the specs, the manifests, the lock, and the committed results.
+8. **Merge.** Merge `phase/8-runs` into `dev` with `--no-ff` and delete
+   the branch. Then open a pull request from `dev` to `main` containing
+   the code, the specs, the manifests, the lock, and the committed
+   results.
 
 ## 8.3 What must not happen
 

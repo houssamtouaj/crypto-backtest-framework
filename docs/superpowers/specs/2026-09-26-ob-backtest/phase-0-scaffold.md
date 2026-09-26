@@ -4,6 +4,9 @@ Read with `00-overview.md`. Delivers the package skeleton, the configuration
 types every later phase imports, the code-version hash, and the test
 harness. Nothing here touches market data.
 
+**Branch:** `phase/0-scaffold`, created from `dev`; merged into `dev` with
+`--no-ff` when the exit criterion below is met (overview §8.1).
+
 ## 0.1 Environment (verified 2026-09-26)
 
 - Python 3.11.2 with pandas 2.2.3, numpy 2.2.4, pyarrow 20.0, ccxt 4.5.64,
@@ -186,5 +189,5 @@ defines it there as a plain dataclass with `ts, o, h, l, c, v` arrays and
   function (cumulative sum) and fails on a non-causal one (reversed
   cumulative sum).
 
-Exit criterion: all Phase 0 tests green; `perpbt` importable; first commit
-of the skeleton on `dev`.
+Exit criterion: all Phase 0 tests green; `perpbt` importable; the skeleton
+committed on `phase/0-scaffold`. Then merge into `dev` and delete the branch.

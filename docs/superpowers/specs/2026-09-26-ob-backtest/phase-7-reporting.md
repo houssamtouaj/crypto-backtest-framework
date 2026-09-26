@@ -5,6 +5,10 @@ and the plain-language summary with the pre-registered verdict. Depends on
 Phase 6. Output is matplotlib PNGs and Markdown; every number comes from
 `stats.json` or `results.parquet`, never recomputed in the report layer.
 
+**Branch:** `phase/7-reporting`, created from `dev` after Phase 6 is
+merged; merged into `dev` with `--no-ff` when the exit criterion below is
+met (overview §8.1).
+
 ## 7.1 Figures (`report/figures.py`)
 
 Each function takes the tables it needs and a path, writes one PNG, and
@@ -107,4 +111,5 @@ returns the path. All figures render from a synthetic `SimResult`.
 
 Exit criterion: `perpbt report` produces the nine primary reports and the
 summary from synthetic runs in the test suite; the summary reads
-correctly to someone who has not seen the code.
+correctly to someone who has not seen the code. Then merge into `dev` and
+delete the branch.

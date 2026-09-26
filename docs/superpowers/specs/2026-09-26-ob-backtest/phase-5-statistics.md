@@ -7,6 +7,10 @@ alpha decay, regimes, and diagnostics. Depends on Phase 4. Every function
 takes an explicit `rng: np.random.Generator`; seeds derive from
 `(master_seed, variant_id, purpose)`.
 
+**Branch:** `phase/5-statistics`, created from `dev` after Phase 4 is
+merged; merged into `dev` with `--no-ff` when the exit criterion below is
+met (overview §8.1).
+
 All trade statistics use the R subset: trades with
 `exit_reason != data_end`.
 
@@ -221,4 +225,5 @@ primary cells exist.
   synthetic trade tables.
 
 Exit criterion: all tests green; `stats.json` from the Phase 4 smoke run
-is produced and read back without loss.
+is produced and read back without loss. Then merge into `dev` and delete
+the branch.
