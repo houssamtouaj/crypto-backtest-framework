@@ -88,15 +88,22 @@ class SessionInfo:
 class MarketView:
     """Window ending at candle i. Any access beyond i raises LookaheadError."""
     i: int                             # the view never reveals how many candles follow i
-    def ts(self, j) / open(self, j) / high(self, j) / low(self, j) / close(self, j) -> float
+    def ts(self, j) -> int
+    def open(self, j) / high(self, j) / low(self, j) / close(self, j) -> float
     def lows(self, a, b) -> np.ndarray     # low[a..b] inclusive, b <= i; same for highs/closes/opens
     def atr(self, j) -> float
     def daily_sma(self, j) -> float
     def daily_adx(self, j) -> float
     def swings_confirmed_by(self, j) -> Swings      # only rows with confirmed_at <= j; j <= i
     session: SessionInfo
+    def advance_to(self, i) -> None                 # simulator only; forward, < series length
     def is_bearish(self, j) -> bool                 # close[j] < open[j]
 
+@dataclass(frozen=True)
+class OrderView:    order_id: int; side: str; price: float; stop: float; target: float; expires_ms: int; placed_idx: int
+@dataclass(frozen=True)
+class PositionView: position_id: int; side: str; entry: float; stop: float; target: float; qty: float; fill_idx: int
+@dataclass(frozen=True)
 class AccountView:                     # read-only, this variant only
     equity_mtm: float
     open_positions: tuple[PositionView, ...]
@@ -107,7 +114,10 @@ class AccountView:                     # read-only, this variant only
 full arrays and mutated by advancing `i`; it never copies. Every accessor
 checks `j <= self.i` (and `a <= b <= i` for ranges) and raises
 `LookaheadError` otherwise. Negative `j` is an error too, so warmup NaNs
-are the only signal of "not yet available".
+are the only signal of "not yet available". Range accessors and
+`swings_confirmed_by` return read-only views of exactly the requested rows.
+A non-integer index raises `TypeError`. `SessionInfo` outside any window has
+`id = open_ms = end_ms = -1` and both flags false.
 
 ## 2.5 Tasks and tests
 
