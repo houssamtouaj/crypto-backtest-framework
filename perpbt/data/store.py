@@ -403,14 +403,22 @@ class _ParquetStore:
         dtypes: dict[str, object],
         start_ms: int | None,
         end_ms: int | None,
+        columns: Sequence[str] | None = None,
     ) -> pd.DataFrame:
+        if columns is not None:
+            unknown = [c for c in columns if c not in dtypes]
+            if unknown:
+                raise ValueError(f"unknown columns {unknown}; expected a subset of {list(dtypes)}")
+            if key not in columns:
+                raise ValueError(f"columns must include the key column {key!r}")
+            dtypes = {c: dtypes[c] for c in columns}
         files = self._year_files(d)
         years = sorted(files)
         if start_ms is not None:
             years = [y for y in years if y >= year_of_ms(start_ms)]
         if end_ms is not None:
             years = [y for y in years if y <= year_of_ms(end_ms - 1)]
-        parts = [pd.read_parquet(files[y]) for y in years]
+        parts = [pd.read_parquet(files[y], columns=list(columns) if columns is not None else None) for y in years]
         frame = pd.concat(parts, ignore_index=True) if parts else _empty_frame(dtypes)
         if start_ms is not None:
             frame = frame[frame[key] >= start_ms]
@@ -457,9 +465,22 @@ class CandleStore(_ParquetStore):
             finite=("open", "high", "low", "close", "volume"),
         )
 
-    def read_frame(self, pair: str, tf: str, start_ms: int | None = None, end_ms: int | None = None) -> pd.DataFrame:
-        """Storage-layer read, no holdout guard: rows with ``start_ms <= open_ms < end_ms``."""
-        return self._read(self.dir(pair, tf), key="open_ms", dtypes=_CANDLE_DTYPES, start_ms=start_ms, end_ms=end_ms)
+    def read_frame(
+        self,
+        pair: str,
+        tf: str,
+        start_ms: int | None = None,
+        end_ms: int | None = None,
+        columns: Sequence[str] | None = None,
+    ) -> pd.DataFrame:
+        """Storage-layer read, no holdout guard: rows with ``start_ms <= open_ms < end_ms``.
+
+        ``columns`` (which must include ``open_ms``) limits what is read from
+        Parquet; the manifest refresh reads only the timestamps.
+        """
+        return self._read(
+            self.dir(pair, tf), key="open_ms", dtypes=_CANDLE_DTYPES, start_ms=start_ms, end_ms=end_ms, columns=columns
+        )
 
     def load(self, pair: str, tf: str, start_ms: int, end_ms: int, *, allow_holdout: bool = False) -> Candles:
         """Candles with ``start_ms <= open_ms < end_ms`` as read-only arrays (spec §1.3).
@@ -509,9 +530,17 @@ class FundingStore(_ParquetStore):
             dtypes=_FUNDING_DTYPES, fixed={"pair": pair}, finite=("rate",),
         )
 
-    def read_frame(self, pair: str, start_ms: int | None = None, end_ms: int | None = None) -> pd.DataFrame:
+    def read_frame(
+        self,
+        pair: str,
+        start_ms: int | None = None,
+        end_ms: int | None = None,
+        columns: Sequence[str] | None = None,
+    ) -> pd.DataFrame:
         """Storage-layer read, no holdout guard: rows with ``start_ms <= funding_ms < end_ms``."""
-        return self._read(self.dir(pair), key="funding_ms", dtypes=_FUNDING_DTYPES, start_ms=start_ms, end_ms=end_ms)
+        return self._read(
+            self.dir(pair), key="funding_ms", dtypes=_FUNDING_DTYPES, start_ms=start_ms, end_ms=end_ms, columns=columns
+        )
 
     def load(self, pair: str, start_ms: int, end_ms: int, *, allow_holdout: bool = False) -> Funding:
         """Funding with ``start_ms <= funding_ms < end_ms`` as read-only arrays; same guard as candles."""

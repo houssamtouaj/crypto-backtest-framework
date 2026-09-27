@@ -443,3 +443,16 @@ def test_persistent_permission_error_still_raises(data_cfg, monkeypatch):
     monkeypatch.setattr(store_mod.time, "sleep", lambda s: None)
     with pytest.raises(PermissionError):
         CandleStore(data_cfg).write_manifest("BTCUSDT", "15m", new_candle_manifest("BTCUSDT", "15m"))
+
+
+def test_read_frame_can_select_columns(data_cfg):
+    store = CandleStore(data_cfg)
+    store.write("BTCUSDT", "15m", cframe(kline_rows(T0, 3, STEP)))
+    f = store.read_frame("BTCUSDT", "15m", columns=["open_ms", "close"])
+    assert list(f.columns) == ["open_ms", "close"]
+    assert f["open_ms"].tolist() == [T0 + k * STEP for k in range(3)]
+    empty = store.read_frame("ETHUSDT", "15m", columns=["open_ms"])
+    assert list(empty.columns) == ["open_ms"] and empty["open_ms"].dtype == np.int64
+    fs = FundingStore(data_cfg)
+    fs.write("BTCUSDT", fframe([(T0, 1e-4, 8)]))
+    assert list(fs.read_frame("BTCUSDT", columns=["funding_ms", "interval_h"]).columns) == ["funding_ms", "interval_h"]

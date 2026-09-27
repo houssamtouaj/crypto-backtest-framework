@@ -393,3 +393,16 @@ def test_run_validate_hard_failure_raises(data_cfg):
     cstore.write("BTCUSDT", "15m", bulk_frame([(date_ms("2024-05-01") + 1, 1.0, 2.0, 0.5, 1.5, 1.0, 0.0, 1, 0.0)]))
     with pytest.raises(ValueError, match="grid"):
         run_validate(data_cfg, ["BTCUSDT"])
+
+
+def test_manifest_refresh_reads_only_the_columns_it_needs(data_cfg, archive, monkeypatch):
+    seen = []
+    real = CandleStore.read_frame
+
+    def spy(self, pair, tf, start_ms=None, end_ms=None, columns=None):
+        seen.append(columns)
+        return real(self, pair, tf, start_ms, end_ms, columns=columns)
+
+    monkeypatch.setattr(CandleStore, "read_frame", spy)
+    sync(CandleStore(data_cfg), data_cfg, archive, from_date=date(2026, 9, 20))
+    assert seen and all(c == ["open_ms"] for c in seen)

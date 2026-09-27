@@ -139,7 +139,7 @@ def run_validate(data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[st
         for tf in sorted(tfs, key=lambda t: _STEP_MS[t]):  # 1m before 15m
             if not cstore.dir(pair, tf).is_dir():
                 continue
-            frame = cstore.read_frame(pair, tf)
+            frame = cstore.read_frame(pair, tf, columns=["open_ms", "open", "high", "low", "close", "volume"])
             ts = frame["open_ms"].to_numpy()
             gaps = gap_report(ts, _STEP_MS[tf])
             manifest = cstore.manifest(pair, tf)
@@ -159,7 +159,7 @@ def run_validate(data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[st
                 entry[tf]["consistency_1m_15m"] = consistency
             cstore.write_manifest(pair, tf, manifest)
         if fstore.dir(pair).is_dir():
-            frame = fstore.read_frame(pair)
+            frame = fstore.read_frame(pair, columns=["funding_ms", "interval_h"])
             ts = frame["funding_ms"].to_numpy()
             funding = check_funding(ts, frame["interval_h"].to_numpy())
             manifest = fstore.manifest(pair)

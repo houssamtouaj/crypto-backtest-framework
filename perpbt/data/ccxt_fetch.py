@@ -7,18 +7,49 @@ the candle that is still open is never stored.
 """
 from __future__ import annotations
 
+import time
+from collections.abc import Callable
 from datetime import date
-from typing import Protocol
+from typing import Any, Protocol
 
 import numpy as np
 import pandas as pd
 
 from perpbt.config import DataConfig
-from perpbt.data.bulk import ARCHIVE_START, FUNDING_FRAME_COLUMNS, KLINE_FRAME_COLUMNS, round_to_minute
+from perpbt.data.bulk import ARCHIVE_START, FUNDING_FRAME_COLUMNS, KLINE_FRAME_COLUMNS, DownloadError, round_to_minute
 from perpbt.data.store import _STEP_MS, date_ms
 
 OHLCV_LIMIT = 1500  # binanceusdm maximum per fetch_ohlcv call
 FUNDING_LIMIT = 1000
+ATTEMPTS = 3  # retries of one page on a transient exchange error
+
+
+def _ccxt_errors() -> tuple[type[BaseException], type[BaseException]]:
+    """(transient, any) ccxt error classes; placeholders that never match when ccxt is absent."""
+    try:
+        import ccxt
+    except ImportError:  # pragma: no cover - a fake exchange never raises ccxt errors
+
+        class _Never(Exception):
+            pass
+
+        return _Never, _Never
+    return ccxt.NetworkError, ccxt.BaseError
+
+
+def _call(fn: Callable[..., Any], *args: Any, attempts: int = ATTEMPTS) -> Any:
+    """Call one exchange method; retry transient errors with backoff, report the rest as DownloadError."""
+    transient, any_error = _ccxt_errors()
+    for attempt in range(1, attempts + 1):
+        try:
+            return fn(*args)
+        except transient as e:
+            if attempt == attempts:
+                raise DownloadError(f"ccxt: {e}") from e
+            time.sleep(2.0 * attempt)
+        except any_error as e:
+            raise DownloadError(f"ccxt: {e}") from e
+    raise AssertionError("unreachable")
 
 
 class Exchange(Protocol):
@@ -60,7 +91,7 @@ def fetch_ohlcv_range(
     rows: list[list] = []
     since = start_ms
     while since < end_ms:
-        page = exchange.fetch_ohlcv(symbol, tf, since, limit)
+        page = _call(exchange.fetch_ohlcv, symbol, tf, since, limit)
         if not page:
             break
         rows.extend(page)
@@ -106,7 +137,7 @@ def fetch_funding_range(
     events: list[tuple[int, float]] = []
     since = start_ms
     while since < end_ms:
-        page = exchange.fetch_funding_rate_history(symbol, since, limit)
+        page = _call(exchange.fetch_funding_rate_history, symbol, since, limit)
         if not page:
             break
         events.extend((int(e["timestamp"]), float(e["fundingRate"])) for e in page)

@@ -58,7 +58,7 @@ merged into `main`. This is the only time `main` moves (overview §8.1).
 ## 8.3 What must not happen
 
 - No `allow_holdout=True` outside `experiments/holdout.py`, and no
-  `read_frame` outside `perpbt/data/`; the grep for both is part of the
+  `read_frame` outside `perpbt/data/` and `tests/`; the grep for both is part of the
   review at step 5.
 - No edit to `prereg.yaml` after the freeze except `data_download_date`
   and `holdout.end`.

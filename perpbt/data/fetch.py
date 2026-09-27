@@ -90,7 +90,7 @@ def _sort_manifest(manifest: dict) -> None:
 
 def _refresh_candles(store: CandleStore, pair: str, tf: str, manifest: dict) -> None:
     """Recompute rows, first/last and the gap report from what is stored."""
-    ts = store.read_frame(pair, tf)["open_ms"].to_numpy()
+    ts = store.read_frame(pair, tf, columns=["open_ms"])["open_ms"].to_numpy()
     manifest["rows"] = int(len(ts))
     manifest["first_open_ms"] = int(ts[0]) if len(ts) else None
     manifest["last_open_ms"] = int(ts[-1]) if len(ts) else None
@@ -99,7 +99,7 @@ def _refresh_candles(store: CandleStore, pair: str, tf: str, manifest: dict) -> 
 
 
 def _refresh_funding(store: FundingStore, pair: str, manifest: dict) -> None:
-    frame = store.read_frame(pair)
+    frame = store.read_frame(pair, columns=["funding_ms", "interval_h"])
     ts = frame["funding_ms"].to_numpy()
     report = check_funding(ts, frame["interval_h"].to_numpy())
     manifest["rows"] = int(len(ts))

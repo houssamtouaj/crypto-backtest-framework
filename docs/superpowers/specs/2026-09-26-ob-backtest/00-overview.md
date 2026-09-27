@@ -349,7 +349,7 @@ from the trade table for every variant.
 | 15m, 3 pairs, from 2019-11 / listing | ~0.7 M | ~30 MB |
 | 1m, 3 pairs, from 2020-01 / listing | ~10.5 M | ~400 MB |
 | Funding | ~22 k | < 1 MB |
-| Bulk zips (deleted after conversion) | | ~400 MB transient |
+| Bulk zips (verified and parsed in memory, never written) | | a few MB at a time |
 
 ### 9.3 Runtime (20-CPU laptop; budgets, not promises)
 

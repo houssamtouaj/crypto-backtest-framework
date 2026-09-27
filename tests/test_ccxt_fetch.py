@@ -94,3 +94,43 @@ def test_make_exchange_builds_binanceusdm():
     ex = make_exchange()
     assert callable(ex.fetch_ohlcv) and callable(ex.fetch_funding_rate_history)
     assert ex.id == "binanceusdm"
+
+
+def test_transient_exchange_errors_are_retried_and_ccxt_errors_become_download_errors(monkeypatch):
+    ccxt = pytest.importorskip("ccxt")
+    from perpbt.data import ccxt_fetch
+    from perpbt.data.bulk import DownloadError
+
+    monkeypatch.setattr(ccxt_fetch.time, "sleep", lambda s: None)
+
+    class Flaky(FakeExchange):
+        def __init__(self, *args, fail, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fail = fail
+
+        def fetch_ohlcv(self, *args, **kwargs):
+            if self.fail:
+                self.fail -= 1
+                raise ccxt.NetworkError("boom")
+            return super().fetch_ohlcv(*args, **kwargs)
+
+        def fetch_funding_rate_history(self, *args, **kwargs):
+            if self.fail:
+                self.fail -= 1
+                raise ccxt.RequestTimeout("slow")
+            return super().fetch_funding_rate_history(*args, **kwargs)
+
+    assert len(fetch_ohlcv_range(Flaky(ccxt_candles(T0, 5), fail=2), "BTCUSDT", "15m", T0, T0 + 5 * STEP)) == 5
+    with pytest.raises(DownloadError, match="boom"):
+        fetch_ohlcv_range(Flaky(ccxt_candles(T0, 5), fail=99), "BTCUSDT", "15m", T0, T0 + 5 * STEP)
+    assert len(fetch_funding_range(Flaky(funding=ccxt_funding(T0, 3), fail=2), "BTCUSDT", T0, T0 + 30 * H, interval_h=8)) == 3
+
+    class Broken(FakeExchange):
+        def fetch_ohlcv(self, *args, **kwargs):
+            self.calls.append(args)
+            raise ccxt.BadSymbol("nope")
+
+    broken = Broken([])
+    with pytest.raises(DownloadError, match="nope"):
+        fetch_ohlcv_range(broken, "BTCUSDT", "15m", T0, T0 + STEP)
+    assert len(broken.calls) == 1  # not transient: no retry

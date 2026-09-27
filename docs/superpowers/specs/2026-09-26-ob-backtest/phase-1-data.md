@@ -230,8 +230,8 @@ series with nothing stored.
   Tests: fixture CSVs in both header styles and both timestamp units parse
   to identical frames; a bad checksum raises and leaves no Parquet; a
   missing month (404) is recorded in the manifest and does not abort;
-  re-running is idempotent (no re-download, no duplicate rows); zip deleted
-  after conversion.
+  re-running is idempotent (no re-download, no duplicate rows); no zip is
+  left on disk (zips are verified and parsed in memory).
 - **1.2 CandleStore with validation and holdout guard.**
   Tests: unsorted or duplicate input rejected at `write`; gap report on a
   synthetic series with a 45-minute hole lists one gap of 3 slots;
