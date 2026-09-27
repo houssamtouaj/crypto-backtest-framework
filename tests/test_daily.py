@@ -2,8 +2,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+from pathlib import Path
 
-from perpbt.data.store import DAY_MS, Candles
+from perpbt.config import DataConfig, load_yaml, to_dict
+from perpbt.data.store import DAY_MS, CandleStore, Candles, date_ms
 from perpbt.indicators.daily import (
     daily_adx,
     daily_adx_aligned,
@@ -206,3 +208,44 @@ def test_daily_indicators_are_causal(fn, n):
 def test_docstrings_state_lag():
     assert "Lag 0" in daily_sma_aligned.__doc__
     assert "Lag 0" in daily_adx_aligned.__doc__
+
+
+# --- real data (slow) -----------------------------------------------------------------
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(scope="module")
+def real_cfg():
+    cfg = load_yaml(ROOT / "configs" / "data.yaml", DataConfig)
+    cfg = DataConfig(**{**to_dict(cfg), "data_dir": str(ROOT / cfg.data_dir)})
+    if not (Path(cfg.data_dir) / "candles").is_dir():
+        pytest.skip("no downloaded data under data/; run `perpbt data fetch` first")
+    return cfg
+
+
+def _first_valid_day(cd: Candles, values: np.ndarray) -> int:
+    return int(cd.ts[np.flatnonzero(np.isfinite(values))[0]])
+
+
+@pytest.mark.slow
+def test_btc_sma50_and_adx14_valid_on_2020_01_01(real_cfg):
+    cd = CandleStore(real_cfg).load("BTCUSDT", "15m", date_ms("2019-11-01"), date_ms("2020-01-02"))
+    i = cd.index_at(date_ms("2020-01-01"), exact=True)
+    assert np.isfinite(daily_sma_aligned(cd, 50)[i])
+    assert np.isfinite(daily_adx_aligned(cd, 14)[i])
+
+
+@pytest.mark.slow
+def test_eth_warmup_starts_at_listing(real_cfg):
+    cd = CandleStore(real_cfg).load("ETHUSDT", "15m", date_ms("2019-11-01"), date_ms("2020-02-01"))
+    assert _first_valid_day(cd, daily_adx_aligned(cd, 14)) == date_ms("2019-12-25")
+    assert _first_valid_day(cd, daily_sma_aligned(cd, 50)) == date_ms("2020-01-16")
+
+
+@pytest.mark.slow
+def test_sol_valid_from_listing_plus_warmup(real_cfg):
+    cd = CandleStore(real_cfg).load("SOLUSDT", "15m", date_ms("2020-09-01"), date_ms("2020-12-31"))
+    first_day = (int(cd.ts[0]) // DAY_MS) * DAY_MS
+    assert _first_valid_day(cd, daily_sma_aligned(cd, 50)) == first_day + 50 * DAY_MS
+    assert _first_valid_day(cd, daily_adx_aligned(cd, 14)) == first_day + 28 * DAY_MS
