@@ -35,6 +35,9 @@ def candles_from_rows(
     if width not in (4, 5) or any(len(r) != width for r in rows):
         raise ValueError("rows must all be (o, h, l, c) or (o, h, l, c, v)")
     arr = np.asarray(rows, dtype=np.float64)
+    if not np.all(np.isfinite(arr)):
+        bad_row = int(np.flatnonzero(~np.isfinite(arr).all(axis=1))[0])
+        raise ValueError(f"row {bad_row}: every value must be finite")
     o, h, l, c = arr[:, 0], arr[:, 1], arr[:, 2], arr[:, 3]
     v = arr[:, 4] if width == 5 else np.ones(n)
     bad = np.flatnonzero((h < np.maximum(o, c)) | (l > np.minimum(o, c)))
@@ -117,6 +120,9 @@ def _split(out: Any) -> tuple[np.ndarray, np.ndarray | None]:
     return np.asarray(out), None
 
 
+_PART_NAMES = ("values", "confirmed_at")
+
+
 def _visible(values: np.ndarray, confirmed_at: np.ndarray | None, cut: int) -> list[np.ndarray]:
     if confirmed_at is None:
         return [values[: cut + 1]]
@@ -146,38 +152,59 @@ def _first_diff(a: np.ndarray, b: np.ndarray) -> str:
     return f"; first difference at row {i}: {a[i]!r} vs {b[i]!r}"
 
 
+def _compare(name: str, expected: list[np.ndarray], got: list[np.ndarray], how: str) -> None:
+    pair_form = len(expected) == 2
+    # confirmed_at first: a changed row set shows up as a shape difference in both parts,
+    # and "which rows are confirmed" is the more useful description of it
+    for part in ((1, 0) if pair_form else (0,)):
+        a, b = expected[part], got[part]
+        if not _equal(a, b):
+            which = f" ({_PART_NAMES[part]})" if pair_form else ""
+            raise AssertionError(f"{name} is not causal: output{which} {how}{_first_diff(a, b)}")
+
+
 def assert_causal(
     fn: Callable[[Candles], Any],
     candles: Candles,
     *,
     cuts: Iterable[int],
     seeds: Iterable[int],
+    truncate: bool = False,
 ) -> None:
     """Assert ``fn``'s output at or before each cut does not depend on later candles.
 
     ``fn`` returns either an array aligned to the candle index (rows ``[:cut+1]``
     are compared) or a ``(values, confirmed_at)`` pair (only rows with
     ``confirmed_at <= cut`` are compared, values and ``confirmed_at`` both).
-    NaNs compare equal to NaNs. The perturbation holds ``ts`` and the series
-    length fixed, so this proves independence from future o/h/l/c/v only, not
-    from the series length or future timestamps. Both ``cuts`` and ``seeds``
-    are materialised up front; an empty one raises ValueError so the check can
-    never pass vacuously.
+    NaNs compare equal to NaNs.
+
+    The perturbation holds ``ts`` and the series length fixed, so on its own
+    it proves independence from future o/h/l/c/v only. With ``truncate=True``
+    each cut is also checked against ``fn`` applied to the series cut after
+    ``cut`` (``candles.slice(ts[0], ts[cut] + 1)``), which catches a
+    dependence on the series length or on future timestamps. Both ``cuts``
+    and ``seeds`` are materialised up front; an empty one raises ValueError
+    so the check can never pass vacuously; a cut outside ``[0, len)`` raises
+    IndexError.
     """
     cuts = list(cuts)
     seeds = list(seeds)
     if not cuts or not seeds:
         raise ValueError("assert_causal: cuts and seeds must both be non-empty")
+    n = len(candles)
     name = getattr(fn, "__name__", repr(fn))
     base_values, base_conf = _split(fn(candles))
     for cut in cuts:
+        if not 0 <= cut < n:
+            raise IndexError(f"cut must be in [0, {n}), got {cut}")
         expected = _visible(base_values, base_conf, cut)
+        if truncate:
+            head = candles.slice(int(candles.ts[0]), int(candles.ts[cut]) + 1)
+            got = _visible(*_split(fn(head)), cut)
+            _compare(name, expected, got, f"at or before cut={cut} changed under truncation after the cut")
         for seed in seeds:
-            got_values, got_conf = _split(fn(perturb_after(candles, cut, seed=seed)))
-            got = _visible(got_values, got_conf, cut)
-            for a, b in zip(expected, got, strict=True):
-                if not _equal(a, b):
-                    raise AssertionError(
-                        f"{name} is not causal: output at or before cut={cut} changed "
-                        f"under perturbation with seed={seed}{_first_diff(a, b)}"
-                    )
+            got = _visible(*_split(fn(perturb_after(candles, cut, seed=seed))), cut)
+            _compare(
+                name, expected, got,
+                f"at or before cut={cut} changed under perturbation with seed={seed}",
+            )

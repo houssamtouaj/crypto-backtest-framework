@@ -251,3 +251,51 @@ def test_assert_causal_rejects_bad_return_shape():
     cd = random_walk(20, seed=6, start_ms=T0_MS)
     with pytest.raises(TypeError):
         assert_causal(lambda c: (c.c, c.c, c.c), cd, cuts=[5], seeds=[1])
+
+
+def test_assert_causal_truncate_catches_length_dependence():
+    def depends_on_length(cd: Candles) -> np.ndarray:
+        # identical under perturbation (length fixed), different under truncation
+        return np.full(len(cd), float(len(cd)))
+
+    cd = random_walk(200, seed=9, start_ms=T0_MS)
+    assert_causal(depends_on_length, cd, cuts=[50], seeds=[1])  # perturbation alone is fooled
+    with pytest.raises(AssertionError, match="truncation"):
+        assert_causal(depends_on_length, cd, cuts=[50], seeds=[1], truncate=True)
+
+
+def test_assert_causal_truncate_passes_causal_functions():
+    cd = random_walk(300, seed=10, start_ms=T0_MS)
+    assert_causal(cumsum, cd, cuts=[0, 1, 150, 299], seeds=[1, 2], truncate=True)
+
+    k = 2
+
+    def forward_max_confirmed(c: Candles):
+        idx = np.arange(max(len(c) - k, 0))
+        values = np.array([c.h[i : i + k + 1].max() for i in idx])
+        return values, idx + k
+
+    assert_causal(forward_max_confirmed, cd, cuts=[0, 2, 100, 299], seeds=[1], truncate=True)
+
+
+def test_assert_causal_rejects_out_of_range_cut_with_truncate():
+    cd = random_walk(20, seed=11, start_ms=T0_MS)
+    with pytest.raises(IndexError):
+        assert_causal(cumsum, cd, cuts=[20], seeds=[1], truncate=True)
+
+
+def test_pair_form_message_names_the_differing_part():
+    def shifted_confirmation(cd: Candles):
+        n = len(cd)
+        confirmed_at = np.arange(n)
+        confirmed_at[0] = 0 if cd.c[-1] > cd.c[0] else 1
+        return np.ones(n), confirmed_at
+
+    cd = random_walk(300, seed=8, start_ms=T0_MS)
+    with pytest.raises(AssertionError, match="confirmed_at"):
+        assert_causal(shifted_confirmation, cd, cuts=[0], seeds=[1, 2, 3, 4, 5, 6, 7, 8])
+
+
+def test_candles_from_rows_rejects_nan():
+    with pytest.raises(ValueError, match="finite"):
+        candles_from_rows([(1.0, 2.0, 0.5, 1.5), (1.5, float("nan"), 1.0, 1.2)], start_ms=T0_MS)
