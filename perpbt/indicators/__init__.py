@@ -1,1 +1,4 @@
-"""perpbt.indicators: ATR, swing highs, daily SMA/ADX, MarketView guard (Phase 2)."""
+"""perpbt.indicators: causal indicators for the strategy (ATR, swing highs, completed-day SMA/ADX).
+
+The look-ahead guard (MarketView) lives in perpbt.strategy.base.
+"""
