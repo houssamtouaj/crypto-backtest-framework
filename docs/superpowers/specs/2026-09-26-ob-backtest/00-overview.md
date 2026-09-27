@@ -117,8 +117,9 @@ frameworks (backtrader, vectorbt) are rejected: they hide fill logic and
 fight the audit goal.
 
 **4.2 Data: bulk archive first, ccxt for head and tail.** Monthly and daily
-zips are complete and checksummed. ccxt fills the 2019 warmup (D14) and the
-last one or two days not yet published.
+zips are checksummed but not always complete. ccxt fills the 2019 warmup
+(D14), the last one or two days not yet published, and the holes the
+archive has where the exchange API does not (Phase 1 §1.5 `--ccxt-gaps`).
 
 **4.3 Session variants do not share an account.** Each (pair, session,
 parameter set) is an isolated simulation with its own equity. The brief calls
@@ -151,6 +152,7 @@ perpbt/
   data/
     bulk.py            download + checksum verify + parse data.binance.vision files
     ccxt_fetch.py      head backfill (2019 warmup) and tail fetch via ccxt
+    fetch.py           the `data fetch` pipeline: bulk sync, ccxt head/tail, manifest upkeep
     store.py           CandleStore / FundingStore: Parquet cache, holdout guard
     validate.py        monotonic/unique timestamps, gap report, 1m→15m consistency
     sessions.py        SessionCalendar: per-candle session id, window flags, DST-aware
@@ -197,6 +199,7 @@ tests/
 configs/
   prereg.yaml          the pre-registered primary, grid, costs, and verdict rule
   prereg.lock          hash + commit recorded at freeze (Phase 8)
+  data.yaml            DataConfig for `perpbt data fetch` / `validate` (Phase 1)
 data/                  Parquet cache (git-ignored); manifest.json per pair/tf is committed
 runs/                  per-variant outputs (git-ignored), registry.jsonl
 ```
@@ -347,7 +350,7 @@ from the trade table for every variant.
 | 15m, 3 pairs, from 2019-11 / listing | ~0.7 M | ~30 MB |
 | 1m, 3 pairs, from 2020-01 / listing | ~10.5 M | ~400 MB |
 | Funding | ~22 k | < 1 MB |
-| Bulk zips (deleted after conversion) | | ~400 MB transient |
+| Bulk zips (verified and parsed in memory, never written) | | a few MB at a time |
 
 ### 9.3 Runtime (20-CPU laptop; budgets, not promises)
 

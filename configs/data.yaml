@@ -1,0 +1,12 @@
+# DataConfig for `perpbt data fetch` and `perpbt data validate` (Phase 1).
+# Phase 6 carries the same values inside the pre-registration file.
+data_dir: data
+insample_start: "2020-01-01"
+insample_end: "2025-12-31"
+holdout_start: "2026-01-01"
+holdout_end: null
+warmup_start: "2019-11-01"
+listing:
+  BTCUSDT: "2019-09-08"
+  ETHUSDT: "2019-11-27"
+  SOLUSDT: "2020-09-14"

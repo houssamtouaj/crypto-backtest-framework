@@ -78,13 +78,27 @@ logged in the manifest.
   "pair": "BTCUSDT", "tf": "15m",
   "download_date": "2026-09-27",
   "files": [{"name": "BTCUSDT-15m-2020-01.zip", "sha256": "...", "rows": 2976, "source": "bulk_monthly"}],
-  "ccxt_ranges": [{"start_ms": 1572566400000, "end_ms": 1577836800000, "rows": 5856}],
+  "missing": [{"name": "BTCUSDT-15m-2026-09-26.zip", "checked": "2026-09-27"}],
+  "ccxt_ranges": [{"start_ms": 1572566400000, "end_ms": 1577836800000, "rows": 5856, "purpose": "head"}],
+  "rows": 236000,
   "first_open_ms": 1572566400000, "last_open_ms": 1790000000000,
   "gaps": [{"start_ms": ..., "end_ms": ..., "missing": 3}],
   "overlap_mismatches": 0,
-  "consistency_1m_15m": {"months_checked": 81, "mismatching_candles": 0}
+  "consistency_1m_15m": {"months_checked": 81, "candles_compared": 233000, "mismatching_candles": 0, "mismatch_fields": {"open": 0, "high": 0, "low": 0, "close": 0, "volume": 0}}
 }
 ```
+
+`missing` records 404s with the date they were checked; entries whose
+period ended recently are retried on the next `fetch` (see §1.5), older
+ones are final. Gap `end_ms` is exclusive (the open time of the next
+present candle), so `missing == (end_ms - start_ms) / step`. The funding
+manifest (`data/funding/<PAIR>/manifest.json`) has `pair, download_date,
+files, missing, ccxt_ranges, rows, first_funding_ms, last_funding_ms,
+last_interval_h, intervals` (count per interval value), `bad_intervals`
+(values outside {1, 2, 4, 8}) and `overlap_mismatches` (on `rate`).
+`consistency_1m_15m` lives in the 15m manifest only and is written by
+`validate`. Manifests are JSON with sorted keys and two-space indentation
+so diffs stay small.
 
 ## 1.3 Interfaces
 
@@ -99,7 +113,7 @@ class Candles:                 # one pair, one timeframe, UTC, sorted, unique
     def slice(self, start_ms: int, end_ms: int) -> Candles   # [start, end)
     def step_ms(self) -> int                            # 60_000 or 900_000
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)   # same reason as Candles
 class Funding:
     pair: str
     ts: np.ndarray             # int64 ms, minute-rounded
@@ -120,6 +134,16 @@ class CandleStore:
 class FundingStore:                                          # same guard and layout
     def load(self, pair, start_ms, end_ms, *, allow_holdout=False) -> Funding
 ```
+
+Arrays returned by `load` are read-only (`flags.writeable` is false) and
+`slice` views inherit the flag, so a strategy cannot mutate shared data.
+`CandleStore.write` returns a `MergeStats(added, replaced, kept,
+mismatches)`; `read_frame(pair, tf, start_ms=None, end_ms=None)` (and the
+funding equivalent) is the storage layer that `data fetch` and `data
+validate` use to see every stored row including the holdout years. It has
+no guard and is off limits to analysis code; the Phase 8 review greps for
+it outside `perpbt/data/`. `write` and `read_frame` never need
+`allow_holdout`.
 
 The guard is API-level. The Parquet files for 2026 exist on disk after
 `data fetch`; the human rule is that nothing reads them except through
@@ -157,19 +181,57 @@ summer). For `utc` the window is the UTC day and every day qualifies.
   low, last close, sum volume) and compare to the published 15m bar; count
   mismatches beyond 1e-9 relative; write to the manifest. Mismatches are
   reported, not "fixed".
-- Funding: timestamps unique after rounding; intervals in {1, 4, 8}; report
-  any other value.
+- Funding: timestamps unique after rounding; intervals in {1, 2, 4, 8};
+  report any other value. (2 was added after the real run: SOLUSDT paid
+  funding every 2 hours from 2022-11-10 to 2022-11-18, after two 4-hour
+  events. Funding is charged per event, so the interval only matters as a
+  sanity check.)
 
 ## 1.5 CLI
 
 ```
-perpbt data fetch   [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head]
-perpbt data validate [--pairs ...]
+perpbt data fetch   [--config configs/data.yaml] [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head] [--ccxt-gaps]
+perpbt data validate [--config configs/data.yaml] [--pairs ...]
 ```
 
-`fetch` downloads what the manifest does not already have, verifies each
-checksum, parses, merges, writes Parquet, deletes the zip, and updates the
-manifest. Re-running is a no-op unless new daily files exist.
+Both commands read a `DataConfig` from `configs/data.yaml` (committed;
+`data_dir`, the in-sample and holdout dates, `warmup_start` and the
+listing dates). `--pairs` defaults to every pair in `listing`; `--from`
+defaults to `warmup_start`; `--to` to today (UTC). Exit codes: 0 success,
+1 a download, checksum or validation failure, 2 a usage or config error.
+
+`fetch` (`perpbt/data/fetch.py`) works per pair and timeframe. Months run
+from `max(--from, listing[pair], 2020-01-01)` to `--to` (default: today,
+UTC). A month before the current one gets its monthly zip; the current
+month, and any past month whose monthly zip is 404, falls back to daily
+zips for the days `>= listing`, `<= --to` and `< today`. Every zip is
+fetched with its `.CHECKSUM`, verified and parsed in memory (nothing is
+written to disk but Parquet and the manifest), merged into the year files
+by source precedence, and recorded in `files`. A 404 is recorded in
+`missing` with the check date and retried on later runs only while the
+file's period ended less than 35 days (monthly) or 3 days (daily) ago, so
+pre-listing days and months before the archive are requested once. The
+manifest is rewritten after every file, so an interrupted run resumes
+without re-downloading; deleting a manifest forces the series to be
+re-ingested. Re-running is a no-op apart from retrying recent 404s.
+Funding files are monthly only (daily ones do not exist), so the current
+month's funding comes from the ccxt tail or waits for the monthly file.
+
+`--ccxt-head` fetches 15m candles for `[--from, 2020-01-01)` for pairs
+listed before 2020-01-01 (skipped when a recorded `ccxt_ranges` entry
+already covers the range). `--ccxt-tail` extends each stored series from
+its last row to the last candle closed before the download instant
+(`floor(now / step) * step`, so the open candle is never stored) and
+funding from the last stored event to now; ccxt's funding history carries
+no interval, so tail events take `last_interval_h` from the manifest (8 if
+none). `--ccxt-gaps` fills every gap in the stored candles from ccxt:
+the bulk archive has holes the exchange API does not (the real run found
+SOLUSDT 2022-02-26..28 and 2022-04-01..02 missing inside ingested monthly
+files, while the API serves them). Each attempt is recorded in
+`ccxt_ranges` with `purpose: "gap"` and the rows it returned, so a genuine
+outage (the API has nothing either) stays a gap and is not queried again;
+bulk rows still win on overlap. All three use `binanceusdm` with rate
+limiting and are skipped for a series with nothing stored.
 
 ## 1.6 Tasks and tests
 
@@ -177,8 +239,8 @@ manifest. Re-running is a no-op unless new daily files exist.
   Tests: fixture CSVs in both header styles and both timestamp units parse
   to identical frames; a bad checksum raises and leaves no Parquet; a
   missing month (404) is recorded in the manifest and does not abort;
-  re-running is idempotent (no re-download, no duplicate rows); zip deleted
-  after conversion.
+  re-running is idempotent (no re-download, no duplicate rows); no zip is
+  left on disk (zips are verified and parsed in memory).
 - **1.2 CandleStore with validation and holdout guard.**
   Tests: unsorted or duplicate input rejected at `write`; gap report on a
   synthetic series with a 45-minute hole lists one gap of 3 slots;
