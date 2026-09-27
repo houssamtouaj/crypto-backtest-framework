@@ -289,10 +289,26 @@ def _empty_frame(dtypes: dict[str, object]) -> pd.DataFrame:
     return pd.DataFrame({c: pd.Series(dtype=t) for c, t in dtypes.items()})
 
 
+def _replace(tmp: Path, path: Path, *, attempts: int = 10) -> None:
+    """``os.replace`` that retries a transient PermissionError.
+
+    On Windows a file that an antivirus or indexer has just opened cannot be
+    replaced for a few hundred milliseconds; the first full fetch died on it.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt == attempts:
+                raise
+            time.sleep(0.1 * attempt)
+
+
 def _write_parquet(path: Path, frame: pd.DataFrame) -> None:
     tmp = path.with_name(path.name + ".tmp")
     frame.to_parquet(tmp, index=False)
-    os.replace(tmp, path)
+    _replace(tmp, path)
 
 
 def _frozen(arr: np.ndarray) -> np.ndarray:
@@ -420,7 +436,7 @@ class _ParquetStore:
         with open(tmp, "w", encoding="utf-8", newline="\n") as f:
             json.dump(manifest, f, indent=2, sort_keys=True)
             f.write("\n")
-        os.replace(tmp, path)
+        _replace(tmp, path)
 
 
 class CandleStore(_ParquetStore):
