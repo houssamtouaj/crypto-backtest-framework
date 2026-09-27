@@ -153,6 +153,8 @@ def _first_diff(a: np.ndarray, b: np.ndarray) -> str:
 
 
 def _compare(name: str, expected: list[np.ndarray], got: list[np.ndarray], how: str) -> None:
+    if len(expected) != len(got):
+        raise AssertionError(f"{name} is not causal: return form changed {how} ({len(expected)} part(s) vs {len(got)})")
     pair_form = len(expected) == 2
     # confirmed_at first: a changed row set shows up as a shape difference in both parts,
     # and "which rows are confirmed" is the more useful description of it

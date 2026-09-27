@@ -299,3 +299,15 @@ def test_pair_form_message_names_the_differing_part():
 def test_candles_from_rows_rejects_nan():
     with pytest.raises(ValueError, match="finite"):
         candles_from_rows([(1.0, 2.0, 0.5, 1.5), (1.5, float("nan"), 1.0, 1.2)], start_ms=T0_MS)
+
+
+def test_assert_causal_detects_a_changed_return_form():
+    def changed_return_form(cd: Candles):
+        if len(cd) == 200:
+            return cd.c
+        else:
+            return cd.c, np.arange(len(cd))
+
+    cd = random_walk(200, seed=12, start_ms=T0_MS)
+    with pytest.raises(AssertionError, match="return form"):
+        assert_causal(changed_return_form, cd, cuts=[50], seeds=[1], truncate=True)
