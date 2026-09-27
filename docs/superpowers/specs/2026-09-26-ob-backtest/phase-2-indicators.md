@@ -87,6 +87,7 @@ class SessionInfo:
 
 class MarketView:
     """Window ending at candle i. Any access beyond i raises LookaheadError."""
+    def __init__(self, candles, *, atr, daily_sma, daily_adx, swings, calendar, start_i=0)   # built once per simulation (Phase 4)
     i: int                             # the view never reveals how many candles follow i
     def ts(self, j) -> int
     def open(self, j) / high(self, j) / low(self, j) / close(self, j) -> float
@@ -121,7 +122,7 @@ A non-integer index raises `TypeError`. `SessionInfo` outside any window has
 
 ## 2.5 Tasks and tests
 
-- **2.1 ATR.** Tests: matches a hand-computed 20-candle example to 1e-12;
+- **2.1 ATR.** Tests: matches a hand-computed 6-candle example (n = 3) and a plain-Python reference implementation on a 20-candle example, both to 1e-12;
   NaN for the first `n−1`; `assert_causal` over 20 seeds × 3 cuts.
 - **2.2 Swing highs.** Tests: synthetic series with known swing highs for
   `k = 1, 2, 3`; equal highs excluded; `confirmed_at == idx + k` exactly;

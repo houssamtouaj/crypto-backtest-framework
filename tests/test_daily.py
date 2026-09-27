@@ -2,9 +2,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pathlib import Path
 
-from perpbt.config import DataConfig, load_yaml, to_dict
 from perpbt.data.store import DAY_MS, CandleStore, Candles, date_ms
 from perpbt.indicators.daily import (
     daily_adx,
@@ -211,17 +209,6 @@ def test_docstrings_state_lag():
 
 
 # --- real data (slow) -----------------------------------------------------------------
-
-ROOT = Path(__file__).resolve().parents[1]
-
-
-@pytest.fixture(scope="module")
-def real_cfg():
-    cfg = load_yaml(ROOT / "configs" / "data.yaml", DataConfig)
-    cfg = DataConfig(**{**to_dict(cfg), "data_dir": str(ROOT / cfg.data_dir)})
-    if not (Path(cfg.data_dir) / "candles").is_dir():
-        pytest.skip("no downloaded data under data/; run `perpbt data fetch` first")
-    return cfg
 
 
 def _first_valid_day(cd: Candles, values: np.ndarray) -> int:

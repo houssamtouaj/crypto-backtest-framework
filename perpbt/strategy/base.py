@@ -77,6 +77,8 @@ def _read_only(arr: np.ndarray, dtype: type) -> np.ndarray:
 
 
 def _index(j: object) -> int:
+    if isinstance(j, (bool, np.bool_)):
+        raise TypeError(f"candle index must be an integer, got bool")
     try:
         return operator.index(j)
     except TypeError:

@@ -1784,3 +1784,14 @@ git branch -a               # expected: no phase/2-indicators locally or on orig
 - **Type consistency.** `wilder_rma(x, n, start)` and `true_range(h, l, c)` are defined in T2 and used with those signatures in T4. `Swings(idx, level, confirmed_at)` from T3 is what T5 slices. `daily_sma_aligned(c, n)` / `daily_adx_aligned(c, n)` and `atr(c, n)` are what T5's fixture passes to `MarketView`. `SessionCalendar` attribute names (`session_id`, `open_ms`, `end_ms`, `in_window`, `is_last`, `ts`) match `perpbt/data/sessions.py`.
 - **Review Focus.** Items 1–5 name their tests (T5 ×2, T4 ×2, T1, T2–T4).
 - **Phase 0 pointers.** `assert_causal` truncation check (T1, used in T2–T4); the `step_sigma` kwarg was not needed (the daily tests perturb with the default and still move daily values) and stays deferred. Deferred Phase 0 minors folded in: pair-form message, `candles_from_rows` NaN (T1). Phase 1 deferred minors touch no file in this phase and stay in the memory file.
+
+## Post-review amendments (applied on `phase/2-indicators`)
+
+The task reviews and the whole-branch review asked for these; they are in the code and tests, and the code blocks above are the pre-amendment text:
+
+- `assert_causal` raises a clean `AssertionError` ("return form changed") when `fn` returns array form on one call and pair form on another (task 1 review; `test_assert_causal_detects_a_changed_return_form`).
+- The real-data config fixture lives once in `tests/conftest.py` as `real_cfg`, shared by `test_real_data.py` and `test_daily.py`.
+- `MarketView` rejects `bool` indices with `TypeError` (`test_bool_index_raises_type_error`).
+- `perpbt/indicators/__init__.py` docstring points to `perpbt/strategy/base.py` for the guard; spec §2.4 states the `MarketView` constructor; spec §2.5 describes the ATR tests accurately.
+
+Deferred to Phase 3/4 (recorded in the merge commit): `.base` of returned views reaches the caller's full array (writable for test-built arrays); the Phase 3 review must grep `perpbt/strategy/` for `.base`, `._` and `advance_to` outside the simulator. One shared integer-argument helper for the three `operator.index` blocks; `DailyBars` validation; `wilder_rma` validating `start`; `Swings` rejecting float indices; `_read_only` documenting that it copies only on a dtype mismatch.

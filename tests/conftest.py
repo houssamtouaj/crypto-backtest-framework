@@ -1,8 +1,10 @@
 """Shared fixtures for the perpbt test suite."""
+from pathlib import Path
+
 import numpy as np
 import pytest
 
-from perpbt.config import DataConfig
+from perpbt.config import DataConfig, load_yaml, to_dict
 
 
 @pytest.fixture
@@ -31,3 +33,16 @@ def data_cfg(tmp_data_dir):
 def rng():
     """A fixed-seed numpy Generator; tests that need randomness take this."""
     return np.random.default_rng(20260926)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(scope="module")
+def real_cfg():
+    """Real data config from configs/data.yaml with data_dir rebased to repo root; skips if data/ is absent."""
+    cfg = load_yaml(ROOT / "configs" / "data.yaml", DataConfig)
+    cfg = DataConfig(**{**to_dict(cfg), "data_dir": str(ROOT / cfg.data_dir)})
+    if not (Path(cfg.data_dir) / "candles").is_dir():
+        pytest.skip("no downloaded data under data/; run `perpbt data fetch` first")
+    return cfg

@@ -85,6 +85,14 @@ def test_float_index_raises_type_error(cd):
         v.lows(1.5, 3)
 
 
+def test_bool_index_raises_type_error(cd):
+    v = make_view(cd, start_i=50)
+    with pytest.raises(TypeError):
+        v.close(True)
+    with pytest.raises(TypeError):
+        v.lows(False, 3)
+
+
 def test_numpy_integer_indices_work(cd):
     v = make_view(cd, start_i=50)
     assert v.close(np.int64(7)) == cd.c[7]
