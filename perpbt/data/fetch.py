@@ -1,4 +1,4 @@
-"""The ``data fetch`` pipeline: bulk sync, ccxt head and tail, manifest upkeep (spec §1.5).
+"""The ``data fetch`` pipeline: bulk sync, ccxt head, gaps and tail, manifest upkeep (spec §1.5).
 
 Per pair and timeframe, every month from ``max(--from, listing, archive
 start)`` to ``--to`` whose monthly zip the manifest does not list is
@@ -215,6 +215,40 @@ def fetch_head(store: CandleStore, data_cfg: DataConfig, pair: str, *, from_date
     return int(len(frame))
 
 
+def fetch_gaps(cstore: CandleStore, pair: str, tfs: Sequence[str], *, exchange: Exchange) -> dict[str, int]:
+    """Fill each gap in the stored series from ccxt, once per gap.
+
+    The bulk archive has holes the exchange API does not (SOLUSDT has
+    2022-02-26..28 and 2022-04-01..02 missing from its monthly files). Every
+    attempt is recorded in ``ccxt_ranges`` with ``purpose="gap"``, whatever
+    it returned, so a genuine outage (the exchange has nothing either) stays a
+    gap and is not queried again. Bulk rows still win over these on overlap.
+    """
+    fetched: dict[str, int] = {}
+    for tf in tfs:
+        fetched[tf] = 0
+        if not cstore.manifest_path(pair, tf).exists():
+            continue
+        manifest = cstore.manifest(pair, tf)
+        tried = {(r["start_ms"], r["end_ms"]) for r in manifest["ccxt_ranges"] if r["purpose"] == "gap"}
+        todo = [g for g in manifest["gaps"] if (g["start_ms"], g["end_ms"]) not in tried]
+        if not todo:
+            continue
+        for g in todo:
+            frame = fetch_ohlcv_range(exchange, pair, tf, g["start_ms"], g["end_ms"])
+            stats = cstore.write(pair, tf, frame) if len(frame) else None
+            manifest["ccxt_ranges"].append(
+                {"start_ms": g["start_ms"], "end_ms": g["end_ms"], "rows": int(len(frame)), "purpose": "gap"}
+            )
+            if stats is not None:
+                manifest["overlap_mismatches"] += stats.mismatches
+            fetched[tf] += int(len(frame))
+            log.info("%s %s: ccxt gap %d..%d filled %d of %d rows", pair, tf, g["start_ms"], g["end_ms"], len(frame), g["missing"])
+        _refresh_candles(cstore, pair, tf, manifest)
+        cstore.write_manifest(pair, tf, manifest)
+    return fetched
+
+
 def fetch_tail(
     cstore: CandleStore,
     fstore: FundingStore,
@@ -275,6 +309,7 @@ def run_fetch(
     to_date: date | None = None,
     ccxt_head: bool = False,
     ccxt_tail: bool = False,
+    ccxt_gaps: bool = False,
     http_get: HttpGet = urllib_get,
     exchange_factory: Callable[[], Exchange] = make_exchange,
     today: date | None = None,
@@ -292,7 +327,7 @@ def run_fetch(
     if bad:
         raise ValueError(f"unknown timeframe {bad}; expected one of {sorted(_STEP_MS)}")
     cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
-    exchange = exchange_factory() if (ccxt_head or ccxt_tail) else None
+    exchange = exchange_factory() if (ccxt_head or ccxt_tail or ccxt_gaps) else None
     summary: dict = {}
     for pair in pairs:
         entry: dict = {}
@@ -309,6 +344,8 @@ def run_fetch(
         }
         if ccxt_head and "15m" in tfs:
             entry["ccxt_head_rows"] = fetch_head(cstore, data_cfg, pair, from_date=from_date, exchange=exchange)
+        if ccxt_gaps:
+            entry["ccxt_gaps"] = fetch_gaps(cstore, pair, tfs, exchange=exchange)
         if ccxt_tail:
             entry["ccxt_tail"] = fetch_tail(cstore, fstore, pair, tfs, exchange=exchange, now_ms=now_ms)
         summary[pair] = entry

@@ -39,7 +39,7 @@ def test_data_fetch_help_lists_every_option(capsys):
         main(["data", "fetch", "--help"])
     assert exc.value.code == 0
     out = capsys.readouterr().out
-    for opt in ("--config", "--pairs", "--tfs", "--from", "--to", "--ccxt-head", "--ccxt-tail"):
+    for opt in ("--config", "--pairs", "--tfs", "--from", "--to", "--ccxt-head", "--ccxt-tail", "--ccxt-gaps"):
         assert opt in out
 
 
@@ -101,14 +101,14 @@ def test_data_fetch_passes_arguments_to_the_pipeline(monkeypatch, config_path, c
     monkeypatch.setattr(cli, "run_fetch", fake_run_fetch)
     rc = main([
         "data", "fetch", "--config", str(config_path), "--pairs", "BTCUSDT", "--tfs", "15m",
-        "--from", "2026-09-20", "--to", "2026-09-26", "--ccxt-tail",
+        "--from", "2026-09-20", "--to", "2026-09-26", "--ccxt-tail", "--ccxt-gaps",
     ])
     assert rc == 0
     cfg, kw = calls[0]
     assert isinstance(cfg, DataConfig) and cfg.listing["BTCUSDT"] == "2019-09-08"
     assert kw == {
         "pairs": ["BTCUSDT"], "tfs": ("15m",), "from_date": date(2026, 9, 20), "to_date": date(2026, 9, 26),
-        "ccxt_head": False, "ccxt_tail": True,
+        "ccxt_head": False, "ccxt_tail": True, "ccxt_gaps": True,
     }
     out = capsys.readouterr().out
     assert "BTCUSDT 15m: rows=5 files=1" in out and "BTCUSDT funding: rows=0" in out
@@ -120,7 +120,7 @@ def test_data_fetch_defaults(monkeypatch, config_path):
     assert main(["data", "fetch", "--config", str(config_path)]) == 0
     assert calls == [{
         "pairs": ["BTCUSDT", "ETHUSDT"], "tfs": ("1m", "15m"), "from_date": None, "to_date": None,
-        "ccxt_head": False, "ccxt_tail": False,
+        "ccxt_head": False, "ccxt_tail": False, "ccxt_gaps": False,
     }]
 
 

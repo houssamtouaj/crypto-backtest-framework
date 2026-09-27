@@ -95,7 +95,7 @@ present candle), so `missing == (end_ms - start_ms) / step`. The funding
 manifest (`data/funding/<PAIR>/manifest.json`) has `pair, download_date,
 files, missing, ccxt_ranges, rows, first_funding_ms, last_funding_ms,
 last_interval_h, intervals` (count per interval value), `bad_intervals`
-(values outside {1, 4, 8}) and `overlap_mismatches` (on `rate`).
+(values outside {1, 2, 4, 8}) and `overlap_mismatches` (on `rate`).
 `consistency_1m_15m` lives in the 15m manifest only and is written by
 `validate`. Manifests are JSON with sorted keys and two-space indentation
 so diffs stay small.
@@ -181,13 +181,16 @@ summer). For `utc` the window is the UTC day and every day qualifies.
   low, last close, sum volume) and compare to the published 15m bar; count
   mismatches beyond 1e-9 relative; write to the manifest. Mismatches are
   reported, not "fixed".
-- Funding: timestamps unique after rounding; intervals in {1, 4, 8}; report
-  any other value.
+- Funding: timestamps unique after rounding; intervals in {1, 2, 4, 8};
+  report any other value. (2 was added after the real run: SOLUSDT paid
+  funding every 2 hours from 2022-11-10 to 2022-11-18, after two 4-hour
+  events. Funding is charged per event, so the interval only matters as a
+  sanity check.)
 
 ## 1.5 CLI
 
 ```
-perpbt data fetch   [--config configs/data.yaml] [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head]
+perpbt data fetch   [--config configs/data.yaml] [--pairs ...] [--tfs 1m 15m] [--from 2019-11-01] [--to today] [--ccxt-tail] [--ccxt-head] [--ccxt-gaps]
 perpbt data validate [--config configs/data.yaml] [--pairs ...]
 ```
 
@@ -221,8 +224,14 @@ its last row to the last candle closed before the download instant
 (`floor(now / step) * step`, so the open candle is never stored) and
 funding from the last stored event to now; ccxt's funding history carries
 no interval, so tail events take `last_interval_h` from the manifest (8 if
-none). Both use `binanceusdm` with rate limiting and are skipped for a
-series with nothing stored.
+none). `--ccxt-gaps` fills every gap in the stored candles from ccxt:
+the bulk archive has holes the exchange API does not (the real run found
+SOLUSDT 2022-02-26..28 and 2022-04-01..02 missing inside ingested monthly
+files, while the API serves them). Each attempt is recorded in
+`ccxt_ranges` with `purpose: "gap"` and the rows it returned, so a genuine
+outage (the API has nothing either) stays a gap and is not queried again;
+bulk rows still win on overlap. All three use `binanceusdm` with rate
+limiting and are skipped for a series with nothing stored.
 
 ## 1.6 Tasks and tests
 

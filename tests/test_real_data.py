@@ -60,4 +60,4 @@ def test_funding_loads_in_sample_and_is_guarded(cfg):
     store = FundingStore(cfg)
     f = store.load("BTCUSDT", date_ms("2020-01-01"), date_ms("2026-01-01"))
     assert f.ts[0] == date_ms("2020-01-01") and len(f) > 6 * 365 * 3 * 0.95
-    assert set(f.interval_h.tolist()) <= {1, 4, 8}
+    assert set(f.interval_h.tolist()) <= {1, 2, 4, 8}

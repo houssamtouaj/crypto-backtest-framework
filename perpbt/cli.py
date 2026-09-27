@@ -68,6 +68,7 @@ def _data_fetch(args: argparse.Namespace) -> int:
             to_date=args.to_date,
             ccxt_head=args.ccxt_head,
             ccxt_tail=args.ccxt_tail,
+            ccxt_gaps=args.ccxt_gaps,
         )
     except (DownloadError, ChecksumError, ValueError) as e:
         print(f"perpbt data fetch: {e}", file=sys.stderr)
@@ -130,6 +131,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fetch.add_argument("--ccxt-head", action="store_true", help="backfill 15m candles before 2020-01 via ccxt (D14)")
     fetch.add_argument("--ccxt-tail", action="store_true", help="extend candles and funding to now via ccxt")
+    fetch.add_argument("--ccxt-gaps", action="store_true", help="fill holes in the bulk archive via ccxt (once per gap)")
     fetch.set_defaults(handler=_data_fetch)
 
     validate = data_sub.add_parser("validate", help="validate stored candles and funding")

@@ -16,7 +16,7 @@ from perpbt.data.store import _STEP_MS, Candles, CandleStore, FundingStore
 
 STEP_15M_MS = 900_000
 STEP_1M_MS = 60_000
-ALLOWED_INTERVALS = (1, 4, 8)
+ALLOWED_INTERVALS = (1, 2, 4, 8)  # 2: SOLUSDT 2022-11-10..18
 TIMEFRAMES = ("1m", "15m")
 
 

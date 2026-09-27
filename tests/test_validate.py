@@ -133,3 +133,9 @@ def test_check_funding_reports_intervals_and_rejects_bad_timestamps():
         check_funding(np.array([T0, T0]), np.array([8, 8]))
     with pytest.raises(ValueError, match="minute"):
         check_funding(np.array([T0 + 1]), np.array([8]))
+
+
+def test_check_funding_accepts_the_2h_interval():
+    # SOLUSDT ran 2-hour funding 2022-11-10..18 (after two 4-hour events) during the FTX collapse
+    ts = T0 + np.arange(4, dtype=np.int64) * 2 * 3_600_000
+    assert check_funding(ts, np.array([2, 2, 2, 2], dtype=np.int8)) == {"intervals": {2: 4}, "bad_intervals": []}

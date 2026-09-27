@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from perpbt.data.bulk import ChecksumError, kline_name
-from perpbt.data.fetch import fetch_head, fetch_tail, run_fetch, sync_candles, sync_funding
+from perpbt.data.fetch import fetch_gaps, fetch_head, fetch_tail, run_fetch, sync_candles, sync_funding
 from perpbt.data.store import CandleStore, FundingStore, date_ms
 from perpbt.data.validate import run_validate
 from tests.fake_archive import FakeArchive, kline_rows
@@ -298,6 +298,66 @@ def test_tail_skips_series_without_stored_rows(data_cfg):
     exchange = FakeExchange(ccxt_candles(date_ms("2026-09-26"), 10), funding=ccxt_funding(date_ms("2026-09-26"), 3))
     assert fetch_tail(cstore, fstore, "BTCUSDT", ("15m",), exchange=exchange, now_ms=NOW_MS) == {"15m": 0, "funding": 0}
     assert exchange.calls == []
+
+
+# --- ccxt gap fill -----------------------------------------------------------------------
+
+
+def holed_archive():
+    """One daily file for 2026-09-20 whose rows 10..19 are absent (an archive hole, not an outage)."""
+    rows = day_rows("2026-09-20", 96)
+    a = FakeArchive()
+    a.add_klines("BTCUSDT", "15m", "2026-09-20", rows[:10] + rows[20:])
+    return a
+
+
+def test_gap_fill_fetches_each_gap_once_and_records_it(data_cfg):
+    cstore = CandleStore(data_cfg)
+    manifest = sync(cstore, data_cfg, holed_archive(), from_date=date(2026, 9, 20), to_date=date(2026, 9, 20))
+    day = date_ms("2026-09-20")
+    assert manifest["gaps"] == [{"start_ms": day + 10 * STEP, "end_ms": day + 20 * STEP, "missing": 10}]
+    exchange = FakeExchange(ccxt_candles(day, 96, price=100.0))
+    assert fetch_gaps(cstore, "BTCUSDT", ("15m",), exchange=exchange) == {"15m": 10}
+    manifest = cstore.manifest("BTCUSDT", "15m")
+    assert manifest["gaps"] == [] and manifest["rows"] == 96
+    assert manifest["ccxt_ranges"] == [{"start_ms": day + 10 * STEP, "end_ms": day + 20 * STEP, "rows": 10, "purpose": "gap"}]
+    frame = cstore.read_frame("BTCUSDT", "15m")
+    ccxt_rows = frame[frame["source"] == "ccxt"]["open_ms"].to_numpy()
+    np.testing.assert_array_equal(ccxt_rows, day + STEP * np.arange(10, 20))
+    assert exchange.calls[0][3] == day + 10 * STEP
+    exchange.calls.clear()
+    assert fetch_gaps(cstore, "BTCUSDT", ("15m",), exchange=exchange) == {"15m": 0}
+    assert exchange.calls == []
+
+
+def test_gap_the_exchange_cannot_fill_stays_a_gap_and_is_not_requeried(data_cfg):
+    cstore = CandleStore(data_cfg)
+    sync(cstore, data_cfg, holed_archive(), from_date=date(2026, 9, 20), to_date=date(2026, 9, 20))
+    exchange = FakeExchange([])  # a genuine outage: the exchange has nothing either
+    assert fetch_gaps(cstore, "BTCUSDT", ("15m",), exchange=exchange) == {"15m": 0}
+    manifest = cstore.manifest("BTCUSDT", "15m")
+    assert len(manifest["gaps"]) == 1 and manifest["ccxt_ranges"][0]["rows"] == 0
+    assert manifest["ccxt_ranges"][0]["purpose"] == "gap"
+    exchange.calls.clear()
+    assert fetch_gaps(cstore, "BTCUSDT", ("15m",), exchange=exchange) == {"15m": 0}
+    assert exchange.calls == []
+
+
+def test_gap_fill_skips_series_without_a_manifest(data_cfg):
+    exchange = FakeExchange(ccxt_candles(date_ms("2026-09-20"), 10))
+    assert fetch_gaps(CandleStore(data_cfg), "BTCUSDT", ("15m",), exchange=exchange) == {"15m": 0}
+    assert exchange.calls == []
+
+
+def test_run_fetch_gap_flag_fills_archive_holes(data_cfg):
+    day = date_ms("2026-09-20")
+    exchange = FakeExchange(ccxt_candles(day, 96, price=100.0))
+    summary = run_fetch(
+        data_cfg, pairs=["BTCUSDT"], tfs=("15m",), from_date=date(2026, 9, 20), to_date=date(2026, 9, 20),
+        ccxt_gaps=True, http_get=holed_archive(), exchange_factory=lambda: exchange, today=TODAY, now_ms=NOW_MS,
+    )
+    assert summary["BTCUSDT"]["ccxt_gaps"] == {"15m": 10}
+    assert CandleStore(data_cfg).manifest("BTCUSDT", "15m")["gaps"] == []
 
 
 # --- run_fetch ---------------------------------------------------------------------------

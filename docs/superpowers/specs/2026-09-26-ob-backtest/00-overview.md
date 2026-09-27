@@ -117,8 +117,9 @@ frameworks (backtrader, vectorbt) are rejected: they hide fill logic and
 fight the audit goal.
 
 **4.2 Data: bulk archive first, ccxt for head and tail.** Monthly and daily
-zips are complete and checksummed. ccxt fills the 2019 warmup (D14) and the
-last one or two days not yet published.
+zips are checksummed but not always complete. ccxt fills the 2019 warmup
+(D14), the last one or two days not yet published, and the holes the
+archive has where the exchange API does not (Phase 1 §1.5 `--ccxt-gaps`).
 
 **4.3 Session variants do not share an account.** Each (pair, session,
 parameter set) is an isolated simulation with its own equity. The brief calls
