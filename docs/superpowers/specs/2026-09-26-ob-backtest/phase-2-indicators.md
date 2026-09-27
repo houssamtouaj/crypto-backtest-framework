@@ -56,19 +56,25 @@ def daily_sma_aligned(candles15: Candles, n: int = 50) -> np.ndarray    # lag 0 
 def daily_adx_aligned(candles15: Candles, n: int = 14) -> np.ndarray    # lag 0 at the 15m level
 ```
 
-A UTC day `D` is *completed* once the candle opening at `D+1 00:00` exists
-or, at the series end, never. The daily close of `D` is the close of the
-last 15m candle of `D` present in the data (outage gaps do not disqualify a
-day). For any 15m candle `i` on day `D`, the aligned value is the indicator
-computed on the completed days `≤ D − 1` only. So the value is constant
-across all candles of a day and changes at 00:00 UTC. Days before the first
-`n` completed days give NaN.
+A UTC day `D` is *completed* once any candle of a later day exists; the
+last day of the series is never completed. (Earlier wording said "once the
+candle opening at `D+1 00:00` exists"; that would leave a day uncompleted
+forever when that one candle is missing.) The daily close of `D` is the
+close of the last 15m candle of `D` present in the data (outage gaps do
+not disqualify a day); a day with no candle at all has no bar and is
+skipped. For any 15m candle `i` on day `D`, the aligned value is the
+indicator computed on the bars of the days `< D` only. So the value is
+constant across all candles of a day and changes at 00:00 UTC. Days before
+the first `n` completed days give NaN.
 
 ADX is the standard Wilder construction: `+DM`, `−DM`, `TR` per day; Wilder
 RMA(n) smoothing of each; `DI± = 100 × RMA(±DM) / RMA(TR)`;
 `DX = 100 × |DI+ − DI−| / (DI+ + DI−)`; `ADX = RMA(n)(DX)`. Warmup is `2n − 1`
 days; with the 2019-11-01 backfill both SMA(50) and ADX(14) are valid on
-2020-01-01 for BTC and ETH. For SOL they are valid from listing plus warmup.
+2020-01-01 for BTC. ETHUSDT listed on 2019-11-27, so only 35 daily bars
+precede 2020-01-01: ADX(14) is valid from 2019-12-25 but SMA(50) only from
+2020-01-16, and the trend filter (Phase 3 §3.8) rejects ETH blocks before
+then. For SOL both are valid from listing plus warmup.
 
 ## 2.4 MarketView and AccountView — `strategy/base.py`
 
