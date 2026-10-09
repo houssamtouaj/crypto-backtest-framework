@@ -104,7 +104,8 @@ breaks.
 ## 3.4 Candidate (N)
 
 For an impulse at `t`, the candidate is the most recent bearish candle `c`
-(`close[c] < open[c]`) with `t − N ≤ c ≤ t − 1`. No such candle → the
+(`close[c] < open[c]`) with `max(t − N, 0) ≤ c ≤ t − 1` (the search stops at the
+first candle of the series). No such candle → the
 impulse yields no block (`no_candidate`). One impulse yields at most one
 candidate; if it is rejected below, the search continues with the next
 impulse, not with an earlier bearish candle.
