@@ -241,6 +241,22 @@ family and stays missing.
   trades shared with the other two session variants (same candidate
   candle), computed at report time from the three trade tables.
 
+Details fixed in implementation (2026-10-09): rolling windows are
+`[month m, month m + 6)` for every month start from the period's first
+month whose window ends at or before the period end; the rolling Sharpe is
+taken at each month end with 182 days of history. Per-year fill rate is
+filled / placed entry orders (leverage-capped intents are not orders) by
+placement year; per-year max DD starts from the previous year-end equity.
+Labels: `regime_trend` is `trend` (ADX > 25) or `no_trend`, `regime_vol`
+`high` (above the median) or `low`, null while the indicator is NaN; the
+vol median is over the as-of values of the in-sample period's UTC days and
+is stored in `stats.json` (`insample_ref.vol_median`) for the holdout.
+Win rate is the share of `net_r > 0`; profit factor is `Σ wins / Σ |losses|`
+(null without losses). Exposure is the fraction of period candles inside
+some trade's `[entry_idx, exit_idx]` (all trades, `data_end` included) and
+the mean of `exposure_notional / equity` over the daily marks. The
+shared-trade fraction leaves out trades without a candidate candle.
+
 ## 5.10 `stats.json` (per variant)
 
 Every number the report or the summary prints comes from this file:
