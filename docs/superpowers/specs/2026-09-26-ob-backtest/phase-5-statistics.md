@@ -37,9 +37,9 @@ equivalent to the simulator (test 5.3).
 
 ```python
 @dataclass
-class TradeSpec:                  # arrays of length m
+class TradeSpec:                  # arrays of length m (a scalar is broadcast)
     entry_idx: np.ndarray         # 15m index of the entry candle
-    entry_kind: np.ndarray        # "limit": fill at entry_price on entry_idx, same-candle rules apply
+    entry_kind: np.ndarray        # "limit": filled at entry_price on entry_idx, same-candle rules apply
                                   # "market_open": fill at open[entry_idx]
     entry_price: np.ndarray
     stop: np.ndarray
@@ -47,28 +47,57 @@ class TradeSpec:                  # arrays of length m
     deadline_idx: np.ndarray      # candle at whose close the time exit happens; -1 for none
     pierce_abs: np.ndarray
     entry_role: np.ndarray        # "maker" | "taker" (fee on entry)
+    entry_minute: np.ndarray | None = None  # 1m candle (0-14) of the fill in the entry candle; default 0
+    stop_dist: np.ndarray | None = None     # the R unit; default entry price − stop
 
 @dataclass
 class Outcome:                    # arrays of length m
-    exit_idx, exit_ref, exit_reason, exit_role
-    funding_r, gross_r, c_maker_entry, c_maker_exit, c_taker_exit, c_slip
+    exit_idx, exit_minute, exit_ref, exit_reason, exit_role
+    funding_r, gross_r, c_maker_entry, c_maker_exit, c_taker_entry, c_taker_exit, c_slip
 
-def evaluate(spec: TradeSpec, candles15, candles1m | None, funding, exec_cfg) -> Outcome
+def evaluate(spec: TradeSpec, candles15, candles1m | None, funding, exec_cfg, *,
+             last_idx=None, min_batch=32, max_steps=512) -> Outcome
 def net_r(outcome: Outcome, fee_maker, fee_taker, slippage) -> np.ndarray
+def specs_from_trades(trades, candles15) -> TradeSpec   # the simulator's trades as limit specs
 ```
 
-Algorithm: a pending mask over all `m` trades. Step `k = 0` applies the
-same-candle rules of Phase 4 §4.3 to the entry candle (stop allowed,
-target not). For `k = 1, 2, …` gather `idx = entry_idx + k` for pending
-trades, test stop, target (with pierce), and deadline in one vectorized
-pass, resolve with the pessimistic precedence, and, when 1m data is
-present and both stop and target are touched, hand those trades to the
-1m resolver of Phase 4 (shared code, not a copy). Trades whose `idx`
-reaches the series end resolve as `data_end`. When fewer than 32 trades
-remain pending, or after 512 steps, the stragglers are finished with
-per-trade slice scans (`np.argmax` on the boolean hit arrays), so one
-long-lived trade does not force thousands of vectorized steps. Funding is
-summed per trade from the funding table over `[fill close, exit open]`.
+`exit_reason` is `stop`, `target`, `time` (a deadline; the evaluator does
+not know the hold kind) or `data_end`; `exit_role` is `maker` for targets,
+else `taker`; `exit_minute` is the 1m candle of a 1m-resolved exit, −1
+otherwise. `c_taker_entry` is `entry / stop_dist` for a taker entry (fee
+only: slippage is charged on exits, D8), else 0. The simulator's trades
+carry `stop_dist = planned_entry − stop`, which differs from
+`entry_price − stop` on `open_gap` fills, and `entry_minute =
+(entry_ms − τ_entry) / 1 min`.
+
+Algorithm: a pending mask over all `m` trades. Step `k = 0` is the entry
+candle: the bracket is already filled, so the stop may exit (reference
+`min(stop, open)`) and the target may not. When that candle touched two or
+more of {entry, stop, target} and 1m data are in use, its minutes are
+walked *from the fill minute* by Phase 4's `walk_minutes` with the entry
+level set marketable (`fill_at = +inf`, first look): stop allowed and
+target not on the fill minute, both after it, which is the post-fill part
+of the simulator's own walk (the simulator can fill and then hit the
+target inside one 15m candle, so "target not on the entry candle" holds
+only without 1m; changed 2026-10-09 to match Phase 4). For
+`k = 1, 2, …` gather `idx = entry_idx + k` for pending trades, test stop
+and target (with pierce) in one vectorized pass, resolve with the
+pessimistic precedence, and, when 1m data is present and both stop and
+target are touched, hand those trades to the 1m resolver of Phase 4
+(`resolve_candle`, shared code, not a copy); a walk that finds no exit
+(1m data disagreeing with the 15m bar) leaves the trade open. A trade with
+no stop or target exit on its deadline candle exits at that close; one
+still open after the checks of `last_idx` (default the last candle given)
+exits at its close as `data_end` (taker, slippage), as simulator §4.9.
+`deadline_idx` from a deadline in ms is the first candle whose close is at
+or after it, clamped to `≥ entry_idx`. When fewer than `min_batch` (32)
+trades remain pending, or after `max_steps` (512) steps, the stragglers
+are finished with per-trade windowed scans (`np.argmax` on the boolean hit
+arrays), so one long-lived trade does not force thousands of vectorized
+steps. Funding is summed per trade from the funding table over events
+`τ_entry + 15m ≤ f < τ_exit + 15m` (on the grid: `[fill close, exit
+open]`), each at the close of the candle before the one containing `f`
+(the simulator's price); off-grid events raise, as in the simulator.
 
 ## 5.3 Baseline A — timing skill (`stats/baselines.py`)
 
@@ -111,6 +140,29 @@ Store per run the mean of each `Outcome` component, so the run's mean
 
 Both baselines are recomputed on the holdout with the holdout's own days.
 
+**Details fixed in implementation (2026-10-09).** A slot (A and B) is an
+in-window candle `e` of the period, at or after the listing date, with
+`ATR14[e−1] > 0`; `pierce_abs = pierce × open[e]`; the deadline candle is
+the first candle whose close is at or after the hold deadline
+(`session_end`: the window end; `max_hold`: `τ_e + 15m + hours`). A real
+trade with a NaN `stop_dist_atr` is left out of table A and counted
+(`n_excluded`); baseline B keeps one draw per R-subset trade and takes its
+multiples from the pool of finite ones. Baseline trades that reach the data end are left
+out of their run's mean, as the real `data_end` trades are left out of
+the observed mean; in table A such slots are dropped, and a trade left
+with no slot is left out and counted. The observed statistic for A is the
+mean over the trades table A covers. B's sessions are
+`eligible_days(max(period_start, listing), period_end)` with at least one
+slot. Both baselines store per run the component means (`gross_r`, the
+five cost coefficients including `c_taker_entry`, `funding_r`) and the
+number of trades `n`; `z` uses the runs' standard deviation with ddof 1.
+B is evaluated in chunks of runs (one `evaluate` call per chunk of
+concatenated per-run specs, about 200,000 trades); each run's draws come
+from the generator in run order, so the result does not depend on the
+chunk size. Public functions: `make_setup`, `slot_spec`,
+`precompute_table_a`, `table_from_outcome`, `runs_a`, `b_plan`, `b_spec`,
+`runs_b`, `p_value`, `run_means`, `observed_components`.
+
 ## 5.5 Buy-and-hold (`stats/buyhold.py`)
 
 Daily return of a constant 1× long in the perp:
@@ -120,12 +172,19 @@ Daily return of a constant 1× long in the perp:
 scale-invariant, the scaling matters for return and drawdown. Reported:
 Sharpe with block-bootstrap CI, vol-scaled return and max drawdown, and
 the paired Sharpe difference (5.1) with its CI and one-sided `p_BH`.
+The days are the UTC days with candles in the period (the dates of the
+`daily` table, joined by date); `close_d` is the close of the day's last
+candle; the first day's previous close is the close of the candle before
+the period (the first open when there is none); a funding event `f`
+belongs to day `f // 1 day`, the day whose mark the simulator charges it
+to. The in-sample σ's (ddof 1) are stored in `stats.json` and passed to
+the holdout run.
 
 ## 5.6 Cost re-pricing (`stats/repricing.py`, D13)
 
 ```python
 def reprice(components, fee_maker, fee_taker, slippage) -> np.ndarray   # net_r per trade or per run
-def reprice_grid(trades, table_a, runs_b, cfg) -> pd.DataFrame
+def reprice_grid(trades_r, exec_cfg, stats_cfg, boot_rng, *, table_ids=None, runs_a=None, runs_b=None) -> pd.DataFrame
 ```
 
 Grid: `slippage ∈ {0, 0.02, 0.05, 0.10}%` × `maker ∈ {0, 0.02}%`, taker
@@ -147,7 +206,12 @@ number of days. Reported for each primary cell with `N = 36` (`V` over
 that pair × session's grid) and `N = 324` (`V` over all grid cells), and
 for the best grid cell. The report states that grid cells share most of
 their trades, so the effective number of independent trials is far below
-`N` and the DSR is conservative.
+`N` and the DSR is conservative. With `N = 1`, `SR* = 0` (the formula's
+`Φ⁻¹(0)` is −∞), so the DSR is the PSR against 0. `γ₄` is the
+non-excess kurtosis (3 for a normal). The per-variant `stats.json` stores
+the inputs (`sr_daily`, `T`, `skew`, `kurt`); the DSR values need the
+grid's Sharpe ratios and are added by the experiments layer
+(`dsr.dsr_from_trials`), like the Holm adjustment.
 
 ## 5.8 Multiplicity (`stats/multiplicity.py`, D11)
 
@@ -155,7 +219,8 @@ Holm step-down over the family of 9 primary cells, per benchmark (A, B,
 buy-and-hold), separately in-sample and on holdout. With sorted p-values
 `p_(1) ≤ … ≤ p_(9)`: `p̃_(i) = max_{j ≤ i} min(1, (9 − j + 1) · p_(j))`.
 Raw and adjusted are both stored. Bonferroni thresholds are also shown for
-reference.
+reference. A missing p-value (a cell without baselines) is left out of the
+family and stays missing.
 
 ## 5.9 Alpha decay, regimes, diagnostics
 
@@ -177,6 +242,22 @@ reference.
   trades shared with the other two session variants (same candidate
   candle), computed at report time from the three trade tables.
 
+Details fixed in implementation (2026-10-09): rolling windows are
+`[month m, month m + 6)` for every month start from the period's first
+month whose window ends at or before the period end; the rolling Sharpe is
+taken at each month end with 182 days of history. Per-year fill rate is
+filled / placed entry orders (leverage-capped intents are not orders) by
+placement year; per-year max DD starts from the previous year-end equity.
+Labels: `regime_trend` is `trend` (ADX > 25) or `no_trend`, `regime_vol`
+`high` (above the median) or `low`, null while the indicator is NaN; the
+vol median is over the as-of values of the in-sample period's UTC days and
+is stored in `stats.json` (`insample_ref.vol_median`) for the holdout.
+Win rate is the share of `net_r > 0`; profit factor is `Σ wins / Σ |losses|`
+(null without losses). Exposure is the fraction of period candles inside
+some trade's `[entry_idx, exit_idx]` (all trades, `data_end` included) and
+the mean of `exposure_notional / equity` over the daily marks. The
+shared-trade fraction leaves out trades without a candidate candle.
+
 ## 5.10 `stats.json` (per variant)
 
 Every number the report or the summary prints comes from this file:
@@ -185,7 +266,36 @@ CI; max DD; exposure; `p_A, z_A, p_B, z_B` with `n_runs`; buy-and-hold
 block; DSR at both `N`; re-pricing grid; rolling and per-year tables;
 regime and breakdown tables; the R-subset size and the `data_end` count.
 Holm-adjusted p-values are added by the experiments layer once all nine
-primary cells exist.
+primary cells exist; so are the two DSR values (the file stores their
+inputs, see 5.7).
+
+`stats/variant.py` builds the file:
+
+```python
+@dataclass(frozen=True)
+class Market:            # candles15, candles1m, funding, calendar, period_start_ms, period_end_ms, listing_ms=None
+def run_baselines(result, market, cfg: VariantConfig, *, variant_id, n_runs=None) -> Baselines
+                         # table_a, runs_a, runs_b (per-run component means), n_runs
+def compute_stats(result, market, cfg, *, variant_id, baselines=None, insample_ref=None) -> dict
+def write_stats(stats, path); def read_stats(path) -> dict
+```
+
+Top-level keys: `schema`, ids and period, `seeds` (master seed and the
+generator purposes), `summary` (the simulator's counts), `skips`,
+`n_sessions` (eligible sessions of the period, D1 caveat), `headline` (n,
+win rate, mean gross/net R, median and std of net R (the holdout power
+calculation), profit factor, both mean-R CIs, Sharpe with CI, max DD, exposure, max concurrent),
+`baselines` (`p_a, z_a, p_b, z_b, n_runs`, observed values, run means and
+stds; null until `run_baselines` has run), `buy_and_hold`, `dsr`,
+`repricing` (8 rows), `costs`, `distributions`, `rolling`, `per_year`,
+`regimes`, `breakdowns` (day of week, entry hour, year, exit reason),
+`insample_ref` (`vol_median`, `sigma_strategy`, `sigma_bh`; a holdout run
+receives the in-sample cell's values). Generators come from
+`rng_for(master_seed, variant_id, purpose)`; the re-pricing grid uses the
+trade-bootstrap purpose for every cell, so its primary cell repeats the
+headline CI. The JSON has sorted keys and non-finite numbers as `null`
+(`compute_stats` returns the sanitized dict, so it equals what is read
+back) and is byte-identical across reruns.
 
 ## 5.11 Tasks and tests
 

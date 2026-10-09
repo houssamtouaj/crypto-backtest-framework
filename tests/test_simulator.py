@@ -440,21 +440,12 @@ def test_daily_mark_includes_the_data_end_close():
 
 # --- 4.6 simulator-level look-ahead, determinism, properties on random walks ------------------
 
-from perpbt.data.store import Funding  # noqa: E402
 from perpbt.execution.orders import RESOLUTIONS  # noqa: E402
 from perpbt.execution.trades import utc_date  # noqa: E402
+from perpbt.data.store import Funding  # noqa: E402
+from tests.sim_harness import N15, run_walk, walk  # noqa: E402
 from tests.strategy_harness import UTC  # noqa: E402
-from tests.synthetic import aggregate, perturb_after, random_walk  # noqa: E402
-
-N15 = 1_500  # 15m candles (about 15.6 days) built from 22,500 one-minute candles
-WALK_COSTS = ExecConfig(fee_maker=0.0002, fee_taker=0.0005, slippage=0.0002, use_1m=True)
-
-
-def walk(seed):
-    m1 = random_walk(N15 * 15, seed=seed, start_ms=T0_MS, step_ms=60_000, tf="1m", step_sigma=0.0006)
-    times = np.arange(T0_MS, T0_MS + N15 * STEP_15M_MS, 8 * 3_600_000, dtype=np.int64)
-    rates = np.random.default_rng(seed).normal(0.0001, 0.0002, len(times))
-    return m1, Funding("TEST", times, rates, np.full(len(times), 8, dtype=np.int8))
+from tests.synthetic import perturb_after  # noqa: E402
 
 
 def perturbed(m1, fund, cut, seed):
@@ -463,16 +454,6 @@ def perturbed(m1, fund, cut, seed):
     rates = fund.rate.copy()
     rates[after] = np.random.default_rng(seed).normal(0.0, 0.001, int(after.sum()))
     return m1p, Funding("TEST", fund.ts, rates, fund.interval_h)
-
-
-def run_walk(m1, fund, spec, *, last=None, params=None):
-    c15 = aggregate(m1, 15, tf="15m")
-    if last is not None:
-        c15 = c15.slice(T0_MS, int(c15.ts[last]) + 1)
-        m1 = m1.slice(T0_MS, int(c15.ts[last]) + STEP_15M_MS)
-    end = int(c15.ts[-1]) + STEP_15M_MS
-    return run(c15, m1, fund, SessionCalendar(spec, c15.ts), OrderBlockStrategy(params or StrategyParams()),
-               WALK_COSTS, T0_MS + 96 * STEP_15M_MS, end, variant_id="walk")
 
 
 def visible(res, cut):
