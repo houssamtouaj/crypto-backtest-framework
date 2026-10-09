@@ -4,8 +4,11 @@ from pathlib import Path
 
 import pytest
 
+from perpbt.config import StrategyParams
+from perpbt.data.sessions import SessionCalendar
 from perpbt.data.store import CandleStore, FundingStore, date_ms
 from perpbt.data.validate import consistency_1m_15m
+from tests.strategy_harness import LONDON, NY, UTC, assert_counts_consistent, run_strategy
 
 pytestmark = pytest.mark.slow
 
@@ -50,3 +53,19 @@ def test_funding_loads_in_sample_and_is_guarded(real_cfg):
     f = store.load("BTCUSDT", date_ms("2020-01-01"), date_ms("2026-01-01"))
     assert f.ts[0] == date_ms("2020-01-01") and len(f) > 6 * 365 * 3 * 0.95
     assert set(f.interval_h.tolist()) <= {1, 2, 4, 8}
+
+
+@pytest.mark.parametrize("pair", PAIRS)
+def test_order_block_rule_on_real_candles(real_cfg, pair):
+    cd = CandleStore(real_cfg).load(pair, "15m", date_ms(real_cfg.warmup_start), date_ms("2026-01-01"))
+    runs = {}
+    for spec in (UTC, NY, LONDON):
+        run = runs[spec.name] = run_strategy(cd, StrategyParams(), spec)
+        assert_counts_consistent(run.counts)
+        assert run.counts["intents"] > 300, (spec.name, run.counts)
+        cal = SessionCalendar(spec, cd.ts)
+        for i, x in run.intents:
+            assert x.stop < x.price < cd.c[i] and x.expires_ms == cal.end_ms[i], (spec.name, i)
+    i0 = cd.index_at(date_ms("2024-01-01"))  # a later first call rebuilds the same live levels
+    late = run_strategy(cd, StrategyParams(), UTC, start_i=i0)
+    assert late.intents == [(i, x) for i, x in runs["utc"].intents if i >= i0]

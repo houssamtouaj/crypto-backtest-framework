@@ -113,3 +113,18 @@ def test_swings_are_causal(k):
 
 def test_docstring_states_lag():
     assert "Lag k" in swing_highs.__doc__
+
+
+def test_swings_rejects_float_indices():
+    with pytest.raises(TypeError, match="idx"):
+        Swings(np.array([1.5]), np.array([2.0]), np.array([3]))
+    with pytest.raises(TypeError, match="confirmed_at"):
+        Swings(np.array([1]), np.array([2.0]), np.array([3.0]))
+    assert len(Swings(np.array([]), np.array([]), np.array([]))) == 0  # empty float arrays are fine
+
+
+def test_k_must_be_an_integer():
+    cd = random_walk(20, seed=1, start_ms=T0_MS)
+    for bad in (2.0, True):
+        with pytest.raises(TypeError):
+            swing_highs(cd, bad)

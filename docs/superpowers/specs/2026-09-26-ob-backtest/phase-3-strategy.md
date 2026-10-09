@@ -45,9 +45,35 @@ class Strategy(Protocol):
     def skip_counts(self) -> dict[str, int]
 ```
 
+`SimEvent` is defined in `strategy/base.py` too, so strategy code never
+imports `execution/`: `kind` is `filled`, `cancelled`, `closed` or
+`skipped_leverage`; `idx` is the candle it happened on; `order_id`,
+`position_id` and `reason` are optional. Phase 4 may add fields with
+defaults. `PlaceBracketLimit` validates itself on construction: side
+`long` or `short`, finite prices, `stop < price < target` for a long
+(reversed for a short), an integer `expires_ms`, a `HoldRule`, a dict tag.
+
 `tag` for this strategy: `candidate_idx, impulse_idx, displacement_idx,
 swing_idx, swing_level, zone_low, zone_high, entry_kind, atr, stop_dist,
 session_id`.
+
+Tag values are plain `int`, `float` or `str`; `atr` is `None` while ATR14
+is NaN (reachable only with a `pct` or zero buffer, §3.6).
+
+**Call contract.** The simulator calls `on_candle` once per candle, in
+order, with no gaps; a skipped or repeated candle raises `ValueError`. On
+its first call, at candle `i0`, the strategy rebuilds its live levels
+(§3.3) from candles `0..i0−1` without counting or emitting anything, so
+its output from `i0` on does not depend on where the loop starts (the
+holdout's first call at 2026-01-01 sees the same levels as a run from
+2019). The used-session state is not rebuilt, so the first call must be at
+a session boundary: a first call at `i0 > 0` inside a window, other than
+at its open, raises `ValueError`. The simulator's first call is at
+`period_start`, 00:00 UTC, which none of the three configured windows
+straddles (a custom window spanning 00:00 UTC would be refused). `warmup_bars` is informational: the candles before
+the first decision the indicators need (14 for ATR14; 50 × 96 with the
+trend filter on). A shortfall is handled by the rule itself: NaN ATR is
+`degenerate` (§3.6), NaN SMA is `trend` (§3.8).
 
 ## 3.2 Swing high (k)
 
@@ -80,7 +106,8 @@ breaks.
 ## 3.4 Candidate (N)
 
 For an impulse at `t`, the candidate is the most recent bearish candle `c`
-(`close[c] < open[c]`) with `t − N ≤ c ≤ t − 1`. No such candle → the
+(`close[c] < open[c]`) with `max(t − N, 0) ≤ c ≤ t − 1` (the search stops at the
+first candle of the series). No such candle → the
 impulse yields no block (`no_candidate`). One impulse yields at most one
 candidate; if it is rejected below, the search continues with the next
 impulse, not with an earlier bearish candle.
@@ -88,9 +115,12 @@ impulse, not with an earlier bearish candle.
 ## 3.5 Session eligibility (D1, D3)
 
 The current session is `view.session`. The candidate is eligible iff
-`τ_c ≥ session.open_ms` and `session.in_window` is true at `t` (which,
-with windows on the 15m grid, is the same as `τ_t + 15m ≤ session.end_ms`).
-Otherwise `ineligible`.
+`τ_c ≥ session.open_ms`, `session.in_window` is true at `t`, and `t` is
+not the window's last candle (`session.is_last` false; with windows on the
+15m grid, together the same as `τ_t + 15m < session.end_ms`). An order
+placed at the close of the last candle would expire at the next open,
+before it could fill (Phase 4 §4.3), so it is never placed. Otherwise
+`ineligible`.
 
 At most **one intent per session**: once the strategy emits a
 `PlaceBracketLimit` in a session, it emits no more in that session,
@@ -101,13 +131,18 @@ session). This keeps the trade list independent of account state.
 ## 3.6 Zone, entry, stop, target
 
 - Zone: `full` → `[low[c], high[c]]`; `body` → `[close[c], open[c]]`.
-- Entry: `top` → zone top; `mid` → zone midpoint.
+- Entry: `top` → zone top; `mid` → zone midpoint `(zone_low + zone_high) / 2`.
 - Stop: `low[c] − buffer`, anchored at the candle's true low in both zone
   modes. Buffer is `value × ATR14[t]` (Wilder, 15m, as of `t`) for `atr`,
-  or `value × entry` for `pct`.
-- `stop_dist = entry − stop` (must be `> 0`; otherwise `degenerate`, counted).
+  or `value × entry` for `pct`. An `atr` buffer with `value = 0` is 0 even
+  while ATR14 is NaN.
+- `stop_dist = entry − stop` (must be `> 0`; otherwise `degenerate`,
+  counted; NaN fails the test). A bearish candidate has positive range, so
+  with a finite buffer `stop_dist > 0` always: in practice `degenerate`
+  means ATR14 is NaN (the first 13 candles) under a nonzero `atr` buffer.
 - Target: `entry + r_target × stop_dist`.
-- Pierce: `pierce_abs = pierce × entry`.
+- Pierce: `pierce_abs = pierce × entry`; the mitigation threshold of §3.7
+  is `entry − pierce_abs`, computed exactly so.
 
 ## 3.7 Displacement and mitigation (D12)
 
@@ -122,6 +157,9 @@ This replaces v1 §6.5.
   rejected (`mitigated`). With `d == t` there is nothing to check. This
   uses the same predicate as the Phase 4 fill rule, so "traded back into
   the zone" and "would have filled" are the same test.
+- **Stop mode.** With `skip_mitigated = "stop"` (accepted, not in the
+  grid) a `mitigated` block also ends the session: later blocks in it are
+  `session_used`. The default `continue` is D4.
 - **Price above entry.** If `close[t] ≤ entry`, the limit would sit at or
   above the market: rejected (`entry_above_price`). With `pierce = 0` this
   is implied by the two rules above; with `pierce > 0` it closes the gap
@@ -158,11 +196,23 @@ the fill, not from placement.
 
 ## 3.11 Skip accounting
 
-`skip_counts()` returns counts of `no_candidate, ineligible,
-no_displacement, mitigated, entry_above_price, degenerate, trend,
-session_used` (an impulse seen after the session's intent) plus
-`impulses` and `blocks_seen`. The simulator adds `leverage`. All appear in
-the results row and the report.
+`skip_counts()` returns, in this order, `impulses`, `blocks_seen`,
+`no_candidate`, `ineligible`, `degenerate`, `no_displacement`, `mitigated`,
+`entry_above_price`, `trend`, `session_used` and `intents`. Every impulse
+counts in `impulses`. An impulse without a candidate is `no_candidate`;
+one with a candidate is a block and counts in `blocks_seen`. Each block
+gets exactly one outcome, the first that applies in rule order:
+`ineligible` (3.5), `degenerate` (3.6), `no_displacement`, `mitigated`,
+`entry_above_price` (3.7), `trend` (3.8), `session_used` (a block that
+passed 3.4–3.8 in a session that already has its intent), else `intents`.
+So
+
+    impulses    = no_candidate + blocks_seen
+    blocks_seen = ineligible + degenerate + no_displacement + mitigated
+                + entry_above_price + trend + session_used + intents
+
+The simulator adds `leverage`. All appear in the results row and the
+report.
 
 ## 3.12 Tasks and tests
 
@@ -202,10 +252,14 @@ and assert the exact intent list (prices, expiry, tag) or the skip reason.
     `no_displacement`.
   - S12 `pierce > 0` and `close[t]` in `(entry − pierce_abs, entry]` →
     `entry_above_price`.
-  - S13 `degenerate`: a zero-range candle with zero buffer.
+  - S13 `degenerate`: `block_prices` on a zero-range candle with zero
+    buffer gives `stop_dist = 0`. In the strategy a bearish candidate
+    always has positive range, so the reachable case is ATR14 NaN
+    (warmup) under an `atr` buffer; a `pct` or zero buffer on the same
+    candles gives an intent with `atr = None`.
 - **3.3 Strategy-level look-ahead test.**
   On a seeded random walk (`n = 5,000`, UTC session), the list of intents
-  with decision index `≤ cut` is identical between the full series, the
+  with decision index `≤ cut` (and the skip counts after `cut`) is identical between the full series, the
   series truncated at `cut`, and `perturb_after(series, cut)`. 20 seeds ×
   3 cuts. Repeated for NY with weekday rule.
 

@@ -4,18 +4,24 @@ import dataclasses
 import numpy as np
 import pytest
 
-from perpbt.config import SessionSpec
+from perpbt.config import HoldRule, SessionSpec, StrategyParams
 from perpbt.data.sessions import SessionCalendar
 from perpbt.indicators.atr import atr
 from perpbt.indicators.daily import daily_adx_aligned, daily_sma_aligned
 from perpbt.indicators.swings import swing_highs
 from perpbt.strategy.base import (
     AccountView,
+    CancelOrder,
+    ClosePosition,
+    Intent,
     LookaheadError,
     MarketView,
     OrderView,
+    PlaceBracketLimit,
     PositionView,
     SessionInfo,
+    SimEvent,
+    Strategy,
 )
 from tests.synthetic import T0_MS, random_walk
 
@@ -239,3 +245,74 @@ def test_account_view_is_frozen():
     with pytest.raises(dataclasses.FrozenInstanceError):
         acct.equity_mtm = 0.0
     assert acct.open_positions[0].position_id == 2 and acct.pending_orders[0].order_id == 1
+
+
+# --- intents, events, protocol (spec §3.1) -------------------------------------------------
+
+def bracket(**kw):
+    args = dict(side="long", price=100.0, stop=99.0, target=102.0, expires_ms=T0_MS,
+                hold_rule=HoldRule("none"), tag={"candidate_idx": 3})
+    args.update(kw)
+    return PlaceBracketLimit(**args)
+
+
+def test_bracket_limit_holds_its_fields_and_compares_by_value():
+    a = bracket()
+    assert (a.side, a.price, a.stop, a.target, a.expires_ms) == ("long", 100.0, 99.0, 102.0, T0_MS)
+    assert a == bracket() and a != bracket(tag={"candidate_idx": 4})
+    assert isinstance(a, Intent) and isinstance(CancelOrder(1), Intent) and isinstance(ClosePosition(2, "x"), Intent)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        a.price = 1.0
+    assert bracket(side="short", stop=101.0, target=98.0).side == "short"
+
+
+@pytest.mark.parametrize("kw", [
+    dict(side="buy"),
+    dict(price=float("nan")),
+    dict(stop=float("-inf")),
+    dict(target=float("nan")),
+    dict(stop=100.0),                      # stop not below price
+    dict(target=100.0),                    # target not above price
+    dict(side="short"),                    # long-ordered prices on a short
+])
+def test_bracket_limit_rejects_bad_prices(kw):
+    with pytest.raises(ValueError):
+        bracket(**kw)
+
+
+@pytest.mark.parametrize("kw", [
+    dict(expires_ms=float(T0_MS)),
+    dict(expires_ms=True),
+    dict(hold_rule="none"),
+    dict(tag=[("candidate_idx", 3)]),
+])
+def test_bracket_limit_rejects_bad_types(kw):
+    with pytest.raises(TypeError):
+        bracket(**kw)
+
+
+def test_sim_event_kinds():
+    for kind in ("filled", "cancelled", "closed", "skipped_leverage"):
+        ev = SimEvent(kind, 5)
+        assert (ev.kind, ev.idx, ev.order_id, ev.position_id, ev.reason) == (kind, 5, None, None, None)
+    with pytest.raises(ValueError):
+        SimEvent("fill", 5)
+
+
+def test_strategy_protocol_is_structural():
+    class Dummy:
+        name = "dummy"
+        params = StrategyParams()
+        warmup_bars = 0
+
+        def on_candle(self, view, account):
+            return []
+
+        def on_event(self, event):
+            return None
+
+        def skip_counts(self):
+            return {}
+
+    assert isinstance(Dummy(), Strategy)
+    assert not isinstance(object(), Strategy)
