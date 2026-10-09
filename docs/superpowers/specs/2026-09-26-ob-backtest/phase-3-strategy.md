@@ -45,6 +45,14 @@ class Strategy(Protocol):
     def skip_counts(self) -> dict[str, int]
 ```
 
+`SimEvent` is defined in `strategy/base.py` too, so strategy code never
+imports `execution/`: `kind` is `filled`, `cancelled`, `closed` or
+`skipped_leverage`; `idx` is the candle it happened on; `order_id`,
+`position_id` and `reason` are optional. Phase 4 may add fields with
+defaults. `PlaceBracketLimit` validates itself on construction: side
+`long` or `short`, finite prices, `stop < price < target` for a long
+(reversed for a short), an integer `expires_ms`, a `HoldRule`, a dict tag.
+
 `tag` for this strategy: `candidate_idx, impulse_idx, displacement_idx,
 swing_idx, swing_level, zone_low, zone_high, entry_kind, atr, stop_dist,
 session_id`.

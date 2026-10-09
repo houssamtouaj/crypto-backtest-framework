@@ -165,7 +165,7 @@ perpbt/
     base.py            Strategy protocol, MarketView, AccountView, Intent types
     order_block.py     the ICT OB strategy
   execution/
-    orders.py          Order, Position, SimEvent dataclasses, lifecycle enum
+    orders.py          Order, Position dataclasses, lifecycle enum (SimEvent is in strategy/base.py)
     fills.py           FillModel: 15m pessimistic rules + optional 1m resolver
     costs.py           fees by role, slippage, funding schedule, cost coefficients in R
     sizing.py          fixed-fractional sizing, leverage cap, liquidation assertion

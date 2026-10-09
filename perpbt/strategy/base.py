@@ -1,20 +1,26 @@
-"""Strategy-facing views: the look-ahead guard (spec §2.4, overview §4.1).
+"""The strategy plug-in interface (spec §3.1) and the look-ahead guard (spec §2.4, overview §4.1).
 
 ``MarketView`` is built once per simulation over the full arrays and moved
 forward with ``advance_to``; every accessor refuses an index after the
 current candle ``i`` (or before 0) with ``LookaheadError``, so warmup NaNs
 are the only signal of "not yet available". The guard targets accidental
 look-ahead: underscored attributes and an array's ``.base`` are private and
-strategy code must not touch them. The Phase 3 strategy types (intents, the
-``Strategy`` protocol) join this module in Phase 3.
+strategy code must not touch them.
+
+A strategy turns ``(MarketView, AccountView)`` into ``Intent`` objects and
+hears back through ``SimEvent``. ``SimEvent`` lives here rather than in
+``execution/`` so that strategy code never imports the simulator.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 
 from perpbt.checks import as_int
+from perpbt.config import HoldRule, StrategyParams
 from perpbt.data.sessions import SessionCalendar
 from perpbt.data.store import Candles
 from perpbt.indicators.swings import Swings
@@ -230,3 +236,118 @@ class MarketView:
                 is_last=bool(self._slast[i]),
             )
         return self._session_cache
+
+
+# --- intents, events, the strategy protocol (spec §3.1) ---------------------------------
+
+SIDES = ("long", "short")
+EVENT_KINDS = ("filled", "cancelled", "closed", "skipped_leverage")
+
+
+@dataclass(frozen=True)
+class PlaceBracketLimit:
+    """Place an entry limit with an attached stop and target (spec §3.1).
+
+    ``expires_ms``: cancel if unfilled by this instant (the window end).
+    ``hold_rule``: the simulator derives the exit deadline at the fill.
+    ``tag``: audit metadata of plain ``int``/``float``/``str``/``None``
+    values, copied to orders and trades. Validated on construction so the
+    simulator never sees NaN prices or a stop on the wrong side. Not
+    hashable (``tag`` is a dict).
+    """
+
+    side: str
+    price: float
+    stop: float
+    target: float
+    expires_ms: int
+    hold_rule: HoldRule
+    tag: dict
+
+    def __post_init__(self) -> None:
+        if self.side not in SIDES:
+            raise ValueError(f"PlaceBracketLimit.side must be one of {SIDES}, got {self.side!r}")
+        for name in ("price", "stop", "target"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"PlaceBracketLimit.{name} must be finite, got {getattr(self, name)!r}")
+        if self.side == "long":
+            ordered = self.stop < self.price < self.target
+        else:
+            ordered = self.target < self.price < self.stop
+        if not ordered:
+            raise ValueError(
+                f"PlaceBracketLimit: stop {self.stop}, price {self.price}, target {self.target} "
+                f"are out of order for a {self.side}"
+            )
+        if isinstance(self.expires_ms, bool) or not isinstance(self.expires_ms, int):
+            raise TypeError(
+                f"PlaceBracketLimit.expires_ms must be an int (UTC ms), got {type(self.expires_ms).__name__}"
+            )
+        if not isinstance(self.hold_rule, HoldRule):
+            raise TypeError(f"PlaceBracketLimit.hold_rule must be a HoldRule, got {type(self.hold_rule).__name__}")
+        if not isinstance(self.tag, dict):
+            raise TypeError(f"PlaceBracketLimit.tag must be a dict, got {type(self.tag).__name__}")
+
+
+@dataclass(frozen=True)
+class CancelOrder:
+    """Cancel a pending entry order."""
+
+    order_id: int
+
+
+@dataclass(frozen=True)
+class ClosePosition:
+    """Close an open position at the current close (a time exit)."""
+
+    position_id: int
+    reason: str
+
+
+Intent = PlaceBracketLimit | CancelOrder | ClosePosition
+
+
+@dataclass(frozen=True)
+class SimEvent:
+    """What the simulator tells the strategy after acting (spec §3.1; built by Phase 4).
+
+    ``kind``: ``filled`` (an entry order filled; ``order_id``, ``position_id``),
+    ``cancelled`` (a pending order cancelled; ``order_id``, ``reason`` =
+    ``expired``/``strategy``/``leverage_cap``/``data_end``), ``closed`` (a
+    position exited; ``position_id``, ``reason`` = the exit reason),
+    ``skipped_leverage`` (a ``PlaceBracketLimit`` refused by the leverage
+    cap at placement; no ids). ``idx`` is the candle it happened on. Phase 4
+    may add fields, with defaults.
+    """
+
+    kind: str
+    idx: int
+    order_id: int | None = None
+    position_id: int | None = None
+    reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.kind not in EVENT_KINDS:
+            raise ValueError(f"SimEvent.kind must be one of {EVENT_KINDS}, got {self.kind!r}")
+
+
+@runtime_checkable
+class Strategy(Protocol):
+    """The plug-in interface every strategy implements (spec §3.1).
+
+    Call contract: the simulator calls ``on_candle`` once per candle, in
+    order, without gaps, from the first decision candle on; intents are
+    placed at that candle's close. ``on_event`` delivers what happened to
+    earlier intents. ``warmup_bars`` is the number of candles before the
+    first decision candle the strategy's indicators need.
+    """
+
+    name: str
+    params: StrategyParams
+    warmup_bars: int
+
+    def on_candle(self, view: MarketView, account: AccountView) -> list[Intent]: ...
+
+    def on_event(self, event: SimEvent) -> None: ...
+
+    def skip_counts(self) -> dict[str, int]: ...
