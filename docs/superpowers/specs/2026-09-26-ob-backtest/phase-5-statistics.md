@@ -171,6 +171,13 @@ Daily return of a constant 1× long in the perp:
 scale-invariant, the scaling matters for return and drawdown. Reported:
 Sharpe with block-bootstrap CI, vol-scaled return and max drawdown, and
 the paired Sharpe difference (5.1) with its CI and one-sided `p_BH`.
+The days are the UTC days with candles in the period (the dates of the
+`daily` table, joined by date); `close_d` is the close of the day's last
+candle; the first day's previous close is the close of the candle before
+the period (the first open when there is none); a funding event `f`
+belongs to day `f // 1 day`, the day whose mark the simulator charges it
+to. The in-sample σ's (ddof 1) are stored in `stats.json` and passed to
+the holdout run.
 
 ## 5.6 Cost re-pricing (`stats/repricing.py`, D13)
 
@@ -198,7 +205,12 @@ number of days. Reported for each primary cell with `N = 36` (`V` over
 that pair × session's grid) and `N = 324` (`V` over all grid cells), and
 for the best grid cell. The report states that grid cells share most of
 their trades, so the effective number of independent trials is far below
-`N` and the DSR is conservative.
+`N` and the DSR is conservative. With `N = 1`, `SR* = 0` (the formula's
+`Φ⁻¹(0)` is −∞), so the DSR is the PSR against 0. `γ₄` is the
+non-excess kurtosis (3 for a normal). The per-variant `stats.json` stores
+the inputs (`sr_daily`, `T`, `skew`, `kurt`); the DSR values need the
+grid's Sharpe ratios and are added by the experiments layer
+(`dsr.dsr_from_trials`), like the Holm adjustment.
 
 ## 5.8 Multiplicity (`stats/multiplicity.py`, D11)
 
@@ -206,7 +218,8 @@ Holm step-down over the family of 9 primary cells, per benchmark (A, B,
 buy-and-hold), separately in-sample and on holdout. With sorted p-values
 `p_(1) ≤ … ≤ p_(9)`: `p̃_(i) = max_{j ≤ i} min(1, (9 − j + 1) · p_(j))`.
 Raw and adjusted are both stored. Bonferroni thresholds are also shown for
-reference.
+reference. A missing p-value (a cell without baselines) is left out of the
+family and stays missing.
 
 ## 5.9 Alpha decay, regimes, diagnostics
 

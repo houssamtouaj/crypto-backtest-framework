@@ -14,3 +14,12 @@ def quantiles(x) -> dict | None:
         return None
     q = np.percentile(a, list(QUANTILES.values()))
     return {**{k: float(v) for k, v in zip(QUANTILES, q, strict=True)}, "mean": float(a.mean())}
+
+
+def max_drawdown(equity, start: float) -> float | None:
+    """Largest fall from a running peak, as a fraction: ``max(1 − equity / peak)`` with ``start`` as the first peak."""
+    eq = np.asarray(equity, dtype=np.float64)
+    if len(eq) == 0:
+        return None
+    peak = np.maximum.accumulate(np.concatenate(([start], eq)))[1:]
+    return float(np.max(1.0 - eq / peak))
