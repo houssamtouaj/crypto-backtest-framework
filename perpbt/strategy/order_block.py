@@ -15,10 +15,18 @@ from dataclasses import dataclass
 from typing import NamedTuple
 
 from perpbt.config import StrategyParams
-from perpbt.strategy.base import AccountView, Intent, MarketView, PlaceBracketLimit, SimEvent
+from perpbt.strategy.base import (
+    VIEW_ATR_PERIOD,
+    VIEW_SMA_DAYS,
+    AccountView,
+    Intent,
+    MarketView,
+    PlaceBracketLimit,
+    SimEvent,
+)
 
-ATR_PERIOD = 14  # the simulator builds the view's ATR with this period
-TREND_SMA_DAYS = 50  # and the daily SMA with this one (D7)
+ATR_PERIOD = VIEW_ATR_PERIOD  # the view's ATR, used for the stop buffer
+TREND_SMA_DAYS = VIEW_SMA_DAYS  # the view's daily SMA, used by the trend filter (D7)
 CANDLES_PER_DAY = 96
 
 SKIP_REASONS = (
