@@ -113,3 +113,16 @@ def test_atr_is_causal():
 
 def test_docstring_states_lag():
     assert "Lag 0" in atr.__doc__
+
+
+def test_n_must_not_be_a_bool():
+    with pytest.raises(TypeError):
+        atr(random_walk(20, seed=1, start_ms=T0_MS), n=True)
+
+
+def test_wilder_rma_validates_start():
+    x = np.arange(5.0)
+    with pytest.raises(ValueError, match="start"):
+        wilder_rma(x, 2, start=-1)
+    with pytest.raises(TypeError, match="start"):
+        wilder_rma(x, 2, start=1.0)

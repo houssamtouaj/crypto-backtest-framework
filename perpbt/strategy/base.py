@@ -10,11 +10,11 @@ strategy code must not touch them. The Phase 3 strategy types (intents, the
 """
 from __future__ import annotations
 
-import operator
 from dataclasses import dataclass
 
 import numpy as np
 
+from perpbt.checks import as_int
 from perpbt.data.sessions import SessionCalendar
 from perpbt.data.store import Candles
 from perpbt.indicators.swings import Swings
@@ -71,18 +71,14 @@ class AccountView:
 
 
 def _read_only(arr: np.ndarray, dtype: type) -> np.ndarray:
+    """A read-only view of ``arr`` as ``dtype``.
+
+    ``np.asarray`` copies only when ``arr`` has another dtype; otherwise the
+    view shares memory with the caller's array, whose own flag is untouched.
+    """
     view = np.asarray(arr, dtype=dtype).view()
     view.flags.writeable = False
     return view
-
-
-def _index(j: object) -> int:
-    if isinstance(j, (bool, np.bool_)):
-        raise TypeError(f"candle index must be an integer, got bool")
-    try:
-        return operator.index(j)
-    except TypeError:
-        raise TypeError(f"candle index must be an integer, got {type(j).__name__}") from None
 
 
 class MarketView:
@@ -132,7 +128,7 @@ class MarketView:
         self._sin = calendar.in_window
         self._slast = calendar.is_last
         self._session_cache: SessionInfo | None = None
-        start_i = _index(start_i)
+        start_i = as_int(start_i, "start_i")
         if not 0 <= start_i < n:
             raise ValueError(f"MarketView: start_i must be in [0, {n}), got {start_i}")
         self._i = start_i
@@ -146,7 +142,7 @@ class MarketView:
 
     def advance_to(self, i: int) -> None:
         """Move the cursor forward to ``i`` (simulator only). Backwards or past the end raises ValueError."""
-        i = _index(i)
+        i = as_int(i, "candle index")
         if i < self._i or i >= self._n:
             raise ValueError(f"MarketView.advance_to: cannot move from {self._i} to {i}")
         if i != self._i:
@@ -156,13 +152,13 @@ class MarketView:
     # --- guards ------------------------------------------------------------------------
 
     def _j(self, j: object) -> int:
-        j = _index(j)
+        j = as_int(j, "candle index")
         if j < 0 or j > self._i:
             raise LookaheadError(f"candle {j} is not visible at i={self._i}")
         return j
 
     def _ab(self, a: object, b: object) -> slice:
-        a, b = _index(a), _index(b)
+        a, b = as_int(a, "candle index"), as_int(b, "candle index")
         if not 0 <= a <= b <= self._i:
             raise LookaheadError(f"range [{a}, {b}] is not visible at i={self._i} (need 0 <= a <= b <= i)")
         return slice(a, b + 1)
@@ -218,7 +214,7 @@ class MarketView:
     def swings_confirmed_by(self, j: int) -> Swings:
         """Swing highs with ``confirmed_at <= j`` (``j <= i``), as read-only views."""
         j = self._j(j)
-        m = int(np.searchsorted(self._sw_conf, j, side="right"))
+        m = int(self._sw_conf.searchsorted(j, side="right"))
         return Swings._unchecked(self._sw_idx[:m], self._sw_level[:m], self._sw_conf[:m])
 
     @property

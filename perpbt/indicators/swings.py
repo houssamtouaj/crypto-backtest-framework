@@ -5,11 +5,11 @@ Consumers never index ``Swings`` directly; strategy code goes through
 """
 from __future__ import annotations
 
-import operator
 from dataclasses import dataclass
 
 import numpy as np
 
+from perpbt.checks import as_int
 from perpbt.data.store import Candles
 
 
@@ -26,6 +26,10 @@ class Swings:
     confirmed_at: np.ndarray
 
     def __post_init__(self) -> None:
+        for name in ("idx", "confirmed_at"):
+            raw = np.asarray(getattr(self, name))
+            if raw.size and not np.issubdtype(raw.dtype, np.integer):
+                raise TypeError(f"Swings.{name} must hold integers, got dtype {raw.dtype}")
         idx = np.asarray(self.idx).astype(np.int64, copy=False)
         level = np.asarray(self.level, dtype=np.float64)
         conf = np.asarray(self.confirmed_at).astype(np.int64, copy=False)
@@ -65,10 +69,7 @@ def swing_highs(candles: Candles, k: int) -> Swings:
     not qualify). Candles within ``k`` of either end of the series cannot be
     swing highs.
     """
-    try:
-        k = operator.index(k)
-    except TypeError:
-        raise TypeError(f"k must be an integer, got {type(k).__name__}") from None
+    k = as_int(k, "k")
     if k < 1:
         raise ValueError(f"k must be >= 1, got {k}")
     h = np.asarray(candles.h, dtype=np.float64)

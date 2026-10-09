@@ -149,6 +149,7 @@ Package name `perpbt` (placeholder, rename freely).
 perpbt/
   config.py            frozen dataclasses; YAML load/dump; canonical JSON and hash
   version.py           code_version() = SHA-256 of the perpbt source tree; git commit best effort
+  checks.py            as_int: the shared integer-argument check
   data/
     bulk.py            download + checksum verify + parse data.binance.vision files
     ccxt_fetch.py      head backfill (2019 warmup) and tail fetch via ccxt

@@ -1,19 +1,15 @@
 """Wilder ATR on 15m candles (spec §2.1) and the Wilder recursion it shares with ADX."""
 from __future__ import annotations
 
-import operator
-
 import numpy as np
 
+from perpbt.checks import as_int
 from perpbt.data.store import Candles
 
 
 def check_period(n: object) -> int:
-    """``n`` as an int >= 1; TypeError for a non-integer, ValueError below 1."""
-    try:
-        n = operator.index(n)
-    except TypeError:
-        raise TypeError(f"period must be an integer, got {type(n).__name__}") from None
+    """``n`` as an int >= 1; TypeError for a bool or non-integer, ValueError below 1."""
+    n = as_int(n, "period")
     if n < 1:
         raise ValueError(f"period must be >= 1, got {n}")
     return n
@@ -27,6 +23,9 @@ def wilder_rma(x: np.ndarray, n: int, start: int = 0) -> np.ndarray:
     so is everything when fewer than ``n`` values follow ``start``. Lag 0.
     """
     n = check_period(n)
+    start = as_int(start, "start")
+    if start < 0:
+        raise ValueError(f"start must be >= 0, got {start}")
     x = np.asarray(x, dtype=np.float64)
     out = np.full(len(x), np.nan)
     first = start + n - 1
