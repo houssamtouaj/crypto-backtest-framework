@@ -40,6 +40,10 @@ available through the view but produce no intents):
    leverage cap, assert liquidation below the stop, and register the order
    with `placed_idx = i`. Orders placed here are first evaluated at `i+1`.
 
+The first `on_candle` call is at `period_start`: the strategy rebuilds its
+state from the earlier candles through the view (Phase 3 §3.1), so the
+loop does not run over the warmup and skip counts cover the period only.
+
 The simulator has no randomness. Running twice yields byte-identical
 tables.
 
