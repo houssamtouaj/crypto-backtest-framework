@@ -22,6 +22,7 @@ from perpbt.strategy.base import (
     SessionInfo,
     SimEvent,
     Strategy,
+    build_market_view,
 )
 from tests.synthetic import T0_MS, random_walk
 
@@ -289,6 +290,30 @@ def test_bracket_limit_rejects_bad_prices(kw):
 def test_bracket_limit_rejects_bad_types(kw):
     with pytest.raises(TypeError):
         bracket(**kw)
+
+
+def test_bracket_limit_accepts_numpy_int_expiry():
+    a = bracket(expires_ms=np.int64(T0_MS))
+    assert a.expires_ms == T0_MS and type(a.expires_ms) is int
+
+
+def test_build_market_view_matches_a_hand_built_view(cd):
+    cal = SessionCalendar(UTC, cd.ts)
+    got = build_market_view(cd, cal, swing_k=2, start_i=5)
+    want = MarketView(
+        cd, atr=atr(cd, 14), daily_sma=daily_sma_aligned(cd, 50), daily_adx=daily_adx_aligned(cd, 14),
+        swings=swing_highs(cd, 2), calendar=cal, start_i=5,
+    )
+    for i in (5, 100, N - 1):
+        got.advance_to(i)
+        want.advance_to(i)
+        for name in ("open", "high", "low", "close", "atr", "daily_sma", "daily_adx"):
+            np.testing.assert_array_equal(
+                [getattr(got, name)(j) for j in range(i + 1)], [getattr(want, name)(j) for j in range(i + 1)]
+            )
+        assert got.swings_confirmed_by(i).idx.tolist() == want.swings_confirmed_by(i).idx.tolist()
+    sma = np.full(N, 7.0)
+    assert build_market_view(cd, cal, swing_k=2, daily_sma=sma).daily_sma(0) == 7.0
 
 
 def test_sim_event_kinds():

@@ -17,11 +17,8 @@ import numpy as np
 from perpbt.config import SessionSpec, StrategyParams
 from perpbt.data.sessions import SessionCalendar
 from perpbt.data.store import Candles
-from perpbt.indicators.atr import atr
-from perpbt.indicators.daily import daily_adx_aligned, daily_sma_aligned
-from perpbt.indicators.swings import swing_highs
-from perpbt.strategy.base import AccountView, Intent, MarketView, SimEvent
-from perpbt.strategy.order_block import ATR_PERIOD, COUNT_KEYS, SKIP_REASONS, TREND_SMA_DAYS, OrderBlockStrategy
+from perpbt.strategy.base import AccountView, Intent, MarketView, SimEvent, build_market_view
+from perpbt.strategy.order_block import COUNT_KEYS, SKIP_REASONS, OrderBlockStrategy
 
 UTC = SessionSpec(name="utc", tz="UTC", open="00:00", close="24:00", days=(0, 1, 2, 3, 4, 5, 6))
 NY = SessionSpec(name="ny", tz="America/New_York", open="09:30", close="16:00", days=(0, 1, 2, 3, 4))
@@ -48,15 +45,8 @@ def build_view(
     candles: Candles, spec: SessionSpec, *, swing_k: int,
     daily_sma: np.ndarray | None = None, start_i: int = 0,
 ) -> MarketView:
-    sma = daily_sma_aligned(candles, TREND_SMA_DAYS) if daily_sma is None else np.asarray(daily_sma, dtype=np.float64)
-    return MarketView(
-        candles,
-        atr=atr(candles, ATR_PERIOD),
-        daily_sma=sma,
-        daily_adx=daily_adx_aligned(candles, 14),
-        swings=swing_highs(candles, swing_k),
-        calendar=SessionCalendar(spec, candles.ts),
-        start_i=start_i,
+    return build_market_view(
+        candles, SessionCalendar(spec, candles.ts), swing_k=swing_k, daily_sma=daily_sma, start_i=start_i,
     )
 
 

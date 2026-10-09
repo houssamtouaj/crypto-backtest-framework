@@ -23,7 +23,14 @@ from perpbt.checks import as_int
 from perpbt.config import HoldRule, StrategyParams
 from perpbt.data.sessions import SessionCalendar
 from perpbt.data.store import Candles
-from perpbt.indicators.swings import Swings
+from perpbt.indicators.atr import atr as atr_of
+from perpbt.indicators.daily import daily_adx_aligned, daily_sma_aligned
+from perpbt.indicators.swings import Swings, swing_highs
+
+# The indicator periods every MarketView is built with (spec §2.4); strategies read them as given.
+VIEW_ATR_PERIOD = 14
+VIEW_SMA_DAYS = 50
+VIEW_ADX_PERIOD = 14
 
 
 class LookaheadError(RuntimeError):
@@ -238,6 +245,30 @@ class MarketView:
         return self._session_cache
 
 
+def build_market_view(
+    candles: Candles,
+    calendar: SessionCalendar,
+    *,
+    swing_k: int,
+    daily_sma: np.ndarray | None = None,
+    start_i: int = 0,
+) -> MarketView:
+    """The view the simulator hands a strategy: ATR14, completed-day SMA(50) and ADX(14), swing highs of ``swing_k``.
+
+    ``daily_sma`` overrides the computed SMA (tests of the trend filter).
+    """
+    sma = daily_sma_aligned(candles, VIEW_SMA_DAYS) if daily_sma is None else np.asarray(daily_sma, dtype=np.float64)
+    return MarketView(
+        candles,
+        atr=atr_of(candles, VIEW_ATR_PERIOD),
+        daily_sma=sma,
+        daily_adx=daily_adx_aligned(candles, VIEW_ADX_PERIOD),
+        swings=swing_highs(candles, swing_k),
+        calendar=calendar,
+        start_i=start_i,
+    )
+
+
 # --- intents, events, the strategy protocol (spec §3.1) ---------------------------------
 
 SIDES = ("long", "short")
@@ -279,10 +310,8 @@ class PlaceBracketLimit:
                 f"PlaceBracketLimit: stop {self.stop}, price {self.price}, target {self.target} "
                 f"are out of order for a {self.side}"
             )
-        if isinstance(self.expires_ms, bool) or not isinstance(self.expires_ms, int):
-            raise TypeError(
-                f"PlaceBracketLimit.expires_ms must be an int (UTC ms), got {type(self.expires_ms).__name__}"
-            )
+        # A numpy integer (e.g. straight from a calendar array) is accepted and stored as int.
+        object.__setattr__(self, "expires_ms", as_int(self.expires_ms, "PlaceBracketLimit.expires_ms (UTC ms)"))
         if not isinstance(self.hold_rule, HoldRule):
             raise TypeError(f"PlaceBracketLimit.hold_rule must be a HoldRule, got {type(self.hold_rule).__name__}")
         if not isinstance(self.tag, dict):
