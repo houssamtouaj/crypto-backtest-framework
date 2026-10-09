@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pytest
 
-from perpbt.config import HoldRule, StopBuffer, StrategyParams
+from perpbt.config import HoldRule, SessionSpec, StopBuffer, StrategyParams
 from perpbt.data.sessions import SessionCalendar
 from perpbt.indicators.atr import atr
 from perpbt.indicators.swings import swing_highs
@@ -476,3 +476,14 @@ def test_random_walk_intents_are_well_formed(params, spec):
             assert list(x.tag) == list(TAG_KEYS)
             assert all(type(v) in (int, float, str) or v is None for v in x.tag.values())
             json.dumps(x.tag, allow_nan=False)
+
+
+def test_first_call_inside_a_window_is_refused():
+    # A window that spans 00:00 UTC (Tokyo 08:00-12:00 = 23:00-03:00 UTC): a first call at 00:00 UTC would
+    # not know whether the session already had its intent at 23:xx, so it must refuse rather than guess.
+    tokyo = SessionSpec(name="tokyo", tz="Asia/Tokyo", open="08:00", close="12:00", days=(0, 1, 2, 3, 4, 5, 6))
+    cd = random_walk(400, seed=15, start_ms=T0_MS)
+    with pytest.raises(ValueError, match="session"):
+        run_strategy(cd, PRIMARY, tokyo, start_i=96)  # 2020-01-02 00:00 UTC, one hour into the window
+    run_strategy(cd, PRIMARY, tokyo, start_i=92)  # 23:00 UTC: the window's open, accepted
+    run_strategy(cd, PRIMARY, tokyo, start_i=0)  # nothing precedes candle 0, so nothing can be lost

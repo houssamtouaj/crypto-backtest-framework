@@ -67,8 +67,10 @@ its first call, at candle `i0`, the strategy rebuilds its live levels
 its output from `i0` on does not depend on where the loop starts (the
 holdout's first call at 2026-01-01 sees the same levels as a run from
 2019). The used-session state is not rebuilt, so the first call must be at
-a session boundary; the simulator's is at `period_start`, 00:00 UTC, which
-no window straddles. `warmup_bars` is informational: the candles before
+a session boundary: a first call at `i0 > 0` inside a window, other than
+at its open, raises `ValueError`. The simulator's first call is at
+`period_start`, 00:00 UTC, which none of the three configured windows
+straddles (a custom window spanning 00:00 UTC would be refused). `warmup_bars` is informational: the candles before
 the first decision the indicators need (14 for ATR14; 50 × 96 with the
 trend filter on). A shortfall is handled by the rule itself: NaN ATR is
 `degenerate` (§3.6), NaN SMA is `trend` (§3.8).

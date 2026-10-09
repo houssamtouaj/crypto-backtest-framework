@@ -1952,4 +1952,6 @@ git branch -d phase/3-strategy && git push origin --delete phase/3-strategy
 
 ## Post-review amendments
 
-(filled in during execution)
+- Task 6 (exit check): spec §3.4 now states the candidate search stops at candle 0 (`max(t − N, 0)`), matching the code and Review Focus 3.
+- Whole-branch review (Critical 0, Important 1, Minor 6). Fixed: a first call at `i0 > 0` inside a session window (only possible with a custom window spanning 00:00 UTC, e.g. Tokyo) silently broke start independence; `on_candle` now raises `ValueError` there (`test_first_call_inside_a_window_is_refused`), spec §3.1 call contract updated.
+- Deferred minors: intents on a window's last candle can never fill (rule question for the user); Phase 4 must compute the fill threshold as `params.pierce * intent.price`; `expires_ms` rejects numpy integers; §3.11 `session_used` wording omits stop mode; `warmup_bars` 14 vs 13; counts updated before the intent is constructed.

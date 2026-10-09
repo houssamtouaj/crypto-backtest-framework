@@ -118,7 +118,8 @@ class OrderBlockStrategy:
     call, at candle ``i0``, the live levels are rebuilt from candles
     ``0..i0-1`` without counting or emitting anything, so the output from
     ``i0`` on does not depend on where the loop starts. The used-session
-    state is not rebuilt: start at a session boundary.
+    state is not rebuilt, so a first call inside a window (other than at
+    its open, or at candle 0) raises ValueError.
     """
 
     name = "order_block"
@@ -137,6 +138,12 @@ class OrderBlockStrategy:
     def on_candle(self, view: MarketView, account: AccountView) -> list[Intent]:
         t = view.i
         if self._next_i is None:
+            s = view.session
+            if t > 0 and s.in_window and view.ts(t) != s.open_ms:
+                raise ValueError(
+                    f"OrderBlockStrategy: first call at candle {t} is inside a session window opened at "
+                    f"{s.open_ms} ms; the used-session state is not rebuilt, so start at a session boundary"
+                )
             self._catch_up(view, t)
         elif t != self._next_i:
             raise ValueError(f"OrderBlockStrategy.on_candle: expected candle {self._next_i}, got {t}")
