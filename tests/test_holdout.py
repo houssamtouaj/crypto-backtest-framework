@@ -1,6 +1,7 @@
 """Spec §6.6 (test 6.6): the one-shot holdout runner and its guards."""
 import io
 import json
+import shutil
 import tokenize
 from pathlib import Path
 
@@ -98,6 +99,29 @@ def test_code_change_refuses_without_the_flag_and_records_the_reason(world):
     assert done["reason"] == "fix funding sign" and done["code_version"] == "0" * 64
     rows = [r for r in Registry(runs).rows() if r["is_holdout"]]
     assert len(rows) == 8 and {r["reason"] for r in rows} == {"fix funding sign"}
+
+
+def test_a_failing_cell_does_not_stop_the_others_and_holm_waits(world):
+    path, prereg, data_cfg, runs = world
+    shutil.rmtree(Path(data_cfg.data_dir) / "candles" / "ETHUSDT" / "1m")
+    done = go(world)
+    cv = code_version()
+    hold = primary_variants(prereg, holdout=True)
+    eth = [v.cfg.variant_id(cv) for v in hold if v.cfg.pair == "ETHUSDT"]
+    assert done["status"] == "failed" and done["failed"] == eth
+    for v in hold:
+        d = variant_dir(runs, v.cfg.variant_id(cv)) / "stats.json"
+        assert d.exists() == (v.cfg.pair == "BTCUSDT")
+        if d.exists():
+            assert "holm" not in read_stats(d)
+    assert yaml.safe_load(done_path(runs).read_text(encoding="utf-8"))["status"] == "failed"
+
+
+def test_holdout_end_cannot_pass_the_frozen_download_date(world):
+    path, _, _, _ = world
+    path.write_text(prereg_text(download="2020-01-25", holdout_end="2020-01-20"), encoding="utf-8")
+    with pytest.raises(HoldoutRefused, match="frozen data download date"):
+        go(world)
 
 
 def test_refuses_without_the_in_sample_primary_runs(tmp_path):

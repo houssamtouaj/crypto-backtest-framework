@@ -21,9 +21,10 @@ means every value that maps to a Phase 0 dataclass field went through
 that dataclass (`r_target: 2` and `2.0` hash the same; a grid axis value
 is normalised as the `StrategyParams` field it sets) and dates are ISO
 strings. The loader rejects duplicate YAML keys, unknown keys, session
-names other than `utc`, `ny`, `london`, and a `primary` or `execution`
+names other than `utc`, `ny`, `london`, a `primary` or `execution`
 block that leaves any field to its default (a pre-registration names
-every value).
+every value), and a `holdout.end` without a `data_download_date` or after
+it.
 
 `configs/prereg.lock` is written once by `perpbt prereg freeze` in Phase 8
 (it refuses while `data_download_date` is null, and refuses to overwrite)
@@ -64,8 +65,12 @@ configs does not.
 - `runs/results.parquet`, derived: rebuilt from every
   `runs/<variant_id>/stats.json` (with its `config.yaml`) by every driver
   and family pass, and on demand (`perpbt stats results`); one row per
-  variant. `run_ms`, `git_commit` and `runtime_s` come from the variant's
-  latest `ok` run line.
+  variant of the current code version. Folders written by another code
+  version (runs before a step-5 bug fix) go to
+  `runs/results_superseded.parquet` instead, so the committed table holds
+  one code generation and the registry keeps the history. `run_ms`,
+  `git_commit` and `runtime_s` come from the variant's latest `ok` run
+  line.
 
 ### `results` columns
 
@@ -118,18 +123,25 @@ builds the indicators), computes Phase 5 statistics (and baselines when
 `{orders,fills,trades,daily,events}.parquet` (trades with the regime
 labels), `buyhold.parquet` (`bh_daily`, for Phase 7's equity figure),
 `config.yaml`, and last `stats.json`, which gains an `experiment` block
-(`is_primary`, `members`, `code_version`). An existing `stats.json` is
-deleted first, so its presence marks a complete folder. Nothing time- or
+(`is_primary`, `members`, `code_version`). An existing `stats.json` and
+any baseline files are deleted first, so the presence of `stats.json`
+marks a complete folder and nothing stale survives a rerun; `stats.json`
+is written atomically (temporary file, then rename). Nothing time- or
 commit-dependent goes into the folder. The registry gets `started`, then
 `ok` or `failed` with the traceback.
 
 Driver: `ProcessPoolExecutor` with `spawn` (Windows), one variant per
-task, `--workers` default 8, tasks sorted by pair. Each worker process
+task, `--workers` default 4, tasks sorted by pair. Each worker process
 caches the loaded data of one pair (keyed by pair, timeframe, range and
 the guard flag; another pair evicts it), so a pair's candles are read once
-per process and memory stays at one pair per worker. Resume: a variant
-whose `stats.json` exists and whose latest `run` line is `ok` is skipped;
-`--force` reruns. A failed variant does not stop the others.
+per process and memory stays at one pair per worker: about 0.56 GB, 0.73
+GB at peak, for BTCUSDT 2020–2025 with 1m (the stores read only the OHLCV
+columns). Four workers fit the ~5 GB this machine has free; eight would
+not. The parent computes the code version once and passes it to every
+task. Resume: a variant whose `stats.json` exists and whose latest `run`
+line is `ok` is skipped (a killed run leaves `started` as its latest line
+and reruns); `--force` reruns. A failed variant, or a worker process that
+dies, does not stop the others.
 
 Baselines are a separate pass because they need the trade table:
 `perpbt baselines --primary` and `perpbt baselines --grid` (non-primary
@@ -144,8 +156,10 @@ whose `stats.json` already has that budget is skipped unless `--force`.
 Family passes, run last because any rewrite of a `stats.json` (a rerun
 or a baselines pass) drops their values:
 - `perpbt stats holm` refuses until all nine in-sample primary cells have
-  baselines, then writes a `holm` block into each (`family`,
-  `variant_ids`, `n`, `alpha`, `p_{a,b,bh}_adj` and, for reference,
+  baselines at the pre-registered `baseline_runs_primary` (a smaller
+  `--runs` does not count), then writes a `holm` block into each
+  (`family`, `variant_ids`, `n`, `n_tested` per benchmark, `alpha`,
+  `baseline_runs`, `p_{a,b,bh}_adj` and, for reference,
   `p_{a,b,bh}_bonf`).
 - `perpbt stats dsr` refuses until every in-sample grid variant has a
   `stats.json`, then fills `dsr.local` (trials: the pair × session's 36)
@@ -158,7 +172,8 @@ or a baselines pass) drops their values:
 `allow_holdout=True`. It:
 
 1. Requires `configs/prereg.lock`; recomputes `prereg_hash` and refuses on
-   mismatch. Requires `holdout.end`, and the in-sample primary
+   mismatch. Requires `holdout.end`, not after the lock's
+   `data_download_date`, and the in-sample primary
    `stats.json` of every cell under the current code (its `insample_ref`:
    in-sample vol median and σ's for the regime labels and the
    buy-and-hold scaling).
@@ -171,9 +186,10 @@ or a baselines pass) drops their values:
    (`check_holdout_config` rejects anything else), with `is_holdout=True`,
    period `holdout.start` to `holdout.end`, in one invocation and in
    process, including baselines at the primary budget and the Holm
-   adjustment over the holdout family.
+   adjustment over the holdout family. A failing cell does not stop the
+   others; Holm is applied only when all nine succeeded.
 5. Writes `runs/holdout/DONE` (YAML) with the timestamp, the status, the
-   batch, both hashes (prereg and code version, plus the lock's code
+   failed cells, the batch, both hashes (prereg and code version, plus the lock's code
    version), the reason, the earlier holdout batches found in the
    registry, and the list of variant ids. `DONE` is written even when a
    cell fails, so any second touch needs its manual deletion.

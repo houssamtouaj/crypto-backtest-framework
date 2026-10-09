@@ -9,7 +9,8 @@ per CLI invocation; ``reason`` carries a holdout code-change reason.
 Worker processes append under an OS file lock, so lines never interleave.
 
 ``runs/results.parquet`` is derived: ``rebuild_results`` reads every
-``runs/<variant_id>/stats.json`` (with its ``config.yaml``) and takes
+``runs/<variant_id>/stats.json`` (with its ``config.yaml``) of the current
+code version (older ones go to ``results_superseded.parquet``) and takes
 ``run_ms``, ``git_commit`` and ``runtime_s`` from the variant's latest
 ``ok`` run row.
 """
@@ -29,9 +30,11 @@ import pyarrow.parquet as pq
 from perpbt.config import VariantConfig, load_yaml
 from perpbt.stats.variant import read_stats
 from perpbt.strategy.order_block import SKIP_REASONS
+from perpbt.version import code_version as current_code_version
 
 REGISTRY_FILE = "registry.jsonl"
 RESULTS_FILE = "results.parquet"
+SUPERSEDED_FILE = "results_superseded.parquet"
 STATUSES = ("started", "ok", "failed")
 KINDS = ("run", "baselines")
 SKIP_COLUMNS = tuple(f"skip_{r}" for r in (*SKIP_REASONS, "leverage"))
@@ -200,19 +203,27 @@ def results_rows(runs_dir: str | Path) -> list[dict]:
     return rows
 
 
-def results_table(runs_dir: str | Path) -> pa.Table:
-    return pa.Table.from_pylist(results_rows(runs_dir), schema=RESULTS_SCHEMA)
+def rebuild_results(runs_dir: str | Path, code_version: str | None = None) -> Path:
+    """Write ``runs/results.parquet`` from the ``stats.json`` of the current code version (spec §6.3).
 
-
-def rebuild_results(runs_dir: str | Path) -> Path:
-    """Write ``runs/results.parquet`` from every ``stats.json`` (spec §6.3)."""
+    Folders written by another code version (runs before a bug fix) go to
+    ``runs/results_superseded.parquet`` instead, so the committed table
+    holds one code generation; the registry keeps the history.
+    """
     runs_dir = Path(runs_dir)
-    table = results_table(runs_dir)
+    cv = code_version or current_code_version()
+    rows = results_rows(runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
     out = runs_dir / RESULTS_FILE
-    pq.write_table(table, out)
+    pq.write_table(pa.Table.from_pylist([r for r in rows if r["code_version"] == cv], schema=RESULTS_SCHEMA), out)
+    old = [r for r in rows if r["code_version"] != cv]
+    stale = runs_dir / SUPERSEDED_FILE
+    if old:
+        pq.write_table(pa.Table.from_pylist(old, schema=RESULTS_SCHEMA), stale)
+    else:
+        stale.unlink(missing_ok=True)
     return out
 
 
-def read_results(runs_dir: str | Path) -> pd.DataFrame:
-    return pq.read_table(Path(runs_dir) / RESULTS_FILE).to_pandas()
+def read_results(runs_dir: str | Path, *, superseded: bool = False) -> pd.DataFrame:
+    return pq.read_table(Path(runs_dir) / (SUPERSEDED_FILE if superseded else RESULTS_FILE)).to_pandas()

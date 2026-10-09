@@ -134,10 +134,13 @@ def test_baselines_pass_holm_dsr_and_results(world, ran, tmp_path):
     runs = tmp_path / "runs"
     shutil.copytree(ran, runs)
     prim = primary_variants(prereg)
-    with pytest.raises(FamilyIncomplete, match="no baselines"):
-        apply_holm(runs, ids(prim), family="insample", alpha=0.05)
+    with pytest.raises(FamilyIncomplete, match="pre-registered 30 runs"):
+        apply_holm(runs, ids(prim), family="insample", alpha=0.05, baseline_runs=30)
+    baselines_many(prim, data_cfg, runs_dir=runs, workers=1, n_runs=3)
+    with pytest.raises(FamilyIncomplete, match="pre-registered 30 runs"):  # a smaller budget is not the prereg's
+        apply_holm(runs, ids(prim), family="insample", alpha=0.05, baseline_runs=30)
 
-    done = baselines_many(prim, data_cfg, runs_dir=runs, workers=1)
+    done = baselines_many(prim, data_cfg, runs_dir=runs, workers=1)  # 3 runs stored: rerun at 30
     assert len(done["ok"]) == 4 and not done["failed"] and not done["missing"]
     for vid in ids(prim):
         d = variant_dir(runs, vid)
@@ -155,7 +158,8 @@ def test_baselines_pass_holm_dsr_and_results(world, ran, tmp_path):
     assert len(baselines_many(grid_rest, data_cfg, runs_dir=runs, workers=1)["ok"]) == 8
     assert read_stats(variant_dir(runs, ids(grid_rest)[0]) / "stats.json")["baselines"]["n_runs"] == 10
 
-    blocks = apply_holm(runs, ids(prim), family="insample", alpha=0.05)
+    blocks = apply_holm(runs, ids(prim), family="insample", alpha=0.05, baseline_runs=30)
+    assert blocks[0]["n_tested"] == {"a": 4, "b": 4, "bh": 4} and blocks[0]["baseline_runs"] == 30
     stats = [read_stats(variant_dir(runs, v) / "stats.json") for v in ids(prim)]
     expect = holm([s["baselines"]["p_a"] for s in stats])
     assert np.allclose([b["p_a_adj"] for b in blocks], expect)
@@ -183,3 +187,32 @@ def test_baselines_need_a_stored_run(world, tmp_path):
     assert len(done["missing"]) == 4 and not done["ok"]
     with pytest.raises(FamilyIncomplete, match="no stats.json"):
         apply_dsr(tmp_path, {("BTCUSDT", "utc"): ids(primary_variants(prereg))[:1]})
+
+
+def test_a_run_without_a_final_row_reruns_and_a_rerun_drops_stale_baselines(world, ran, tmp_path):
+    _, prereg, data_cfg, _ = world
+    runs = tmp_path / "runs"
+    shutil.copytree(ran, runs)
+    prim = primary_variants(prereg)
+    baselines_many(prim[:1], data_cfg, runs_dir=runs, workers=1)
+    vid = ids(prim)[0]
+    reg = Registry(runs)
+    row = dict(reg.latest()[vid], status="started", error=None)
+    reg.append(row)  # a killed process: started without ok/failed
+    done = run_many(prim, data_cfg, runs_dir=runs, workers=1)
+    assert done["ok"] == [vid] and len(done["skipped"]) == 3
+    names = {p.name for p in variant_dir(runs, vid).iterdir()}
+    assert names == VARIANT_FILES  # the baseline files went with the old stats.json
+    assert read_stats(variant_dir(runs, vid) / "stats.json")["baselines"]["n_runs"] is None
+
+
+def test_results_hold_the_current_code_generation_only(world, ran, tmp_path):
+    _, prereg, data_cfg, _ = world
+    runs = tmp_path / "runs"
+    shutil.copytree(ran, runs)
+    v = primary_variants(prereg)[0]
+    old = run_variant(v.cfg, data_cfg, runs_dir=runs, labels=v.labels(), cv="0" * 64)  # before a bug fix
+    run_many([v], data_cfg, runs_dir=runs, workers=1)
+    assert set(read_results(runs)["code_version"]) == {code_version()} and len(read_results(runs)) == 12
+    stale = read_results(runs, superseded=True)
+    assert list(stale["variant_id"]) == [old.name] and list(stale["code_version"]) == ["0" * 64]

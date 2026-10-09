@@ -360,10 +360,10 @@ from the trade table for every variant.
 | Download + convert + validate | 10–20 min, once |
 | One variant run (~236k candles, Python loop) | 15–60 s |
 | Per-variant stats (bootstraps, re-pricing) | ~5 s |
-| Grid, 324 runs, 8 workers | 15–45 min |
+| Grid, 324 runs, 4 workers (memory, Phase 6 §6.5) | 15–45 min (measured: ~16 s per variant) |
 | Baseline A, primary (precomputed table, 5,000 lookups) | seconds per cell |
 | Baseline B, primary (5,000 batched runs × ~1,000 trades) | 2–10 min per cell |
-| Baselines, grid cells (500 runs) | ~30 min total on 8 workers |
+| Baselines, grid cells (500 runs) | ~30 min total on 4 workers (measured: ~20 s per variant) |
 | Reports | ~5 min |
 
 Trade counts are a guess (several hundred to ~1,000 per pair × session

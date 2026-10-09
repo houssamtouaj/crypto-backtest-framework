@@ -208,7 +208,7 @@ def _stats(args: argparse.Namespace) -> int:
         if args.stats_command == "holm":
             primary = primary_variants(prereg)
             blocks = runner.apply_holm(args.runs_dir, [v.cfg.variant_id(cv) for v in primary], family="insample",
-                                       alpha=prereg.stats.alpha)
+                                       alpha=prereg.stats.alpha, baseline_runs=prereg.stats.baseline_runs_primary)
             for v, b in zip(primary, blocks, strict=True):
                 print(f"{v.cfg.pair} {v.cfg.session.name:6} p_a_adj {b['p_a_adj']} p_b_adj {b['p_b_adj']} "
                       f"p_bh_adj {b['p_bh_adj']}")
@@ -245,7 +245,7 @@ def _holdout(args: argparse.Namespace) -> int:
         return 2
     for k, v in done.items():
         print(f"{k}: {v}")
-    return 0
+    return 0 if done["status"] == "ok" else 1
 
 
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
@@ -253,7 +253,8 @@ def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
     p.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs and the registry (default: %(default)s)")
     if pool:
-        p.add_argument("--workers", type=int, default=8, help="worker processes (default: %(default)s)")
+        p.add_argument("--workers", type=int, default=4,
+                       help="worker processes, about 0.75 GB each at peak (default: %(default)s)")
         p.add_argument("--force", action="store_true", help="rerun variants that are already done")
 
 

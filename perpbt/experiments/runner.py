@@ -34,6 +34,7 @@ import traceback
 import uuid
 from collections.abc import Sequence
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -58,6 +59,7 @@ log = logging.getLogger(__name__)
 
 STATS_FILE = "stats.json"
 CONFIG_FILE = "config.yaml"
+BASELINE_FILES = ("baseline_a.parquet", "baseline_a_runs.parquet", "baseline_b.parquet")
 
 
 class FamilyIncomplete(RuntimeError):
@@ -170,14 +172,17 @@ def run_variant(
     allow_holdout: bool = False,
     reason: str | None = None,
     batch: str = "",
+    cv: str | None = None,
 ) -> Path:
     """Simulate, compute statistics (and baselines when ``baseline_runs``) and write ``runs/<variant_id>/``.
 
     The master seed is ``cfg.stats.master_seed`` (part of the variant id).
     ``insample_ref`` is the in-sample cell's reference for a holdout run.
-    Raises after recording a ``failed`` row.
+    ``cv`` is the code version the caller computed (a driver passes its own,
+    so every worker writes under the ids the driver looks up). Raises after
+    recording a ``failed`` row.
     """
-    cv = _code_version()
+    cv = cv or _code_version()
     vid = cfg.variant_id(cv)
     out = variant_dir(runs_dir, vid)
     reg = Registry(runs_dir)
@@ -187,7 +192,8 @@ def run_variant(
     t0 = time.perf_counter()
     try:
         out.mkdir(parents=True, exist_ok=True)
-        (out / STATS_FILE).unlink(missing_ok=True)
+        for name in (STATS_FILE, *BASELINE_FILES):  # nothing stale survives a rerun
+            (out / name).unlink(missing_ok=True)
         market = load_market(cfg, data_cfg, allow_holdout=allow_holdout)
         result = simulate(cfg, market, vid)
         base = run_baselines(result, market, cfg, variant_id=vid, n_runs=baseline_runs) if baseline_runs else None
@@ -208,9 +214,10 @@ def add_baselines(
     runs_dir: str | Path,
     n_runs: int | None = None,
     batch: str = "",
+    cv: str | None = None,
 ) -> Path:
     """The baselines pass for one stored in-sample variant (default budget ``cfg.stats.baseline_runs``)."""
-    cv = _code_version()
+    cv = cv or _code_version()
     vid = cfg.variant_id(cv)
     out = variant_dir(runs_dir, vid)
     old = read_stats(out / STATS_FILE)  # FileNotFoundError: run the variant first
@@ -247,19 +254,21 @@ class Task:
     data_cfg: DataConfig
     runs_dir: str
     batch: str
+    cv: str
     n_runs: int | None = None
 
 
 def execute(task: Task) -> tuple[str, str, float, str | None]:
     """Run one task (a module-level function, so ``spawn`` workers can import it): ``(id, status, s, error)``."""
     t0 = time.perf_counter()
-    vid = task.cfg.variant_id(_code_version())
+    vid = task.cfg.variant_id(task.cv)
     try:
         if task.kind == "run":
             run_variant(task.cfg, task.data_cfg, runs_dir=task.runs_dir, labels=task.labels,
-                        baseline_runs=task.n_runs, batch=task.batch)
+                        baseline_runs=task.n_runs, batch=task.batch, cv=task.cv)
         else:
-            add_baselines(task.cfg, task.data_cfg, runs_dir=task.runs_dir, n_runs=task.n_runs, batch=task.batch)
+            add_baselines(task.cfg, task.data_cfg, runs_dir=task.runs_dir, n_runs=task.n_runs, batch=task.batch,
+                          cv=task.cv)
     except Exception as e:  # recorded in the registry with the traceback
         return vid, "failed", time.perf_counter() - t0, f"{type(e).__name__}: {e}"
     return vid, "ok", time.perf_counter() - t0, None
@@ -283,7 +292,12 @@ def _drive(tasks: list[Task], workers: int) -> dict[str, list[str]]:
     with ProcessPoolExecutor(max_workers=min(workers, n), mp_context=ctx) as pool:
         futures = {pool.submit(execute, t): t for t in tasks}
         for k, fut in enumerate(as_completed(futures), start=1):
-            report(k, futures[fut], fut.result())
+            task = futures[fut]
+            try:
+                res = fut.result()
+            except BrokenProcessPool as e:  # a worker died (e.g. out of memory): the rest fail, nothing aborts
+                res = (task.cfg.variant_id(task.cv), "failed", 0.0, f"BrokenProcessPool: {e}")
+            report(k, task, res)
     return done
 
 
@@ -292,7 +306,7 @@ def run_many(
     data_cfg: DataConfig,
     *,
     runs_dir: str | Path,
-    workers: int = 8,
+    workers: int = 4,
     force: bool = False,
     batch: str | None = None,
 ) -> dict[str, list[str]]:
@@ -308,11 +322,11 @@ def run_many(
                 and latest.get(vid, {}).get("status") == "ok"):
             skipped.append(vid)
             continue
-        tasks.append(Task("run", v.cfg, v.labels(), data_cfg, str(runs_dir), batch))
+        tasks.append(Task("run", v.cfg, v.labels(), data_cfg, str(runs_dir), batch, cv))
     tasks.sort(key=lambda t: t.cfg.pair)  # stable: a worker's cache sees one pair at a time
     log.info("run: %d to run, %d already done", len(tasks), len(skipped))
     done = _drive(tasks, workers)
-    rebuild_results(runs_dir)
+    rebuild_results(runs_dir, cv)
     return {**done, "skipped": skipped}
 
 
@@ -322,7 +336,7 @@ def baselines_many(
     *,
     runs_dir: str | Path,
     n_runs: int | None = None,
-    workers: int = 8,
+    workers: int = 4,
     force: bool = False,
     batch: str | None = None,
 ) -> dict[str, list[str]]:
@@ -341,11 +355,11 @@ def baselines_many(
         if not force and read_stats(path)["baselines"]["n_runs"] == m:
             skipped.append(vid)
             continue
-        tasks.append(Task("baselines", v.cfg, v.labels(), data_cfg, str(runs_dir), batch, m))
+        tasks.append(Task("baselines", v.cfg, v.labels(), data_cfg, str(runs_dir), batch, cv, m))
     tasks.sort(key=lambda t: t.cfg.pair)
     log.info("baselines: %d to run, %d already done, %d without a run", len(tasks), len(skipped), len(missing))
     done = _drive(tasks, workers)
-    rebuild_results(runs_dir)
+    rebuild_results(runs_dir, cv)
     return {**done, "skipped": skipped, "missing": missing}
 
 
@@ -359,18 +373,23 @@ def _family_stats(runs_dir: Path, variant_ids: Sequence[str], what: str) -> list
     return [read_stats(variant_dir(runs_dir, v) / STATS_FILE) for v in variant_ids]
 
 
-def apply_holm(runs_dir: str | Path, variant_ids: Sequence[str], *, family: str, alpha: float) -> list[dict]:
+def apply_holm(runs_dir: str | Path, variant_ids: Sequence[str], *, family: str, alpha: float,
+               baseline_runs: int) -> list[dict]:
     """Holm (and Bonferroni, for reference) over one family per benchmark (A, B, buy-and-hold); spec §5.8, D11.
 
-    Refuses until every member has baselines. Writes a ``holm`` block into
-    each member's ``stats.json`` and returns the blocks in input order.
+    Refuses until every member has baselines at the pre-registered budget
+    ``baseline_runs``. Writes a ``holm`` block into each member's
+    ``stats.json`` and returns the blocks in input order. ``n`` is the
+    family size; ``n_tested`` counts, per benchmark, the members with a
+    p-value (a missing one is left out of the family, spec §5.8).
     """
     runs_dir = Path(runs_dir)
     stats = _family_stats(runs_dir, variant_ids, "holm")
-    without = [s["variant_id"] for s in stats if s["baselines"]["n_runs"] is None]
+    without = [s["variant_id"] for s in stats if s["baselines"]["n_runs"] != baseline_runs]
     if without:
-        raise FamilyIncomplete(f"holm: {len(without)} of {len(stats)} cells have no baselines yet "
-                               f"(first {without[0][:12]}); run `perpbt baselines` first")
+        raise FamilyIncomplete(f"holm: {len(without)} of {len(stats)} cells have no baselines at the "
+                               f"pre-registered {baseline_runs} runs (first {without[0][:12]}); "
+                               "run `perpbt baselines --primary` first")
     p = {"a": [s["baselines"]["p_a"] for s in stats], "b": [s["baselines"]["p_b"] for s in stats],
          "bh": [s["buy_and_hold"]["p_bh"] for s in stats]}
     adj = {k: holm(v) for k, v in p.items()}
@@ -379,6 +398,8 @@ def apply_holm(runs_dir: str | Path, variant_ids: Sequence[str], *, family: str,
     for i, s in enumerate(stats):
         block = sanitize({
             "family": family, "variant_ids": list(variant_ids), "n": len(variant_ids), "alpha": alpha,
+            "baseline_runs": baseline_runs,
+            "n_tested": {k: int(sum(x is not None for x in v)) for k, v in p.items()},
             **{f"p_{k}_adj": adj[k][i] for k in p}, **{f"p_{k}_bonf": bonf[k][i] for k in p},
         })
         s["holm"] = block

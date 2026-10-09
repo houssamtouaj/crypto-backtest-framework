@@ -113,6 +113,7 @@ INVALID = {
     "listing missing": (_set(("pairs",), ["BTCUSDT", "XRPUSDT"]), "no listing date"),
     "bad date": (_set(("insample", "start"), "2020-13-01"), "date"),
     "negative fee": (_set(("execution", "fee_maker"), -0.1), "fee_maker"),
+    "holdout end without download": (_set(("holdout", "end"), "2026-09-27"), "data_download_date"),
 }
 
 

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -121,7 +122,10 @@ def sanitize(obj):
 def write_stats(stats: dict, path: str | Path) -> None:
     """Write ``stats`` as ``stats.json`` (sorted keys, LF, non-finite as null): byte-identical across reruns."""
     text = json.dumps(sanitize(stats), sort_keys=True, indent=1, allow_nan=False, ensure_ascii=False)
-    Path(path).write_text(text + "\n", encoding="utf-8", newline="\n")
+    path = Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text + "\n", encoding="utf-8", newline="\n")
+    os.replace(tmp, path)  # atomic: a killed writer never leaves a truncated stats.json
 
 
 def read_stats(path: str | Path) -> dict:

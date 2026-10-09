@@ -320,6 +320,8 @@ def parse_prereg(raw: Any) -> Prereg:
         raise ConfigError("insample.end: required")
     if holdout.start <= insample.end:
         raise ConfigError(f"holdout.start {holdout.start} must be after insample.end {insample.end}")
+    if holdout.end is not None and (download is None or holdout.end > download):
+        raise ConfigError(f"holdout.end {holdout.end} must not be after data_download_date {download}")
     warmup = _iso(raw["warmup_start"], "warmup_start")
     if warmup > insample.start:
         raise ConfigError(f"warmup_start {warmup} is after insample.start {insample.start}")

@@ -7,10 +7,11 @@ which goes into every registry row and ``DONE``). It then runs the nine
 primary cells, and only those, over ``holdout.start .. holdout.end`` with
 baselines at the primary budget and the in-sample cell's ``insample_ref``
 (the in-sample primary ``stats.json`` under the current code must exist),
-applies Holm over the holdout family, and writes ``DONE`` with the time,
-the status, both hashes and the variant ids. ``DONE`` is written even when
-a cell fails, so a second touch always needs its manual deletion; earlier
-holdout batches in the registry are reported.
+applies Holm over the holdout family when every cell succeeded, and
+writes ``DONE`` with the time, the status, the failed cells, both hashes
+and the variant ids. A failing cell does not stop the others; ``DONE`` is
+written even then, so a second touch always needs its manual deletion;
+earlier holdout batches in the registry are reported.
 """
 from __future__ import annotations
 
@@ -87,6 +88,9 @@ def run_holdout(
         raise HoldoutRefused("holdout: perpbt/ changed since the freeze; rerun with --allow-code-change --reason")
     if prereg.holdout.end is None:
         raise HoldoutRefused("holdout: holdout.end is not set in the pre-registration")
+    if prereg.holdout.end > lock["data_download_date"]:
+        raise HoldoutRefused(f"holdout: holdout.end {prereg.holdout.end} is after the frozen data download date "
+                             f"{lock['data_download_date']}")
     reason = reason.strip() if allow_code_change else None
 
     variants = primary_variants(prereg, holdout=True)
@@ -106,19 +110,27 @@ def run_holdout(
     batch = new_batch()
     data_cfg = prereg.data_config(data_dir)
     ids = [v.cfg.variant_id(code_version()) for v in variants]
+    failed: list[str] = []
     status = "failed"
     try:
-        for v, ref in zip(variants, refs, strict=True):
+        for v, ref, vid in zip(variants, refs, ids, strict=True):
             log.info("holdout: %s %s", v.cfg.pair, v.cfg.session.name)
-            run_variant(v.cfg, data_cfg, runs_dir=runs_dir, labels=v.labels(),
-                        baseline_runs=prereg.stats.baseline_runs_primary, insample_ref=ref,
-                        allow_holdout=True, reason=reason, batch=batch)
-        apply_holm(runs_dir, ids, family="holdout", alpha=prereg.stats.alpha)
-        status = "ok"
+            try:
+                run_variant(v.cfg, data_cfg, runs_dir=runs_dir, labels=v.labels(),
+                            baseline_runs=prereg.stats.baseline_runs_primary, insample_ref=ref,
+                            allow_holdout=True, reason=reason, batch=batch)
+            except Exception as e:  # the traceback is in the registry; the other cells still run
+                log.error("holdout: %s %s failed: %s: %s", v.cfg.pair, v.cfg.session.name, type(e).__name__, e)
+                failed.append(vid)
+        if not failed:
+            apply_holm(runs_dir, ids, family="holdout", alpha=prereg.stats.alpha,
+                       baseline_runs=prereg.stats.baseline_runs_primary)
+            status = "ok"
     finally:
         content = {
             "finished_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "status": status, "batch": batch, "prereg_hash": lock["prereg_hash"], "code_version": cv,
+            "status": status, "failed": failed, "batch": batch, "prereg_hash": lock["prereg_hash"],
+            "code_version": cv,
             "lock_code_version": lock["code_version"], "reason": reason, "prior_attempts": prior,
             "variant_ids": ids,
         }
