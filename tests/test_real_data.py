@@ -69,3 +69,28 @@ def test_order_block_rule_on_real_candles(real_cfg, pair):
     i0 = cd.index_at(date_ms("2024-01-01"))  # a later first call rebuilds the same live levels
     late = run_strategy(cd, StrategyParams(), UTC, start_i=i0)
     assert late.intents == [(i, x) for i, x in runs["utc"].intents if i >= i0]
+
+
+def test_simulator_smoke_btc_2024(real_cfg, capsys):
+    """Spec test 4.7: primary config, BTCUSDT 2024, UTC session, 1m resolution on."""
+    from perpbt.config import ExecConfig
+    from perpbt.execution.simulator import run
+    from perpbt.strategy.order_block import OrderBlockStrategy
+
+    start, end = date_ms("2024-01-01"), date_ms("2025-01-01")
+    cd = CandleStore(real_cfg).load("BTCUSDT", "15m", date_ms(real_cfg.warmup_start), end)
+    m1 = CandleStore(real_cfg).load("BTCUSDT", "1m", start, end)
+    fund = FundingStore(real_cfg).load("BTCUSDT", start, end)
+    params = StrategyParams()
+    res = run(cd, m1, fund, SessionCalendar(UTC, cd.ts), OrderBlockStrategy(params), ExecConfig(),
+              start, end, variant_id="smoke")
+    tr, s = res.trades, res.summary
+    assert s["n_trades"] > 50 and tr["exit_ms"].notna().all() and (tr["exit_reason"] != "").all()
+    plain = tr[tr["fill_resolution"] != "open_gap"]
+    assert (plain["net_r"] >= -1 - plain["cost_r"] - 1e-9).all()
+    assert (plain["net_r"] <= params.r_target + 1e-9).all()
+    assert 10_000 + tr["net_pnl"].sum() == pytest.approx(s["final_equity"], rel=1e-12)
+    assert len(res.daily) == 366  # 2024 is a leap year
+    with capsys.disabled():
+        print(f"\nsmoke BTCUSDT 2024 UTC: {json.dumps(s, indent=1)}\nskips {res.skips}")
+        print(tr.groupby("exit_reason")["net_r"].agg(["count", "mean"]))

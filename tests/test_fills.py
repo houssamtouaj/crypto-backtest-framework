@@ -61,11 +61,18 @@ def test_target_needs_target_plus_pierce_and_exits_at_the_target():
     assert (s.exit, s.exit_ref, s.touched) == ("target", 102.0, 1)
 
 
-def test_gaps_through_stop_or_target_exit_at_the_open():
+def test_a_gap_through_the_stop_exits_at_the_open_a_target_exit_is_always_at_the_target():
     s = apply_rules(False, 98.0, 98.5, 97.5, LV)
     assert (s.exit, s.exit_ref) == ("stop", 98.0)
-    s = apply_rules(False, 103.0, 103.5, 102.5, LV)
-    assert (s.exit, s.exit_ref) == ("target", 103.0)
+    s = apply_rules(False, 103.0, 103.5, 102.5, LV)  # no price improvement on a resting sell limit
+    assert (s.exit, s.exit_ref) == ("target", 102.0)
+
+
+def test_suppressed_target_then_open_above_it_still_exits_at_the_target():
+    # minute 0 fills and touches the target (ignored, same minute); minute 1 opens above the target
+    m = minutes([(101.9, 102.4, 99.9), (102.3, 102.5, 102.2)])
+    out = walk_minutes(True, *m, LV)
+    assert (out.filled, out.exit, out.exit_ref, out.exit_minute) == (True, "target", 102.0, 1)
 
 
 def test_open_gap_below_the_stop_fills_and_stops_at_the_open():

@@ -2,7 +2,8 @@
 
 ``apply_rules`` is spec §4.3 on a single candle of any timeframe, for one
 long bracket: entry (if pending), then stop (also on the fill candle),
-then target (not on the fill candle). ``resolve_candle`` applies it to a
+then target (not on the fill candle; a target exit is always at the
+target price). ``resolve_candle`` applies it to a
 15m candle and, when two or more of {entry, stop, target} were touched and
 1m candles are in use, hands the candle to ``walk_minutes``, which applies
 the same rules to each of its 15 minutes. Time exits are not handled here:
@@ -83,7 +84,9 @@ def apply_rules(pending: bool, o: float, h: float, l: float, lv: Levels) -> Step
     if stop_hit:
         return Step(touched, filled, fill_price, gap, "stop", min(lv.stop, o))
     if target_hit and not filled:
-        return Step(touched, filled, fill_price, gap, "target", max(lv.target, o))
+        # A resting sell limit fills at its price, never better (user ruling 2026-10-09): an open above the
+        # target only follows a candle whose target touch the same-candle rule ignored, not a real gap.
+        return Step(touched, filled, fill_price, gap, "target", lv.target)
     return Step(touched, filled, fill_price, gap, None, NAN)
 
 

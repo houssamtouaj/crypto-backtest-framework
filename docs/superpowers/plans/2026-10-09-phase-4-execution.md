@@ -204,3 +204,11 @@ Tests: column lists and dtypes equal the spec tables (plus decision-12 nulls); M
 ### Task 8: Real-data smoke run, spec amendments, review
 
 `test_simulator_smoke_btc_2024` (slow): primary config, BTCUSDT, UTC session, 2024-01-01..2024-12-31, 1m on: no exception; every trade has an exit; for non-`open_gap` trades `net_r ≥ −1 − cost_r − 1e-9` and `net_r ≤ r_target + 1e-9`; fill rate, skip counts and resolution counts printed. Then three trades spot-checked against the raw candles, the spec amended (decisions 1–18), the whole-branch review, and the merge question to the user.
+
+## Execution notes
+
+- **User ruling 2026-10-09 (target pricing).** The smoke run found a target exit above its target: the same-candle rule ignores a target touched on the fill candle (or minute), and the next open above the target was then paid by `max(target, open)`. On all real data, 17 of ~9,600 trades, ~+10 R, all favourable. Ruling: a target exit is always at the target price. `apply_rules` changed; spec §4.3 amended in the same commit.
+- **Spec test 4.3 corrected:** an `open_gap` fill gives `actual_risk_usd < risk_usd` for a long (the spec said `>`).
+- **Look-ahead test strengthened:** a planted one-candle peek (equity from `close[i+1]`, or `low[i+1]` in the fill check) passed the fixed-cut test; cuts on candles with a placement, a fill and an exit catch both.
+- **Real-data speed:** about 2 s per variant over 2020–2025 with 1m resolution (all three pairs, three sessions).
+- **Spot check (exit criterion):** BTCUSDT 2024 UTC trades 25 (target), 45 (stop) and 41 (1m-resolved) recomputed by hand from the raw 15m and 1m candles: stop, target, qty, fees, slippage, funding and net R match; no earlier candle touches the entry, stop or target.
