@@ -34,9 +34,21 @@ def test_e1_no_fill_at_entry_with_pierce_but_fill_at_entry_minus_pierce():
     assert s.filled and s.fill_price == 100.0  # the limit price: pierce is queue position, not improvement
 
 
-def test_e2_open_gap_fills_at_the_open():
-    s = apply_rules(True, 99.6, 99.8, 99.5, LV)
+def test_e2_open_gap_fills_at_the_open_on_the_first_look_only():
+    s = apply_rules(True, 99.6, 99.8, 99.5, LV, first_look=True)
     assert (s.filled, s.fill_price, s.fill_gap) == (True, 99.6, True)
+    s = apply_rules(True, 99.6, 99.8, 99.5, LV)  # a resting limit fills at its price, never better
+    assert (s.filled, s.fill_price, s.fill_gap, s.touched) == (True, 100.0, False, 1)
+
+
+def test_first_look_in_the_walk_is_minute_zero_only():
+    m = minutes([(100.5, 100.6, 100.4), (99.7, 99.8, 99.6)])  # minute 1 opens below the entry
+    out = walk_minutes(True, *m, LV, first_look=True)
+    assert (out.filled, out.fill_price, out.fill_gap, out.fill_minute) == (True, 100.0, False, 1)
+    m = minutes([(99.7, 99.8, 99.6)])
+    out = walk_minutes(True, *m, LV, first_look=True)
+    assert (out.fill_price, out.fill_gap, out.fill_minute) == (99.7, True, 0)
+    assert walk_minutes(True, *m, LV).fill_price == 100.0
 
 
 def test_e3_fill_and_stop_on_one_candle_is_stopped_at_the_stop():
@@ -76,7 +88,7 @@ def test_suppressed_target_then_open_above_it_still_exits_at_the_target():
 
 
 def test_open_gap_below_the_stop_fills_and_stops_at_the_open():
-    s = apply_rules(True, 98.0, 98.5, 97.5, LV)
+    s = apply_rules(True, 98.0, 98.5, 97.5, LV, first_look=True)
     assert (s.filled, s.fill_price, s.fill_gap, s.exit, s.exit_ref) == (True, 98.0, True, "stop", 98.0)
 
 

@@ -63,6 +63,14 @@ def test_e2_open_gap_fills_at_the_open():
     assert t.actual_risk_usd == pytest.approx(t.qty * (99.8 - 99.0))
 
 
+def test_a_resting_order_never_fills_below_its_limit():
+    rows = [FLAT, FLAT, (99.8, 100.4, 99.6, 100.2), FLAT]
+    res, _ = sim(rows, {0: [bracket()]})
+    t = only(res.trades)
+    assert (t.entry_idx, t.entry_price, t.fill_resolution) == (2, 100.0, "15m_unambiguous")
+    assert t.actual_risk_usd == pytest.approx(t.risk_usd)
+
+
 def test_e3_fill_and_stop_on_one_candle_is_minus_one_r():
     rows = [FLAT, (100.5, 100.6, 98.5, 99.0), FLAT]
     res, _ = sim(rows, {0: [bracket()]})

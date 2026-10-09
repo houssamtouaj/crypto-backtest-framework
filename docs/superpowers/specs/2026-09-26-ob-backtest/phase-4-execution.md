@@ -91,11 +91,16 @@ order-block strategy emits neither). A `short` bracket raises
 
 For each candle `j` after placement (`j > placed_idx`), in this order:
 
-1. **Entry** (pending, `expires_ms > τ_j`): if `open[j] ≤ entry − pierce_abs`
-   → fill at `open[j]`, resolution `open_gap`; else if
+1. **Entry** (pending, `expires_ms > τ_j`): on the order's first look
+   (`j = placed_idx + 1`; with 1m, its minute 0) if
+   `open[j] ≤ entry − pierce_abs` → fill at `open[j]`, resolution
+   `open_gap` (the order was marketable on arrival, E9); else if
    `low[j] ≤ entry − pierce_abs` → fill at `entry`. The fill price is the
-   limit price: pierce models queue position, not price improvement. Maker
-   fee. A pending order whose `expires_ms ≤ τ_j` is cancelled (`expired`)
+   limit price: pierce models queue position, not price improvement, and
+   a resting order never fills below its limit (user ruling 2026-10-09,
+   the mirror of the target ruling below; before it, any open through the
+   threshold filled at the open, which on real data improved one resting
+   SOL fill by 0.1 R). Maker fee. A pending order whose `expires_ms ≤ τ_j` is cancelled (`expired`)
    before this check; an order expiring at `τ_j + 15m` can still fill on
    `j`, and if it does not it is cancelled after the check, so it is not
    pending in the `AccountView` of that close (`cancelled_ms = expires_ms`).
@@ -333,7 +338,8 @@ ambiguous (candle, order) pairs resolved without a full minute set.
 
 - **4.1 Order lifecycle and simulator loop, no costs.**
   E1 fill when `low == entry` with `pierce = 0`, not with `pierce > 0`;
-  fill when `low ≤ entry − pierce_abs`. E2 open-gap fill at the open.
+  fill when `low ≤ entry − pierce_abs`. E2 open-gap fill at the open on the first look; a
+  resting order whose candle opens below the threshold fills at its limit.
   E3 fill and stop on one candle → stop, `−1 R` gross. E4 fill and target
   on one candle → no target that candle. E5 stop and target on one candle
   → stop. E6 cancel at expiry; an order expiring at the candle's close

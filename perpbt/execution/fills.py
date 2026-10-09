@@ -3,7 +3,10 @@
 ``apply_rules`` is spec §4.3 on a single candle of any timeframe, for one
 long bracket: entry (if pending), then stop (also on the fill candle),
 then target (not on the fill candle; a target exit is always at the
-target price). ``resolve_candle`` applies it to a
+target price). A resting limit fills at its own price; only on the order's
+first look (the first candle, or minute, it is evaluated on) can an open
+already through the threshold fill it at that open, because the order was
+marketable on arrival (user ruling 2026-10-09). ``resolve_candle`` applies it to a
 15m candle and, when two or more of {entry, stop, target} were touched and
 1m candles are in use, hands the candle to ``walk_minutes``, which applies
 the same rules to each of its 15 minutes. Time exits are not handled here:
@@ -64,14 +67,21 @@ class Step:
     exit_ref: float  # exit reference price, before slippage
 
 
-def apply_rules(pending: bool, o: float, h: float, l: float, lv: Levels) -> Step:  # noqa: E741
-    """One candle for one bracket: ``pending`` is True for an unfilled entry, False for an open position."""
+def apply_rules(
+    pending: bool, o: float, h: float, l: float, lv: Levels, *, first_look: bool = False,  # noqa: E741
+) -> Step:
+    """One candle for one bracket: ``pending`` is True for an unfilled entry, False for an open position.
+
+    ``first_look``: this is the first candle (or minute) the entry is
+    evaluated on, so an open through the threshold fills at the open
+    (``open_gap``); a resting entry fills at its limit price.
+    """
     touched = 0
     filled = False
     fill_price = NAN
     gap = False
     if pending:
-        if o <= lv.fill_at:
+        if first_look and o <= lv.fill_at:
             filled, fill_price, gap = True, o, True
         elif l <= lv.fill_at:
             filled, fill_price = True, lv.entry
@@ -108,15 +118,20 @@ def _from_step(s: Step, resolution: str) -> CandleOutcome:
     return CandleOutcome(s.filled, s.fill_price, s.fill_gap, -1, s.exit, s.exit_ref, -1, resolution)
 
 
-def walk_minutes(pending: bool, o1: np.ndarray, h1: np.ndarray, l1: np.ndarray, lv: Levels) -> CandleOutcome:
-    """Spec §4.4: ``apply_rules`` minute by minute until an exit; ``1m_pessimistic`` if one minute touched two events."""
+def walk_minutes(
+    pending: bool, o1: np.ndarray, h1: np.ndarray, l1: np.ndarray, lv: Levels, *, first_look: bool = False,
+) -> CandleOutcome:
+    """Spec §4.4: ``apply_rules`` minute by minute until an exit; ``1m_pessimistic`` if one minute touched two events.
+
+    ``first_look`` applies to minute 0 only.
+    """
     filled = False
     fill_price = NAN
     gap = False
     fill_minute = -1
     pessimistic = False
     for m in range(len(o1)):
-        s = apply_rules(pending, float(o1[m]), float(h1[m]), float(l1[m]), lv)
+        s = apply_rules(pending, float(o1[m]), float(h1[m]), float(l1[m]), lv, first_look=first_look and m == 0)
         if s.touched >= 2:
             pessimistic = True
         if s.filled:
@@ -131,15 +146,18 @@ def walk_minutes(pending: bool, o1: np.ndarray, h1: np.ndarray, l1: np.ndarray, 
 def resolve_candle(
     pending: bool, o: float, h: float, l: float, lv: Levels,  # noqa: E741
     minutes: tuple[np.ndarray, np.ndarray, np.ndarray] | _Missing | None,
+    *,
+    first_look: bool = False,
 ) -> CandleOutcome:
     """Spec §4.3 on a 15m candle, with the 1m resolver for ambiguous candles.
 
     ``minutes`` is None when 1m candles are not in use, ``MISSING`` when
     they are but one of this candle's minutes is absent, else the
     ``(open, high, low)`` arrays of its 15 minutes. The minutes are only
-    consulted when the 15m candle touched two or more events.
+    consulted when the 15m candle touched two or more events. ``first_look``
+    as in ``apply_rules``.
     """
-    s = apply_rules(pending, o, h, l, lv)
+    s = apply_rules(pending, o, h, l, lv, first_look=first_look)
     if s.touched <= 1:
         return _from_step(s, "15m_unambiguous")
     if minutes is None:
@@ -147,7 +165,7 @@ def resolve_candle(
     if minutes is MISSING:
         return _from_step(s, "15m_pessimistic_missing_1m")
     o1, h1, l1 = minutes
-    return walk_minutes(pending, o1, h1, l1, lv)
+    return walk_minutes(pending, o1, h1, l1, lv, first_look=first_look)
 
 
 class MinuteIndex:

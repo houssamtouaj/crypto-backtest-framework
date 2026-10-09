@@ -237,7 +237,7 @@ class _Simulator:
                 if order.expires_ms <= tau:
                     self._cancel(item, i, "expired", order.expires_ms)
                     continue
-                out = resolve_candle(True, o, h, l, item.lv, minutes)
+                out = resolve_candle(True, o, h, l, item.lv, minutes, first_look=i == order.placed_idx + 1)
                 self._note_missing(out.resolution, i, key)
                 if not out.filled:
                     if order.expires_ms <= close_ms:
