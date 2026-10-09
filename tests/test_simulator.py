@@ -478,23 +478,36 @@ def visible(res, cut):
     return ev, tr, day
 
 
-@pytest.mark.parametrize("spec", [UTC, NY], ids=["utc", "ny"])
-@pytest.mark.parametrize("seed", range(20))
-def test_simulator_is_causal(seed, spec):
+def assert_simulator_causal(seed, spec, params=None):
     m1, fund = walk(seed)
-    full = run_walk(m1, fund, spec)
+    full = run_walk(m1, fund, spec, params=params)
     assert len(full.trades) > 0
     # Fixed cuts plus cuts exactly on candles where something happens: a one-candle peek shows only there.
     ev = full.events
-    busy = [int(x) for kind in ("placed", "filled", "closed") for x in ev.loc[ev["kind"] == kind, "idx"].iloc[:2]]
+    kinds = ("placed", "filled", "closed", "cancelled")
+    busy = [int(x) for kind in kinds for x in ev.loc[ev["kind"] == kind, "idx"].iloc[:2]]
+    tr = full.trades
+    busy += [int(x) for x in tr.loc[tr["exit_reason"].isin(["max_hold", "session_end"]), "exit_idx"].iloc[:2]]
     for cut in sorted({400, 900, N15 - 2, *(b for b in busy if 96 < b < N15 - 1)}):
         want = visible(full, cut)
         if cut == N15 - 2:
             assert len(want[0]) > 0 and len(want[2]) > 0  # never a vacuous comparison
-        for got in (visible(run_walk(m1, fund, spec, last=cut), cut),
-                    visible(run_walk(*perturbed(m1, fund, cut, seed + 1000), spec), cut)):
+        for got in (visible(run_walk(m1, fund, spec, last=cut, params=params), cut),
+                    visible(run_walk(*perturbed(m1, fund, cut, seed + 1000), spec, params=params), cut)):
             for a, b in zip(want, got, strict=True):
                 pd.testing.assert_frame_equal(a, b)
+
+
+@pytest.mark.parametrize("spec", [UTC, NY], ids=["utc", "ny"])
+@pytest.mark.parametrize("seed", range(20))
+def test_simulator_is_causal(seed, spec):
+    assert_simulator_causal(seed, spec)
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_simulator_is_causal_with_time_exits_and_pierce(seed):
+    params = StrategyParams(hold_rule=HoldRule("max_hold", hours=2.0), pierce=0.0005)
+    assert_simulator_causal(seed, UTC, params)
 
 
 def test_two_runs_write_byte_identical_parquet(tmp_path):
@@ -544,3 +557,83 @@ def test_random_walk_properties(seed, params):
         assert (tr["hold_minutes"] <= 120).all()
     if params.hold_rule.kind == "session_end":
         assert (tr["exit_ms"] < tr["session_open_ms"] + 7 * 3_600_000).all()  # inside the NY window
+
+
+# --- review fixes: stamps of time exits on a 1m-filled candle, labels, coverage -----------------
+
+# Candle 1 touches entry and target (ambiguous); its minutes reach the target at minute 1, fill at minute 2.
+AMBIG = (100.5, 102.5, 99.9, 100.5)
+AMBIG_MINUTES = [(100.5, 100.6, 100.4, 100.5), (100.5, 102.5, 100.5, 101.0), (101.0, 101.0, 99.9, 100.2)]
+AMBIG_MINUTES += [(100.2, 100.5, 100.2, 100.5)] * 12
+NO_COST_1M = ExecConfig(fee_maker=0, fee_taker=0, slippage=0)
+
+
+def ambiguous_rows(n_before, n_after):
+    rows = [FLAT] * n_before + [AMBIG] + [FLAT] * n_after
+    return rows, minute_candles(rows, {n_before: AMBIG_MINUTES})
+
+
+@pytest.mark.parametrize("case", ["data_end", "session_end", "strategy"])
+def test_time_exit_on_the_candle_of_a_1m_fill_is_never_before_the_fill(case):
+    if case == "data_end":
+        rows, m1 = ambiguous_rows(1, 0)
+        script = {0: [bracket()]}
+    elif case == "session_end":
+        rows, m1 = ambiguous_rows(DAY - 1, 2)
+        script = {DAY - 2: [bracket(hold=HoldRule("session_end"))]}
+    else:
+        rows, m1 = ambiguous_rows(1, 2)
+        script = {0: [bracket()], 1: [ClosePosition(1, "manual")]}
+    res, _ = sim(rows, script, cfg=NO_COST_1M, candles1m=m1)
+    t = only(res.trades)
+    fill_candle = t.entry_idx
+    assert t.entry_ms == T0_MS + fill_candle * STEP_15M_MS + 2 * 60_000  # the 1m walk filled at minute 2
+    assert (t.exit_reason, t.exit_idx, t.exit_ms, t.hold_minutes) == (case, fill_candle, t.entry_ms, 0)
+    assert t.exit_resolution == ("15m_unambiguous" if case == "data_end" else "1m")
+    exit_fill = res.fills.iloc[-1]
+    assert exit_fill.ts_ms == t.entry_ms
+    o = res.orders[res.orders["kind"] == "time_exit"].iloc[0]
+    assert o.placed_ms == o.filled_ms == t.exit_ms  # placed and filled at the same instant
+    # MAE/MFE window is the fill minute to the 15m close: minutes 2..14 (lows 99.9, highs <= 101.0)
+    assert (t.mae_r, t.mfe_r) == pytest.approx((-0.1, 1.0))
+
+
+def test_strategy_close_on_an_unevaluated_candle_is_unambiguous():
+    rows = [FLAT, (100.5, 100.8, 99.9, 100.5), FLAT, FLAT]
+    res, _ = sim(rows, {0: [bracket()], 2: [ClosePosition(1, "x")]})
+    assert only(res.trades).exit_resolution == "15m_unambiguous"
+
+
+def test_summary_reports_coverage_and_warns_when_the_data_is_short(caplog):
+    rows = [FLAT] * 20
+    cd = candles_from_rows(rows, start_ms=T0_MS)
+    strat = OrderBlockStrategy(StrategyParams())
+    with caplog.at_level("WARNING"):
+        res = run(cd, None, no_funding(), SessionCalendar(NY, cd.ts), strat, ZERO_COST,
+                  T0_MS - STEP_15M_MS, close_ms(30))
+    s = res.summary
+    assert (s["first_candle_ms"], s["last_close_ms"], s["warmup_candles"]) == (T0_MS, close_ms(19), 0)
+    assert "cover" in caplog.text and "warmup" in caplog.text
+    caplog.clear()
+    with caplog.at_level("WARNING"):
+        sim(rows, {})  # ScriptedStrategy wants no warmup and the data cover the period
+    assert caplog.text == ""
+
+
+def test_parquet_schema_is_fixed_whatever_the_rows(tmp_path):
+    import pyarrow.dataset as ds
+    import pyarrow.parquet as pq
+
+    rows = [FLAT, (100.5, 100.8, 99.9, 100.5), (100.5, 100.6, 98.0, 99.0), FLAT]
+    full, _ = sim(rows, {0: [bracket()]})
+    empty, _ = sim([FLAT, FLAT], {})
+    full.to_parquet(tmp_path / "a")
+    empty.to_parquet(tmp_path / "b")
+    for name in ("orders", "fills", "trades", "daily", "events"):
+        fa, fb = tmp_path / "a" / f"{name}.parquet", tmp_path / "b" / f"{name}.parquet"
+        assert pq.read_schema(fa).remove_metadata() == pq.read_schema(fb).remove_metadata(), name
+        both = ds.dataset([str(fb), str(fa)]).to_table()  # the empty file first: no null-typed column
+        assert both.num_rows == len(getattr(full, name)) + len(getattr(empty, name))
+    sch = pq.read_schema(tmp_path / "b" / "trades.parquet")
+    assert str(sch.field("regime_trend").type) == "string" and str(sch.field("exit_reason").type) == "string"
+    assert str(pq.read_schema(tmp_path / "a" / "daily.parquet").field("date").type) == "date32[day]"

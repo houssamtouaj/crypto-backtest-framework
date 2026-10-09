@@ -250,7 +250,7 @@ candles.
 
 `stop` and `target_limit` rows are created at the fill (`placed_ms` = the
 fill's `ts_ms`, `placed_idx` = the fill candle); a `time_exit` row is
-created and filled at its close (`placed_ms` = that close).
+placed and filled at the same instant, the exit fill's `ts_ms`.
 
 ### `fills`
 
@@ -287,7 +287,7 @@ created and filled at its close (`placed_ms` = that close).
 | gross_r, net_r, cost_r, funding_r | float64 | |
 | c_maker_entry, c_maker_exit, c_taker_exit, c_slip | float64 | re-pricing coefficients |
 | mae_r, mfe_r | float64 | `(min low − entry_price) / stop_dist`, `(max high − entry_price) / stop_dist` over `[entry_ms, exit_ms + span)`, span 1m or 15m by how the exit was resolved; 1m candles when `use_1m` and they cover the window, else the 15m candles |
-| hold_minutes | int64 | `(exit_ms − entry_ms) / 1 min`; `entry_ms`/`exit_ms` are the fills' `ts_ms`, so a 24 h `max_hold` gives 1,440 |
+| hold_minutes | int64 | `(exit_ms − entry_ms) / 1 min`; `entry_ms`/`exit_ms` are the fills' `ts_ms`, so a 24 h `max_hold` gives 1,440. A time exit is stamped `max(τ_j, entry_ms)`: on the candle of a 1m-resolved fill it is never before the fill (hold 0) |
 | atr_at_entry, stop_dist_atr | float64 | ATR14 at `entry_idx − 1` (as baseline A uses `ATR14[e−1]`); `stop_dist / atr_at_entry`, NaN while ATR is NaN; used by baselines |
 | regime_trend, regime_vol | str | null here; Phase 5 `stats/regimes.py` fills the labels as of the entry day |
 | dow, entry_hour_utc | int8 | |
@@ -317,7 +317,17 @@ created and filled at its close (`placed_ms` = that close).
 | reason | str | cancel or exit reason |
 | price, qty, amount | float64 | nullable; `amount` is the funding paid |
 
-Every table has a fixed column order and dtype, also when empty.
+Every table has a fixed column order and dtype, also when empty, and
+`to_parquet` writes it with an explicit Arrow schema (strings stay
+`string` when empty or all null, `daily.date` is `date32`), so the files of
+many variants read back as one dataset.
+
+`summary` also reports the data coverage (`first_candle_ms`,
+`last_close_ms`, `warmup_candles` = candles before the first decision); a
+`logging.warning` says when the 15m candles do not cover the requested
+period (e.g. SOLUSDT before its listing) or when fewer candles precede the
+first decision than the strategy's `warmup_bars`. `n_missing_1m` counts
+ambiguous (candle, order) pairs resolved without a full minute set.
 
 ## 4.11 Tasks and tests
 
@@ -362,7 +372,8 @@ Every table has a fixed column order and dtype, also when empty.
   candles come from a 1m random walk aggregated to 15m, and funding rates
   after the cut are perturbed too. Besides fixed cuts, cuts are placed on
   candles with a placement, a fill and an exit, where a one-candle peek
-  shows. Two runs yield byte-identical Parquet.
+  shows; a second parameter set (`max_hold` 2 h, pierce 0.05 %) anchors on
+  deadline exits and cancels too. Two runs yield byte-identical Parquet.
 - **4.7 Real-data smoke run (slow).**
   Primary config on BTCUSDT 2024, UTC session: no exceptions; every trade
   has an exit; `net_r ≥ −1 − cost_r` and `net_r ≤ r_target + 1e-9` for

@@ -51,7 +51,10 @@ from perpbt.strategy.base import (
 
 log = logging.getLogger(__name__)
 
-TABLES = ("orders", "fills", "trades", "daily", "events")
+TABLES = {
+    "orders": tables.ORDERS_SCHEMA, "fills": tables.FILLS_SCHEMA, "trades": tables.TRADES_SCHEMA,
+    "daily": tables.DAILY_SCHEMA, "events": tables.EVENTS_SCHEMA,
+}
 
 
 @dataclass
@@ -68,8 +71,8 @@ class SimResult:
         """Write the five tables as ``<name>.parquet`` (byte-identical across reruns)."""
         out = Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
-        for name in TABLES:
-            getattr(self, name).to_parquet(out / f"{name}.parquet", index=False)
+        for name, schema in TABLES.items():
+            tables.write_table(getattr(self, name), schema, out / f"{name}.parquet")
 
 
 def run(
@@ -118,6 +121,14 @@ class _Simulator:
         if self.i_last < self.i0:
             raise ValueError(f"run: no 15m candle in [{period_start_ms}, {period_end_ms})")
         self.period = (int(period_start_ms), int(period_end_ms))
+        first_ms, last_close_ms = int(candles15.ts[self.i0]), int(candles15.ts[self.i_last]) + CANDLE_15M_MS
+        if first_ms > self.period[0] or last_close_ms < self.period[1]:
+            log.warning("%s: the 15m candles cover %d..%d ms of the requested period %d..%d ms",
+                        candles15.pair, first_ms, last_close_ms, *self.period)
+        if self.i0 < strategy.warmup_bars:
+            log.warning("%s: only %d candles before the first decision; %s wants %d for warmup",
+                        candles15.pair, self.i0, strategy.name, strategy.warmup_bars)
+        self.coverage = {"first_candle_ms": first_ms, "last_close_ms": last_close_ms, "warmup_candles": self.i0}
         self.ids = {"variant_id": variant_id, "pair": candles15.pair, "session_variant": calendar.spec.name}
         self.view = build_market_view(candles15, calendar, swing_k=strategy.params.swing_k, start_i=self.i0)
         self.pierce = float(strategy.params.pierce)
@@ -237,14 +248,15 @@ class _Simulator:
                 pos = item
                 out = resolve_candle(False, o, h, l, pos.entry.lv, minutes)
                 self._note_missing(out.resolution, i, key)
+            pos.label_idx, pos.label = i, out.resolution
             if out.exit is not None:
                 minute = out.exit_minute
                 ts_ms = tau if minute < 0 else tau + minute * MINUTE_MS
-                span = CANDLE_15M_MS if minute < 0 else MINUTE_MS
+                end = close_ms if minute < 0 else ts_ms + MINUTE_MS
                 role = "maker" if out.exit == "target" else "taker"
-                self._close(pos, i, out.exit, out.exit_ref, role, ts_ms, span, out.resolution)
+                self._close(pos, i, out.exit, out.exit_ref, role, ts_ms, end, out.resolution)
             elif pos.deadline_ms is not None and pos.deadline_ms <= close_ms:
-                self._close(pos, i, pos.entry.hold_rule.kind, self.c[i], "taker", tau, CANDLE_15M_MS, out.resolution)
+                self._time_exit(pos, i, pos.entry.hold_rule.kind, out.resolution)
 
     def _note_missing(self, resolution: str, i: int, order_id: int) -> None:
         if resolution == "15m_pessimistic_missing_1m":
@@ -290,9 +302,23 @@ class _Simulator:
             "resolution": resolution,
         })
 
-    def _close(self, p: Position, i: int, reason: str, exit_ref: float, role: str, ts_ms: int, span_ms: int,
+    def _time_exit(self, p: Position, i: int, reason: str, resolution: str) -> None:
+        """Exit ``p`` at ``close[i]`` (taker): deadlines, strategy closes, data end.
+
+        Stamped at the candle's open like every 15m fill, but never before the
+        entry: a position the 1m walk filled at minute ``m`` of this candle
+        exits at that minute's stamp, so ``hold_minutes`` is 0, not ``-m``.
+        """
+        ts_ms = max(self.ts[i], p.fill_ms)
+        self._close(p, i, reason, self.c[i], "taker", ts_ms, self.ts[i] + CANDLE_15M_MS, resolution)
+
+    def _close(self, p: Position, i: int, reason: str, exit_ref: float, role: str, ts_ms: int, window_end_ms: int,
                resolution: str) -> None:
-        """Exit ``p`` at reference ``exit_ref``: ``reason`` is the exit reason (stop, target, a hold kind, ...)."""
+        """Exit ``p`` at reference ``exit_ref``: ``reason`` is the exit reason (stop, target, a hold kind, ...).
+
+        ``ts_ms`` stamps the exit fill (and the exit order's placement and fill);
+        ``window_end_ms`` ends the MAE/MFE window.
+        """
         fee, slip, price = exit_costs(p.qty, exit_ref, role, self.cfg)
         self.ledger.credit(p.qty * (price - p.entry_price) - fee)
         if reason == "stop":
@@ -301,7 +327,7 @@ class _Simulator:
             filled, siblings = p.target_order, (p.stop_order,)
         else:
             o = p.entry.order
-            filled = self._new_order("time_exit", "sell", exit_ref, p.qty, "pending", self.ts[i] + CANDLE_15M_MS, i,
+            filled = self._new_order("time_exit", "sell", exit_ref, p.qty, "pending", ts_ms, i,
                                      o.session_id, o.tag_json, trade_id=p.trade_id)
             siblings = (p.stop_order, p.target_order)
         filled.status, filled.filled_ms, filled.fill_price = "filled", ts_ms, price
@@ -309,7 +335,7 @@ class _Simulator:
             s.status, s.cancelled_ms, s.cancel_reason = "cancelled", ts_ms, "oco"
         self._fill_row(filled.order_id, p.trade_id, ts_ms, exit_ref, price, p.qty, fee, role, slip, resolution)
         p.exit_idx, p.exit_ms, p.exit_ref, p.exit_price = i, ts_ms, exit_ref, price
-        p.exit_reason, p.exit_role, p.exit_resolution, p.exit_span_ms = reason, role, resolution, span_ms
+        p.exit_reason, p.exit_role, p.exit_resolution, p.exit_window_end_ms = reason, role, resolution, window_end_ms
         del self.active[p.entry.order.order_id]
         del self.open[p.trade_id]
         e = p.entry
@@ -358,7 +384,8 @@ class _Simulator:
             p = self.open.get(intent.position_id)
             if p is None:
                 raise ValueError(f"ClosePosition: position {intent.position_id} is not open")
-            self._close(p, i, "strategy", self.c[i], "taker", self.ts[i], CANDLE_15M_MS, "15m_unambiguous")
+            label = p.label if p.label_idx == i else "15m_unambiguous"  # the label of the candle it happens on
+            self._time_exit(p, i, "strategy", label)
         else:
             raise TypeError(f"unknown intent {type(intent).__name__}")
 
@@ -399,7 +426,7 @@ class _Simulator:
             if isinstance(item, Entry):
                 self._cancel(item, i, "data_end", self.ts[i] + CANDLE_15M_MS)
             else:
-                self._close(item, i, "data_end", self.c[i], "taker", self.ts[i], CANDLE_15M_MS, "15m_unambiguous")
+                self._time_exit(item, i, "data_end", "15m_unambiguous")
 
     def _mark_day(self, i: int) -> None:
         close = self.c[i]
@@ -430,12 +457,14 @@ class _Simulator:
             **ids,
             "period_start_ms": self.period[0], "period_end_ms": self.period[1],
             "first_idx": self.i0, "last_idx": self.i_last, "n_candles": self.i_last - self.i0 + 1,
+            **self.coverage,
             "start_equity": self.ledger.start_equity,
             "final_equity": self._equity(self.i_last),
             "n_intents": len(entries), "n_orders": n_orders, "n_filled": n_filled,
             "fill_rate": n_filled / n_orders if n_orders else None,
             "n_trades": len(trades), "n_data_end": n_data_end, "n_trades_r": len(trades) - n_data_end,
-            "n_leverage_skips": self.n_leverage, "n_missing_1m": self.n_missing_1m,
+            "n_leverage_skips": self.n_leverage,
+            "n_missing_1m": self.n_missing_1m,  # ambiguous (candle, order) pairs resolved without full 1m
             "max_concurrent": self.max_concurrent,
             "funding_total": float(np.sum(trades["funding"])) if len(trades) else 0.0,
             "resolution_counts": {k: int(v) for k, v in sorted(fills["resolution"].value_counts().items())},

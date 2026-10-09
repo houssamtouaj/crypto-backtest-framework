@@ -88,4 +88,6 @@ class Position:
     exit_reason: str = ""
     exit_role: str = ""
     exit_resolution: str = ""
-    exit_span_ms: int = 0  # 60_000 when 1m resolved the exit, else 900_000 (MAE/MFE window)
+    exit_window_end_ms: int = -1  # end of the MAE/MFE window: the exit's 1m or 15m candle close
+    label_idx: int = -1  # the last candle step 2 evaluated this position on ...
+    label: str = ""  # ... and its resolution label (a strategy close on that candle carries it)

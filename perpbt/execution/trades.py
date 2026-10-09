@@ -3,14 +3,20 @@
 Every table has a fixed column order and dtype, also when empty, so two
 runs write byte-identical Parquet. Nullable integers and floats use the
 pandas ``Int64`` / ``Float64`` dtypes; strings are ``object`` columns that
-may hold None.
+may hold None. Parquet files are written with an explicit Arrow schema
+(``write_table``), so an empty or all-null column keeps its type and the
+files of many variants read back as one dataset.
 """
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from perpbt.data.store import DAY_MS, Candles
 from perpbt.execution.costs import TradeCosts
@@ -63,6 +69,24 @@ EVENTS_SCHEMA: dict[str, str] = {
     "event_id": "int64", "idx": "int64", "ts_ms": "int64", "kind": STR, "order_id": "Int64", "trade_id": "Int64",
     "reason": STR, "price": "Float64", "qty": "Float64", "amount": "Float64",
 }
+
+_ARROW = {
+    STR: pa.string(), "int64": pa.int64(), "Int64": pa.int64(), "float64": pa.float64(),
+    "Float64": pa.float64(), "int8": pa.int8(), "int16": pa.int16(),
+}
+_ARROW_OVERRIDES = {"date": pa.date32()}  # daily.date holds datetime.date values
+
+
+def arrow_schema(schema: dict[str, str]) -> pa.Schema:
+    """The Parquet schema of a table: fixed whatever the rows (an all-None string column stays a string)."""
+    return pa.schema([(col, _ARROW_OVERRIDES.get(col, _ARROW[dtype])) for col, dtype in schema.items()])
+
+
+def write_table(df: pd.DataFrame, schema: dict[str, str], path: str | Path) -> None:
+    """Write ``df`` (built by ``frame`` with ``schema``) as Parquet with the fixed Arrow schema."""
+    table = pa.Table.from_pandas(df, schema=arrow_schema(schema), preserve_index=False)
+    pq.write_table(table, path)
+
 
 EVENT_KINDS = ("placed", "skipped_leverage", "filled", "cancelled", "closed", "funding", "missing_1m")
 
@@ -125,7 +149,7 @@ def trade_row(
     """One row of the ``trades`` table for the closed position ``p``."""
     e = p.entry
     o = e.order
-    mae, mfe = mae_mfe(p.entry_price, e.stop_dist, p.fill_ms, p.exit_ms + p.exit_span_ms, candles15, minutes)
+    mae, mfe = mae_mfe(p.entry_price, e.stop_dist, p.fill_ms, p.exit_window_end_ms, candles15, minutes)
     return {
         "trade_id": p.trade_id, **ids, "session_id": o.session_id,
         "session_open_ms": None if session_open_ms < 0 else session_open_ms,
