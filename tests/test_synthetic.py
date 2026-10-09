@@ -311,3 +311,15 @@ def test_assert_causal_detects_a_changed_return_form():
     cd = random_walk(200, seed=12, start_ms=T0_MS)
     with pytest.raises(AssertionError, match="return form"):
         assert_causal(changed_return_form, cd, cuts=[50], seeds=[1], truncate=True)
+
+
+def test_aggregate_builds_consistent_bars():
+    from tests.synthetic import aggregate
+
+    m1 = random_walk(45, seed=4, start_ms=T0_MS, step_ms=60_000, tf="1m")
+    c15 = aggregate(m1, 15, tf="15m")
+    assert len(c15) == 3 and c15.ts.tolist() == [T0_MS, T0_MS + 900_000, T0_MS + 1_800_000]
+    assert c15.o[1] == m1.o[15] and c15.c[1] == m1.c[29]
+    assert c15.h[2] == m1.h[30:].max() and c15.l[0] == m1.l[:15].min()
+    with pytest.raises(ValueError):
+        aggregate(m1, 7, tf="15m")

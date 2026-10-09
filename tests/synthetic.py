@@ -210,3 +210,21 @@ def assert_causal(
                 name, expected, got,
                 f"at or before cut={cut} changed under perturbation with seed={seed}",
             )
+
+
+def aggregate(candles: Candles, factor: int, *, tf: str) -> Candles:
+    """Candles of ``factor`` consecutive bars each (open of the first, max high, min low, close of the last).
+
+    ``len(candles)`` must be a multiple of ``factor``; used to build 15m
+    candles that agree exactly with a 1m random walk.
+    """
+    n = len(candles)
+    if factor < 1 or n % factor:
+        raise ValueError(f"cannot aggregate {n} candles by {factor}")
+    def blocks(a):
+        return a.reshape(-1, factor)
+    return Candles(
+        candles.pair, tf, candles.ts[::factor].copy(),
+        blocks(candles.o)[:, 0].copy(), blocks(candles.h).max(axis=1), blocks(candles.l).min(axis=1),
+        blocks(candles.c)[:, -1].copy(), blocks(candles.v).sum(axis=1),
+    )

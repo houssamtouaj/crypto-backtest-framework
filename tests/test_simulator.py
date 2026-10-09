@@ -428,3 +428,119 @@ def test_daily_mark_includes_the_data_end_close():
     res, _ = sim(rows, {0: [bracket()]}, cfg=COSTS)
     t = only(res.trades)
     assert t.exit_reason == "data_end" and only(res.daily).equity == pytest.approx(10_000 + t.net_pnl)
+
+
+# --- 4.6 simulator-level look-ahead, determinism, properties on random walks ------------------
+
+from perpbt.data.store import Funding  # noqa: E402
+from perpbt.execution.orders import RESOLUTIONS  # noqa: E402
+from perpbt.execution.trades import utc_date  # noqa: E402
+from tests.strategy_harness import UTC  # noqa: E402
+from tests.synthetic import aggregate, perturb_after, random_walk  # noqa: E402
+
+N15 = 1_500  # 15m candles (about 15.6 days) built from 22,500 one-minute candles
+WALK_COSTS = ExecConfig(fee_maker=0.0002, fee_taker=0.0005, slippage=0.0002, use_1m=True)
+
+
+def walk(seed):
+    m1 = random_walk(N15 * 15, seed=seed, start_ms=T0_MS, step_ms=60_000, tf="1m", step_sigma=0.0006)
+    times = np.arange(T0_MS, T0_MS + N15 * STEP_15M_MS, 8 * 3_600_000, dtype=np.int64)
+    rates = np.random.default_rng(seed).normal(0.0001, 0.0002, len(times))
+    return m1, Funding("TEST", times, rates, np.full(len(times), 8, dtype=np.int8))
+
+
+def perturbed(m1, fund, cut, seed):
+    m1p = perturb_after(m1, cut * 15 + 14, seed=seed, step_sigma=0.0006)
+    after = fund.ts >= T0_MS + (cut + 1) * STEP_15M_MS
+    rates = fund.rate.copy()
+    rates[after] = np.random.default_rng(seed).normal(0.0, 0.001, int(after.sum()))
+    return m1p, Funding("TEST", fund.ts, rates, fund.interval_h)
+
+
+def run_walk(m1, fund, spec, *, last=None, params=None):
+    c15 = aggregate(m1, 15, tf="15m")
+    if last is not None:
+        c15 = c15.slice(T0_MS, int(c15.ts[last]) + 1)
+        m1 = m1.slice(T0_MS, int(c15.ts[last]) + STEP_15M_MS)
+    end = int(c15.ts[-1]) + STEP_15M_MS
+    return run(c15, m1, fund, SessionCalendar(spec, c15.ts), OrderBlockStrategy(params or StrategyParams()),
+               WALK_COSTS, T0_MS + 96 * STEP_15M_MS, end, variant_id="walk")
+
+
+def visible(res, cut):
+    ev = res.events
+    ev = ev[(ev["idx"] <= cut) & (ev["reason"] != "data_end")].reset_index(drop=True)
+    tr = res.trades
+    tr = tr[(tr["exit_idx"] <= cut) & (tr["exit_reason"] != "data_end")].reset_index(drop=True)
+    cut_day = utc_date(T0_MS + cut * STEP_15M_MS)
+    day = res.daily
+    day = day[day["date"] < cut_day].reset_index(drop=True)
+    return ev, tr, day
+
+
+@pytest.mark.parametrize("spec", [UTC, NY], ids=["utc", "ny"])
+@pytest.mark.parametrize("seed", range(20))
+def test_simulator_is_causal(seed, spec):
+    m1, fund = walk(seed)
+    full = run_walk(m1, fund, spec)
+    assert len(full.trades) > 0
+    # Fixed cuts plus cuts exactly on candles where something happens: a one-candle peek shows only there.
+    ev = full.events
+    busy = [int(x) for kind in ("placed", "filled", "closed") for x in ev.loc[ev["kind"] == kind, "idx"].iloc[:2]]
+    for cut in sorted({400, 900, N15 - 2, *(b for b in busy if 96 < b < N15 - 1)}):
+        want = visible(full, cut)
+        if cut == N15 - 2:
+            assert len(want[0]) > 0 and len(want[2]) > 0  # never a vacuous comparison
+        for got in (visible(run_walk(m1, fund, spec, last=cut), cut),
+                    visible(run_walk(*perturbed(m1, fund, cut, seed + 1000), spec), cut)):
+            for a, b in zip(want, got, strict=True):
+                pd.testing.assert_frame_equal(a, b)
+
+
+def test_two_runs_write_byte_identical_parquet(tmp_path):
+    m1, fund = walk(7)
+    for k in (1, 2):
+        run_walk(m1, fund, UTC).to_parquet(tmp_path / f"run{k}")
+    for name in ("orders", "fills", "trades", "daily", "events"):
+        a = (tmp_path / "run1" / f"{name}.parquet").read_bytes()
+        assert a == (tmp_path / "run2" / f"{name}.parquet").read_bytes(), name
+    back = pd.read_parquet(tmp_path / "run1" / "daily.parquet")
+    assert isinstance(back["date"].iloc[0], date) and len(back) > 0
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("params", [
+    StrategyParams(),
+    StrategyParams(hold_rule=HoldRule("max_hold", hours=2.0), pierce=0.0005),
+    StrategyParams(hold_rule=HoldRule("session_end"), r_target=1.0, entry_level="mid"),
+], ids=["primary", "max_hold_pierce", "session_end_mid"])
+def test_random_walk_properties(seed, params):
+    m1, fund = walk(seed)
+    res = run_walk(m1, fund, NY, params=params)
+    tr, s = res.trades, res.summary
+    assert len(tr) > 0
+    # the ledger: every USDT is accounted for by the trades
+    assert 10_000 + tr["net_pnl"].sum() == pytest.approx(s["final_equity"], rel=1e-12)
+    assert res.daily["equity"].iloc[-1] == s["final_equity"]
+    assert float(np.prod(1 + res.daily["ret"])) * 10_000 == pytest.approx(s["final_equity"], rel=1e-12)
+    # cross-references
+    filled = res.orders[(res.orders["kind"] == "entry_limit") & (res.orders["status"] == "filled")]
+    assert sorted(filled["trade_id"].tolist()) == tr["trade_id"].tolist() == list(range(1, len(tr) + 1))
+    assert len(res.fills) == 2 * len(tr) and set(res.fills["resolution"]) <= set(RESOLUTIONS)
+    exits = res.orders[res.orders["kind"] != "entry_limit"]
+    assert (exits.groupby("trade_id")["status"].apply(lambda x: (x == "filled").sum()) == 1).all()
+    assert (res.orders["status"] != "pending").all()
+    assert s["n_filled"] == len(tr) and (res.events["kind"] == "closed").sum() == len(tr)
+    # trade-level bounds
+    assert (tr["hold_minutes"] >= 0).all() and (tr["mae_r"] <= 1e-12).all() and (tr["mfe_r"] >= -1e-12).all()
+    assert (tr["exit_ms"] >= tr["entry_ms"]).all() and (tr["exit_idx"] >= tr["entry_idx"]).all()
+    gap = tr["fill_resolution"] == "open_gap"
+    r_target = params.r_target
+    assert (tr.loc[~gap, "gross_r"] >= -1 - 1e-9).all() and (tr["gross_r"] <= r_target + 1e-9).all()
+    assert (tr.loc[~gap, "net_r"] >= -1 - tr.loc[~gap, "cost_r"] - 1e-9).all()
+    assert np.allclose(tr["cost_r"], tr["gross_r"] - tr["net_r"])
+    assert (tr["implied_leverage"] <= 25.0).all()
+    if params.hold_rule.kind == "max_hold":
+        assert (tr["hold_minutes"] <= 120).all()
+    if params.hold_rule.kind == "session_end":
+        assert (tr["exit_ms"] < tr["session_open_ms"] + 7 * 3_600_000).all()  # inside the NY window
