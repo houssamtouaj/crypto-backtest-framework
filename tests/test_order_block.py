@@ -234,6 +234,17 @@ def test_s5_candidate_before_the_session_open_is_ineligible_and_the_next_block_i
     assert x.expires_ms == T0_MS + DAY_MS
 
 
+def test_s5_impulse_on_the_last_candle_of_the_window_is_ineligible():
+    # an order placed at the close of the window's last candle would expire before it could fill
+    last = cd_of(S1 + TAIL, start_ms=T0_MS + DAY_MS - 26 * STEP_15M_MS)  # t = 25 at 23:45 UTC
+    run = run_strategy(last, PRIMARY)
+    assert run.counts == counts(impulses=2, blocks_seen=2, ineligible=1, intents=1)
+    (i, x), = run.intents  # the next block, in the next session, is taken
+    assert i == 31 and x.expires_ms == T0_MS + 2 * DAY_MS
+    one_earlier = run_strategy(cd_of(S1, start_ms=T0_MS + DAY_MS - 27 * STEP_15M_MS), PRIMARY)  # t at 23:30
+    assert [x.expires_ms for _, x in one_earlier.intents] == [T0_MS + DAY_MS]
+
+
 def test_s6a_the_immediate_pattern_is_not_mitigated():
     (_, x), = run_strategy(cd_of(S1), PRIMARY).intents
     assert x.tag["displacement_idx"] == x.tag["impulse_idx"] == 25
@@ -286,7 +297,7 @@ def test_s7_one_intent_per_session_whatever_happens_to_it(events):
 
 
 def test_s7_the_next_session_is_free_again():
-    cd = cd_of(S1 + TAIL, start_ms=T0_MS + DAY_MS - 26 * STEP_15M_MS)  # t = 25 at 23:30, the TAIL on the next day
+    cd = cd_of(S1 + TAIL, start_ms=T0_MS + DAY_MS - 27 * STEP_15M_MS)  # t = 25 at 23:30, the TAIL on the next day
     run = run_strategy(cd, PRIMARY)
     assert [i for i, _ in run.intents] == [25, 31]
     assert [x.expires_ms for _, x in run.intents] == [T0_MS + DAY_MS, T0_MS + 2 * DAY_MS]
@@ -468,7 +479,7 @@ def test_random_walk_intents_are_well_formed(params, spec):
         sessions = [x.tag["session_id"] for _, x in run.intents]
         assert len(sessions) == len(set(sessions)) == run.counts["intents"]
         for i, x in run.intents:
-            assert cal.in_window[i] and x.expires_ms == cal.end_ms[i] >= cd.ts[i] + STEP_15M_MS
+            assert cal.in_window[i] and not cal.is_last[i] and x.expires_ms == cal.end_ms[i] > cd.ts[i] + STEP_15M_MS
             assert x.tag["impulse_idx"] == i and x.tag["session_id"] == cal.session_id[i]
             assert i - params.confirm_n <= x.tag["candidate_idx"] < x.tag["displacement_idx"] <= i
             assert cd.ts[x.tag["candidate_idx"]] >= cal.open_ms[i]

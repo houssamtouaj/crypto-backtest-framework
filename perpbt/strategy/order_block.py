@@ -216,7 +216,7 @@ class OrderBlockStrategy:
             return self._skip("no_candidate")
         self._counts["blocks_seen"] += 1
         s = view.session
-        if not (s.in_window and view.ts(c) >= s.open_ms):  # §3.5
+        if not (s.in_window and not s.is_last and view.ts(c) >= s.open_ms):  # §3.5
             return self._skip("ineligible")
         bp = block_prices(view.open(c), view.high(c), view.low(c), view.close(c), view.atr(t), p)
         if not bp.stop_dist > 0:  # §3.6; NaN (ATR warmup) fails too

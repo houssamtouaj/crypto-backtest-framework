@@ -115,9 +115,12 @@ impulse, not with an earlier bearish candle.
 ## 3.5 Session eligibility (D1, D3)
 
 The current session is `view.session`. The candidate is eligible iff
-`τ_c ≥ session.open_ms` and `session.in_window` is true at `t` (which,
-with windows on the 15m grid, is the same as `τ_t + 15m ≤ session.end_ms`).
-Otherwise `ineligible`.
+`τ_c ≥ session.open_ms`, `session.in_window` is true at `t`, and `t` is
+not the window's last candle (`session.is_last` false; with windows on the
+15m grid, together the same as `τ_t + 15m < session.end_ms`). An order
+placed at the close of the last candle would expire at the next open,
+before it could fill (Phase 4 §4.3), so it is never placed. Otherwise
+`ineligible`.
 
 At most **one intent per session**: once the strategy emits a
 `PlaceBracketLimit` in a session, it emits no more in that session,
