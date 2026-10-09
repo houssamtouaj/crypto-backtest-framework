@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from perpbt.config import HoldRule
+from perpbt.execution.fills import Levels
 
 ORDER_KINDS = ("entry_limit", "stop", "target_limit", "time_exit")
 ORDER_STATUSES = ("pending", "filled", "cancelled")
@@ -50,6 +51,7 @@ class Entry:
     """A registered entry order and everything fixed at placement (spec §4.6)."""
 
     order: Order
+    lv: Levels  # entry, stop, target and the pierce thresholds
     stop: float
     target: float
     pierce_abs: float
