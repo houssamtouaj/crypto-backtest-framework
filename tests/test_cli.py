@@ -1,4 +1,4 @@
-"""CLI: data fetch/validate wiring and the remaining 'not implemented' stubs."""
+"""CLI: data fetch/validate wiring, the Phase 6 experiment commands, and the remaining 'not implemented' stub."""
 import subprocess
 import sys
 from datetime import date
@@ -12,8 +12,8 @@ from perpbt.config import DataConfig, load_yaml
 from perpbt.data.bulk import DownloadError
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP_LEVEL = ["data", "run", "grid", "baselines", "report", "holdout"]
-STUB_ARGV = [["run"], ["grid"], ["baselines"], ["report"], ["holdout"]]
+TOP_LEVEL = ["data", "prereg", "run", "grid", "baselines", "stats", "report", "holdout"]
+STUB_ARGV = [["report"]]
 
 
 def test_help_lists_every_subcommand(capsys):
@@ -173,3 +173,65 @@ def test_data_validate_hard_failure_is_exit_1(monkeypatch, config_path, capsys):
     monkeypatch.setattr(cli, "run_validate", boom)
     assert main(["data", "validate", "--config", str(config_path), "--pairs", "BTCUSDT"]) == 1
     assert "grid" in capsys.readouterr().err
+
+
+# --- Phase 6 -----------------------------------------------------------------------------------------
+
+def test_grid_dry_run_prints_324(capsys):
+    """Phase 6 exit criterion: `perpbt grid --dry-run` prints 324."""
+    assert main(["grid", "--dry-run", "--prereg", str(ROOT / "configs" / "prereg.yaml")]) == 0
+    out = capsys.readouterr().out.splitlines()
+    assert out[-1].startswith("324 variants (36 per pair x session, 9 cells)")
+    assert len(out) == 325 and sum(" primary " in line for line in out) == 9
+
+
+def test_prereg_validate_on_the_committed_file(capsys):
+    assert main(["prereg", "validate", "--prereg", str(ROOT / "configs" / "prereg.yaml")]) == 0
+    out = capsys.readouterr().out
+    assert "prereg_hash: " in out and "grid: 324 variants, 9 primary" in out
+
+
+def test_experiment_commands_reject_a_bad_prereg_and_bad_flags(tmp_path, capsys):
+    bad = tmp_path / "p.yaml"
+    bad.write_text("registered_on: 2026-09-26\n", encoding="utf-8")
+    assert main(["grid", "--dry-run", "--prereg", str(bad)]) == 2
+    assert "missing keys" in capsys.readouterr().err
+    assert main(["holdout", "--reason", "x", "--prereg", str(bad)]) == 2
+    for argv in (["grid"], ["baselines", "--runs", "5"], ["run"], ["stats", "nope"]):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+
+
+def test_the_full_pipeline_end_to_end_on_a_synthetic_data_directory(tmp_path, capsys):
+    """Phase 6 exit criterion: Phase 8's protocol, command by command, on synthetic data."""
+    from perpbt.experiments.registry import read_results
+    from tests.experiment_harness import make_world
+
+    path, prereg, data_cfg, runs = make_world(tmp_path, download="2020-01-19", holdout_end="2020-01-18")
+    common = ["--prereg", str(path), "--data-dir", data_cfg.data_dir, "--runs-dir", str(runs)]
+    pool = [*common, "--workers", "1"]
+    assert main(["prereg", "validate", *common]) == 0
+    assert main(["holdout", *common]) == 1  # not frozen yet
+    assert "refused" in capsys.readouterr().err
+    assert main(["prereg", "freeze", *common]) == 0
+    assert main(["prereg", "freeze", *common]) == 1
+    assert main(["run", "--primary", "--pair", "BTCUSDT", "--session", "utc", *pool]) == 0
+    assert main(["run", "--primary", *pool]) == 0
+    assert "skipped 1" in capsys.readouterr().out
+    assert main(["stats", "holm", *common]) == 1  # no baselines yet
+    assert main(["baselines", "--primary", *pool]) == 0
+    assert main(["stats", "holm", *common]) == 0
+    assert main(["stats", "dsr", *common]) == 1  # the grid has not run
+    assert main(["grid", "--run", *pool]) == 0
+    assert main(["baselines", "--grid", "--runs", "5", *pool]) == 0
+    assert main(["stats", "dsr", *common]) == 0
+    assert main(["stats", "results", *common]) == 0
+    assert main(["prereg", "validate", *common]) == 0
+    assert main(["holdout", *common]) == 0
+    assert main(["holdout", *common]) == 1  # touched once
+    res = read_results(runs)
+    assert len(res) == 12 + 4 and res["is_holdout"].sum() == 4
+    ins = res[~res["is_holdout"]]
+    assert ins.loc[ins["is_primary"], "p_a_adj"].notna().all() and ins["dsr_local"].notna().all()
+    assert set(ins.loc[~ins["is_primary"], "n_baseline_runs"]) == {5}

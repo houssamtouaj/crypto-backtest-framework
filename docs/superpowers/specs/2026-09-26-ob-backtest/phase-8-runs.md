@@ -34,8 +34,8 @@ merged into `main`. This is the only time `main` moves (overview §8.1).
    `perpbt baselines --primary --runs 5000`, then `perpbt stats holm`.
    Generate the nine reports.
 4. **Grid.** `perpbt grid --run --workers 8`, then
-   `perpbt baselines --grid --runs 500`. Generate the grid reports and the
-   heatmaps.
+   `perpbt baselines --grid --runs 500`, then `perpbt stats dsr` (the DSR
+   needs every grid cell). Generate the grid reports and the heatmaps.
 5. **Review gate.** Read the nine primary reports and the heatmaps. Fix
    bugs if any are found, commit them, and rerun steps 3–4 (the registry
    keeps every attempt and the summary will show the code-version

@@ -15,10 +15,18 @@ met (overview §8.1).
 sessions, primary parameters, execution defaults with per-pair overrides,
 the grid, the statistics settings, and the verdict rule. The loader
 validates it against the Phase 0 dataclasses and computes
-`prereg_hash = sha256(canonical_json(loaded content))`, so comments and
-formatting do not matter.
+`prereg_hash = sha256(canonical_json(normalised content))`, so comments,
+formatting, key order and number spelling do not matter. "Normalised"
+means every value that maps to a Phase 0 dataclass field went through
+that dataclass (`r_target: 2` and `2.0` hash the same; a grid axis value
+is normalised as the `StrategyParams` field it sets) and dates are ISO
+strings. The loader rejects duplicate YAML keys, unknown keys, session
+names other than `utc`, `ny`, `london`, and a `primary` or `execution`
+block that leaves any field to its default (a pre-registration names
+every value).
 
 `configs/prereg.lock` is written once by `perpbt prereg freeze` in Phase 8
+(it refuses while `data_download_date` is null, and refuses to overwrite)
 and committed:
 
 ```yaml
@@ -43,11 +51,21 @@ configs does not.
 
 ## 6.3 Registry (`experiments/registry.py`)
 
-- `runs/registry.jsonl`, append-only, one line per run attempt:
-  `{variant_id, status: started|ok|failed, run_ms, code_version,
-  git_commit, seed, is_holdout, params_json, artifacts_path, error}`.
-- `runs/results.parquet`, derived: rebuilt from every `stats.json` on
-  demand; one row per variant.
+- `runs/registry.jsonl`, append-only. Every attempt appends a `started`
+  line, then an `ok` or `failed` line, so the number of `started` lines is
+  the number of attempts and a killed process leaves a `started` line
+  without a final one:
+  `{variant_id, kind: run|baselines, status: started|ok|failed, run_ms,
+  code_version, git_commit, seed, is_holdout, params_json,
+  artifacts_path, error, reason, batch, runtime_s}`. `error` holds the
+  traceback, `reason` the holdout code-change reason, `batch` one id per
+  CLI invocation. Worker processes append under an OS file lock
+  (`registry.jsonl.lock`), so lines never interleave.
+- `runs/results.parquet`, derived: rebuilt from every
+  `runs/<variant_id>/stats.json` (with its `config.yaml`) by every driver
+  and family pass, and on demand (`perpbt stats results`); one row per
+  variant. `run_ms`, `git_commit` and `runtime_s` come from the variant's
+  latest `ok` run line.
 
 ### `results` columns
 
@@ -55,7 +73,7 @@ configs does not.
 |---|---|
 | variant_id, run_ms, code_version, git_commit, seed | |
 | params_json | full VariantConfig |
-| pair, session_variant, period_start, period_end, is_holdout, is_primary | |
+| pair, session_variant, period_start, period_end, is_holdout, is_primary, members | `members`: JSON list of the heatmaps/singles the variant belongs to |
 | n_sessions, n_impulses, n_blocks_seen, n_orders, n_filled, fill_rate, n_trades, n_trades_r | `n_trades_r` excludes `data_end` |
 | skip_* | one column per skip reason |
 | win_rate, mean_gross_r, mean_net_r, mean_net_r_ci_lo/hi | trade bootstrap |
@@ -75,34 +93,64 @@ From `prereg.grid`, for each pair × session: the cartesian product of each
 heatmap's axes with every other parameter at the primary value, plus each
 single. Deduplicate by `config_hash` (the primary appears in every
 heatmap). Result: 36 unique variants per pair × session, 324 in total,
-each flagged with the heatmap or single it belongs to and `is_primary`.
-`perpbt grid --dry-run` prints the list and the count.
+each flagged with the heatmaps or singles it belongs to (`heatmap_1..3`,
+`single_1..5`; the primary belongs to all three heatmaps) and
+`is_primary`. A variant's `stats.baseline_runs` is
+`baseline_runs_primary` for a primary cell and `baseline_runs_grid`
+otherwise. `perpbt grid --dry-run` prints the list and the count.
 
 ## 6.5 Runner (`experiments/runner.py`)
 
 ```python
-def run_variant(cfg: VariantConfig, data_cfg: DataConfig, *, master_seed: int) -> Path
+def run_variant(cfg: VariantConfig, data_cfg: DataConfig, *, runs_dir, labels=None,
+                baseline_runs=None, insample_ref=None, allow_holdout=False,
+                reason=None, batch="") -> Path
 ```
 
-Loads candles (15m, and 1m if `use_1m`) and funding through the stores
-(guard active unless `cfg.is_holdout`), builds the calendar and
-indicators, runs the simulator, computes Phase 5 statistics, writes
-`runs/<variant_id>/{orders,fills,trades,daily,events}.parquet`,
-`stats.json`, `config.yaml`, and appends the registry rows (`started`,
-then `ok` or `failed` with the traceback).
+The master seed is `cfg.stats.master_seed` (part of the variant id).
+Loads 15m candles from `warmup_start`, 1m candles (if `use_1m`) and
+funding from `period_start`, all to `period_end`, through the stores; the
+guard is active unless `allow_holdout`, which only `holdout.py` passes, so
+a holdout config sent through the normal runner raises
+`HoldoutAccessError`. Builds the calendar, runs the simulator (which
+builds the indicators), computes Phase 5 statistics (and baselines when
+`baseline_runs`), and writes `runs/<variant_id>/`:
+`{orders,fills,trades,daily,events}.parquet` (trades with the regime
+labels), `buyhold.parquet` (`bh_daily`, for Phase 7's equity figure),
+`config.yaml`, and last `stats.json`, which gains an `experiment` block
+(`is_primary`, `members`, `code_version`). An existing `stats.json` is
+deleted first, so its presence marks a complete folder. Nothing time- or
+commit-dependent goes into the folder. The registry gets `started`, then
+`ok` or `failed` with the traceback.
 
 Driver: `ProcessPoolExecutor` with `spawn` (Windows), one variant per
-task, `--workers` default 8. Each worker process caches loaded data per
-`(pair, tf)` so a pair's candles are read once per process. Resume: a
-variant whose `stats.json` exists and whose latest registry row is `ok`
-with the same `variant_id` is skipped; `--force` reruns.
+task, `--workers` default 8, tasks sorted by pair. Each worker process
+caches the loaded data of one pair (keyed by pair, timeframe, range and
+the guard flag; another pair evicts it), so a pair's candles are read once
+per process and memory stays at one pair per worker. Resume: a variant
+whose `stats.json` exists and whose latest `run` line is `ok` is skipped;
+`--force` reruns. A failed variant does not stop the others.
 
 Baselines are a separate pass because they need the trade table:
-`perpbt baselines --primary --runs 5000` and
-`perpbt baselines --grid --runs 500` write `baseline_a.parquet` (the slot
-table) and `baseline_b.parquet` (per-run component means) into the variant
-folder and update `stats.json`. Holm adjustment runs once all nine primary
-cells have baselines (`perpbt stats holm`).
+`perpbt baselines --primary` and `perpbt baselines --grid` (non-primary
+grid variants; `--runs M` overrides the prereg budget) re-simulate the
+stored variant (deterministic, a few seconds), refuse if the result's
+`summary` differs from the stored `stats.json`, write
+`baseline_a.parquet` (the slot table), `baseline_a_runs.parquet` and
+`baseline_b.parquet` (per-run component means of A and B; the Phase 7
+histograms) into the variant folder, and rewrite `stats.json`. A variant
+whose `stats.json` already has that budget is skipped unless `--force`.
+
+Family passes, run last because any rewrite of a `stats.json` (a rerun
+or a baselines pass) drops their values:
+- `perpbt stats holm` refuses until all nine in-sample primary cells have
+  baselines, then writes a `holm` block into each (`family`,
+  `variant_ids`, `n`, `alpha`, `p_{a,b,bh}_adj` and, for reference,
+  `p_{a,b,bh}_bonf`).
+- `perpbt stats dsr` refuses until every in-sample grid variant has a
+  `stats.json`, then fills `dsr.local` (trials: the pair × session's 36)
+  and `dsr.global` (all 324) of every grid variant with
+  `dsr.dsr_from_trials` (`N`, `V`, `sr_star`, `dsr`).
 
 ## 6.6 Holdout runner (`experiments/holdout.py`)
 
@@ -110,18 +158,25 @@ cells have baselines (`perpbt stats holm`).
 `allow_holdout=True`. It:
 
 1. Requires `configs/prereg.lock`; recomputes `prereg_hash` and refuses on
-   mismatch.
+   mismatch. Requires `holdout.end`, and the in-sample primary
+   `stats.json` of every cell under the current code (its `insample_ref`:
+   in-sample vol median and σ's for the regime labels and the
+   buy-and-hold scaling).
 2. Refuses if `runs/holdout/DONE` exists.
 3. Compares `code_version` with the lock. On mismatch it refuses unless
    `--allow-code-change --reason "<text>"` is given; the reason is written
    to the registry and printed in the summary. This allows a bug fix
    after freezing without hiding it.
-4. Runs the nine primary configurations, and only those, with
-   `is_holdout=True`, period `holdout.start` to `holdout.end`, in one
-   invocation, including baselines at the primary budget and the Holm
+4. Runs the nine primary configurations, and only those
+   (`check_holdout_config` rejects anything else), with `is_holdout=True`,
+   period `holdout.start` to `holdout.end`, in one invocation and in
+   process, including baselines at the primary budget and the Holm
    adjustment over the holdout family.
-5. Writes `runs/holdout/DONE` with the timestamp, both hashes, and the
-   list of variant ids.
+5. Writes `runs/holdout/DONE` (YAML) with the timestamp, the status, the
+   batch, both hashes (prereg and code version, plus the lock's code
+   version), the reason, the earlier holdout batches found in the
+   registry, and the list of variant ids. `DONE` is written even when a
+   cell fails, so any second touch needs its manual deletion.
 
 There is no `--force`. Rerunning the holdout means deleting `DONE` by
 hand, which the summary will report as a second touch (the registry keeps
@@ -132,11 +187,16 @@ every attempt).
 ```
 perpbt prereg validate | freeze
 perpbt grid --dry-run | --run [--workers N] [--force]
-perpbt run --primary [--pair BTCUSDT --session ny]
-perpbt baselines --primary|--grid --runs M
-perpbt stats holm
+perpbt run --primary [--pair BTCUSDT --session ny] [--workers N] [--force]
+perpbt baselines --primary|--grid [--runs M] [--workers N] [--force]
+perpbt stats holm | dsr | results
 perpbt holdout [--allow-code-change --reason "..."]
 ```
+
+Every command takes `--prereg` (default `configs/prereg.yaml`),
+`--data-dir` (default `data`) and `--runs-dir` (default `runs`). Exit 1
+when a variant failed, a family pass is incomplete, or the holdout is
+refused; 2 for a config or usage error.
 
 ## 6.8 `configs/prereg.yaml` (v2 draft)
 
@@ -220,8 +280,9 @@ verdict_rule:                        # D11; inlined so it is part of the hash
   `freeze` writes the lock and refuses to overwrite it.
 - **6.2 Variant ids and registry.** Same config, different key order →
   same id; a changed `.py` byte → new id; a changed test or doc file →
-  same id; registry row count equals attempts; `results.parquet` rebuilt
-  from `stats.json` files matches the registry's `ok` set.
+  same id; the number of `started` lines equals attempts; concurrent
+  appends from spawned processes never interleave; `results.parquet`
+  rebuilt from `stats.json` files matches the registry's `ok` set.
 - **6.3 Grid enumeration.** Dry run yields exactly 36 unique variants per
   pair × session, 324 total, each primary flagged once; every grid
   variant differs from the primary in exactly the axis or axes of its
@@ -240,5 +301,6 @@ verdict_rule:                        # D11; inlined so it is part of the hash
   globally disabled).
 
 Exit criterion: `perpbt grid --dry-run` prints 324; the full pipeline
-runs end to end on a synthetic data directory in the test suite. Then
+(Phase 8's commands in order, through the CLI) runs end to end on a
+synthetic data directory in the test suite. Then
 merge into `dev` and delete the branch.
