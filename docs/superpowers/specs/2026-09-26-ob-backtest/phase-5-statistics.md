@@ -145,8 +145,9 @@ in-window candle `e` of the period, at or after the listing date, with
 `ATR14[e−1] > 0`; `pierce_abs = pierce × open[e]`; the deadline candle is
 the first candle whose close is at or after the hold deadline
 (`session_end`: the window end; `max_hold`: `τ_e + 15m + hours`). A real
-trade with a NaN `stop_dist_atr` is left out of both baselines and
-counted (`n_excluded`). Baseline trades that reach the data end are left
+trade with a NaN `stop_dist_atr` is left out of table A and counted
+(`n_excluded`); baseline B keeps one draw per R-subset trade and takes its
+multiples from the pool of finite ones. Baseline trades that reach the data end are left
 out of their run's mean, as the real `data_end` trades are left out of
 the observed mean; in table A such slots are dropped, and a trade left
 with no slot is left out and counted. The observed statistic for A is the
@@ -183,7 +184,7 @@ the holdout run.
 
 ```python
 def reprice(components, fee_maker, fee_taker, slippage) -> np.ndarray   # net_r per trade or per run
-def reprice_grid(trades, table_a, runs_b, cfg) -> pd.DataFrame
+def reprice_grid(trades_r, exec_cfg, stats_cfg, boot_rng, *, table_ids=None, runs_a=None, runs_b=None) -> pd.DataFrame
 ```
 
 Grid: `slippage ∈ {0, 0.02, 0.05, 0.10}%` × `maker ∈ {0, 0.02}%`, taker
@@ -281,8 +282,9 @@ def write_stats(stats, path); def read_stats(path) -> dict
 
 Top-level keys: `schema`, ids and period, `seeds` (master seed and the
 generator purposes), `summary` (the simulator's counts), `skips`,
-`headline` (n, win rate, mean gross/net R, median, profit factor, both
-mean-R CIs, Sharpe with CI, max DD, exposure, max concurrent),
+`n_sessions` (eligible sessions of the period, D1 caveat), `headline` (n,
+win rate, mean gross/net R, median and std of net R (the holdout power
+calculation), profit factor, both mean-R CIs, Sharpe with CI, max DD, exposure, max concurrent),
 `baselines` (`p_a, z_a, p_b, z_b, n_runs`, observed values, run means and
 stds; null until `run_baselines` has run), `buy_and_hold`, `dsr`,
 `repricing` (8 rows), `costs`, `distributions`, `rolling`, `per_year`,

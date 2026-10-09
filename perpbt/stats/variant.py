@@ -222,6 +222,9 @@ def compute_stats(
         "is_holdout": cfg.is_holdout, "period_start_ms": market.period_start_ms,
         "period_end_ms": market.period_end_ms,
         "seeds": {"master_seed": seed, "purposes": list(PURPOSES)},
+        "n_sessions": len(market.calendar.eligible_days(
+            market.period_start_ms if market.listing_ms is None else max(market.period_start_ms, market.listing_ms),
+            market.period_end_ms)),
         "summary": s, "skips": result.skips,
         "headline": head,
         "baselines": base,

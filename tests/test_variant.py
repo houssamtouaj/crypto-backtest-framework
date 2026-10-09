@@ -16,7 +16,7 @@ from tests.synthetic import STEP_15M_MS, aggregate
 STATS = StatsConfig(bootstrap_n=300, baseline_runs=49)
 KEYS = {"schema", "variant_id", "pair", "session_variant", "is_holdout", "period_start_ms", "period_end_ms", "seeds",
         "summary", "skips", "headline", "baselines", "buy_and_hold", "dsr", "repricing", "costs", "distributions",
-        "rolling", "per_year", "regimes", "breakdowns", "insample_ref"}
+        "rolling", "per_year", "regimes", "breakdowns", "insample_ref", "n_sessions"}
 
 
 def cfg_for(params=StrategyParams()):
@@ -60,6 +60,8 @@ def test_every_block_is_present_and_consistent(full):
     assert st["insample_ref"]["vol_median"] is None  # 15 days of data: no 30-day vol yet
     assert st["insample_ref"]["sigma_bh"] == pytest.approx(st["buy_and_hold"]["sigma_bh"])
     assert sum(r["n"] for r in st["breakdowns"]["dow"]) == len(tr)
+    assert h["std_net_r"] == pytest.approx(tr["net_r"].std(ddof=1))  # Phase 7 holdout power
+    assert st["n_sessions"] == len(market.calendar.eligible_days(market.period_start_ms, market.period_end_ms)) == 15
     assert sum(r["n"] for r in st["regimes"]["trend"]) == len(tr)
 
 

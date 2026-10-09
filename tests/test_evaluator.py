@@ -129,8 +129,15 @@ def test_off_grid_funding_raises():
         one([FLAT, FILL, STOP], spec(), funding=funding_at([T0_MS + STEP_15M_MS + 60_000], [0.01]))
 
 
+def test_a_gap_fill_below_the_stop_is_a_valid_limit_spec():
+    """The simulator fills a first-look order at an open already below the stop; exit at that open, gross 0."""
+    o = one([FLAT, (98.5, 98.8, 98.0, 98.4), FLAT], spec(entry=98.5, stop=99.0, stop_dist=1.0))
+    assert (o["exit_idx"], o["exit_reason"], o["exit_ref"], o["gross_r"]) == (1, "stop", 98.5, 0.0)
+
+
 @pytest.mark.parametrize("bad", [
     dict(entry_idx=7), dict(kind="market"), dict(role="both"), dict(stop=100.0), dict(stop=float("nan")),
+    dict(stop_dist=0.0), dict(kind="market_open", stop=100.6),
 ])
 def test_invalid_specs_raise(bad):
     kw = dict(bad)

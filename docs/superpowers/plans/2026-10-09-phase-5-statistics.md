@@ -158,4 +158,9 @@ Tests: random-walk variant → every §5.10 block present, write/read equal, two
 
 ## Execution notes
 
-(filled in during execution)
+- Task 3 folded into Task 2: `evaluator.net_r` calls `repricing.reprice`; its bit-for-bit test lives in `test_evaluator.py`.
+- The random-walk helpers (`walk`, `run_walk`) moved from `test_simulator.py` into `tests/sim_harness.py`; `tests/coinflip.py` is a no-edge strategy whose random-walk entries are market entries at the open (the baselines' shape).
+- The coin-flip null test cannot see slot-geometry errors (zero drift): a planted `r_target → 1` passed it, so `test_slot_at_a_coin_flip_entry_is_that_trade` pins the geometry against real trades.
+- Coverage of the bootstrap CIs on the fixed seeds: trade 93.8 %, block Sharpe 94.0 %.
+- Real-data smoke (BTCUSDT 2024 UTC primary, 500 baseline runs): n 315, mean net R −0.229 [−0.400, −0.057], p_A 0.124, p_B 0.279, Sharpe −2.60 vs B&H 1.53 (p_BH 0.998); baselines 1 s, stats 1.5 s. Reviewer at full scale (BTC 2020–2025): baselines 67 s with 5,000 runs, `compute_stats` 5 s.
+- Whole-branch review (fresh reviewer): no critical. Fixed: `n_sessions` and `std_net_r` added to `stats.json` (Phase 6/7 read them); the evaluator accepted only `stop < entry`, which rejected a simulator `open_gap` fill below the stop. Spec reconciled: baseline B's NaN-multiple rule, `reprice_grid` signature.

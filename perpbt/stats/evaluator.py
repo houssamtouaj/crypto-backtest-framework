@@ -219,8 +219,10 @@ class _Eval:
         values = np.concatenate([self.entry, self.stop, self.target, self.pierce, self.stop_dist])
         if not np.all(np.isfinite(values)):
             raise ValueError("evaluate: entry, stop, target, pierce and stop_dist must be finite")
-        if m and not (np.all(self.stop_dist > 0) and np.all(self.stop < self.entry)):
-            raise ValueError("evaluate: every stop must lie below its entry (positive stop_dist)")
+        # A limit filled on its first look at an open already below the stop (the simulator's open_gap) is
+        # valid: it exits at that open. Only a market entry must have its stop below the entry.
+        if m and not (np.all(self.stop_dist > 0) and np.all(self.stop[market] < self.entry[market])):
+            raise ValueError("evaluate: stop_dist must be positive and a market entry's stop below its open")
         self.minute0 = np.where(market, 0, spec.entry_minute)
         if m and (self.minute0.min() < 0 or self.minute0.max() > 14):
             raise ValueError("evaluate: entry_minute must lie in 0..14")

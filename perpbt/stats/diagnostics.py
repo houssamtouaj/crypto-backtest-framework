@@ -20,7 +20,7 @@ def quantiles(x) -> dict | None:
 
 
 def headline(trades_r: pd.DataFrame) -> dict:
-    """``n``, win rate (``net_r > 0``), mean gross/net R, median net R, profit factor, mean cost, funding, hold."""
+    """``n``, win rate (``net_r > 0``), mean gross/net R, median and std (ddof 1) of net R, profit factor, costs, hold."""
     n = len(trades_r)
     net = trades_r["net_r"].to_numpy(dtype=np.float64)
     loss = -net[net < 0].sum()
@@ -32,6 +32,7 @@ def headline(trades_r: pd.DataFrame) -> dict:
         "n": n, "win_rate": float((net > 0).mean()) if n else None,
         "mean_gross_r": mean("gross_r"), "mean_net_r": mean("net_r"),
         "median_net_r": float(np.median(net)) if n else None,
+        "std_net_r": float(net.std(ddof=1)) if n > 1 else None,
         "profit_factor": float(net[net > 0].sum() / loss) if loss > 0 else None,
         "avg_cost_r": mean("cost_r"), "avg_funding_r": mean("funding_r"), "avg_hold_min": mean("hold_minutes"),
     }
