@@ -253,7 +253,7 @@ and assert the exact intent list (prices, expiry, tag) or the skip reason.
     candles gives an intent with `atr = None`.
 - **3.3 Strategy-level look-ahead test.**
   On a seeded random walk (`n = 5,000`, UTC session), the list of intents
-  with decision index `≤ cut` is identical between the full series, the
+  with decision index `≤ cut` (and the skip counts after `cut`) is identical between the full series, the
   series truncated at `cut`, and `perturb_after(series, cut)`. 20 seeds ×
   3 cuts. Repeated for NY with weekday rule.
 

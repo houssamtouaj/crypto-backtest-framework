@@ -409,3 +409,70 @@ def test_on_candle_refuses_a_skipped_or_repeated_candle():
     view.advance_to(2)
     with pytest.raises(ValueError, match="expected candle 1"):
         s.on_candle(view, FLAT_ACCOUNT)
+
+
+@pytest.mark.parametrize("params", [PRIMARY, StrategyParams(structure_break="literal")], ids=["fresh", "literal"])
+def test_first_call_mid_series_rebuilds_the_live_levels(params):
+    checked = 0
+    for seed in range(5):
+        cd = random_walk(3000, seed=seed, start_ms=T0_MS)
+        full = run_strategy(cd, params)
+        for i0 in (96 * 5, 96 * 17):  # UTC session boundaries
+            late = run_strategy(cd, params, start_i=i0)
+            expected = [(i, x) for i, x in full.intents if i >= i0]
+            assert late.intents == expected
+            checked += len(expected)
+    assert checked > 50
+
+
+# --- 3.3 strategy-level look-ahead and properties on random walks -------------------------
+
+
+CUTS = (1500, 3000, 4500)
+
+
+@pytest.mark.parametrize("spec", [UTC, NY], ids=["utc", "ny"])
+def test_intents_up_to_cut_ignore_later_candles(spec):
+    total = 0
+    for seed in range(20):
+        cd = random_walk(5000, seed=seed, start_ms=T0_MS)
+        full = run_strategy(cd, PRIMARY, spec, counts_at=CUTS)
+        total += len(full.intents)
+        for cut in CUTS:
+            expected = [(i, x) for i, x in full.intents if i <= cut]
+            head = run_strategy(cd.slice(int(cd.ts[0]), int(cd.ts[cut]) + 1), PRIMARY, spec)
+            assert head.intents == expected and head.counts == full.counts_at[cut], (seed, cut, "truncated")
+            moved = run_strategy(perturb_after(cd, cut, seed=1000 + seed), PRIMARY, spec, stop_at=cut)
+            assert moved.intents == expected and moved.counts == full.counts_at[cut], (seed, cut, "perturbed")
+    assert total > 100  # not vacuous: UTC about 900, NY about 300
+
+
+VARIANTS = [
+    PRIMARY,
+    StrategyParams(swing_k=1, confirm_n=5, zone="body", entry_level="mid", pierce=0.0005,
+                   stop_buffer=StopBuffer("pct", 0.0025), trend_filter=True),
+    StrategyParams(swing_k=3, confirm_n=2, stop_buffer=StopBuffer("atr", 0.0), r_target=1.0),
+    StrategyParams(structure_break="literal", skip_mitigated="stop"),
+]
+
+
+@pytest.mark.parametrize("params", VARIANTS, ids=["primary", "features", "k3n2", "literal_stop"])
+@pytest.mark.parametrize("spec", [UTC, NY, LONDON], ids=["utc", "ny", "london"])
+def test_random_walk_intents_are_well_formed(params, spec):
+    for seed in range(3):
+        cd = random_walk(3000, seed=50 + seed, start_ms=T0_MS)
+        cal = SessionCalendar(spec, cd.ts)
+        sma = np.convolve(cd.c, np.ones(96) / 96)[: len(cd)]  # any causal series: exercises both trend branches
+        run = run_strategy(cd, params, spec, daily_sma=sma)
+        assert_counts_consistent(run.counts)
+        sessions = [x.tag["session_id"] for _, x in run.intents]
+        assert len(sessions) == len(set(sessions)) == run.counts["intents"]
+        for i, x in run.intents:
+            assert cal.in_window[i] and x.expires_ms == cal.end_ms[i] >= cd.ts[i] + STEP_15M_MS
+            assert x.tag["impulse_idx"] == i and x.tag["session_id"] == cal.session_id[i]
+            assert i - params.confirm_n <= x.tag["candidate_idx"] < x.tag["displacement_idx"] <= i
+            assert cd.ts[x.tag["candidate_idx"]] >= cal.open_ms[i]
+            assert x.stop < x.price < cd.c[i] and x.price < x.target
+            assert list(x.tag) == list(TAG_KEYS)
+            assert all(type(v) in (int, float, str) or v is None for v in x.tag.values())
+            json.dumps(x.tag, allow_nan=False)
