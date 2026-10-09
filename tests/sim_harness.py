@@ -16,7 +16,8 @@ from perpbt.data.store import Candles, Funding
 from perpbt.execution.simulator import SimResult, run
 from perpbt.strategy.base import AccountView, Intent, MarketView, PlaceBracketLimit, SimEvent
 from tests.strategy_harness import UTC
-from tests.synthetic import STEP_15M_MS, T0_MS, candles_from_rows
+from perpbt.strategy.order_block import OrderBlockStrategy
+from tests.synthetic import STEP_15M_MS, T0_MS, aggregate, candles_from_rows, random_walk
 
 ZERO_COST = ExecConfig(fee_maker=0.0, fee_taker=0.0, slippage=0.0, use_1m=False)
 FLAT = (100.5, 100.8, 100.2, 100.5)  # touches none of entry 100, stop 99, target 102
@@ -114,3 +115,30 @@ def sim(
         int(cd.ts[first]), close_ms(last, start_ms), variant_id="v",
     )
     return res, strategy
+
+
+# --- random-walk runs (1m walk aggregated to 15m, 8-hourly funding) ---------------------------
+
+N15 = 1_500  # 15m candles (about 15.6 days) built from 22,500 one-minute candles
+WALK_COSTS = ExecConfig(fee_maker=0.0002, fee_taker=0.0005, slippage=0.0002, use_1m=True)
+WALK_START = T0_MS + 96 * STEP_15M_MS  # the first decision candle: one day of warmup
+
+
+def walk(seed: int, n15: int = N15) -> tuple[Candles, Funding]:
+    """A seeded 1m random walk of ``n15 × 15`` minutes and 8-hourly funding with random rates."""
+    m1 = random_walk(n15 * 15, seed=seed, start_ms=T0_MS, step_ms=60_000, tf="1m", step_sigma=0.0006)
+    times = np.arange(T0_MS, T0_MS + n15 * STEP_15M_MS, 8 * 3_600_000, dtype=np.int64)
+    rates = np.random.default_rng(seed).normal(0.0001, 0.0002, len(times))
+    return m1, Funding("TEST", times, rates, np.full(len(times), 8, dtype=np.int8))
+
+
+def run_walk(m1: Candles, fund: Funding, spec: SessionSpec, *, last: int | None = None,
+             params: StrategyParams | None = None, strategy=None, cfg: ExecConfig = WALK_COSTS) -> SimResult:
+    """Simulate the 15m aggregate of ``m1`` from ``WALK_START`` (``OrderBlockStrategy`` unless ``strategy``)."""
+    c15 = aggregate(m1, 15, tf="15m")
+    if last is not None:
+        c15 = c15.slice(T0_MS, int(c15.ts[last]) + 1)
+        m1 = m1.slice(T0_MS, int(c15.ts[last]) + STEP_15M_MS)
+    end = int(c15.ts[-1]) + STEP_15M_MS
+    strategy = strategy or OrderBlockStrategy(params or StrategyParams())
+    return run(c15, m1, fund, SessionCalendar(spec, c15.ts), strategy, cfg, WALK_START, end, variant_id="walk")

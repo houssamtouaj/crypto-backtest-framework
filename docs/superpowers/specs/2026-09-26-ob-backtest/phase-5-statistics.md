@@ -37,9 +37,9 @@ equivalent to the simulator (test 5.3).
 
 ```python
 @dataclass
-class TradeSpec:                  # arrays of length m
+class TradeSpec:                  # arrays of length m (a scalar is broadcast)
     entry_idx: np.ndarray         # 15m index of the entry candle
-    entry_kind: np.ndarray        # "limit": fill at entry_price on entry_idx, same-candle rules apply
+    entry_kind: np.ndarray        # "limit": filled at entry_price on entry_idx, same-candle rules apply
                                   # "market_open": fill at open[entry_idx]
     entry_price: np.ndarray
     stop: np.ndarray
@@ -47,28 +47,57 @@ class TradeSpec:                  # arrays of length m
     deadline_idx: np.ndarray      # candle at whose close the time exit happens; -1 for none
     pierce_abs: np.ndarray
     entry_role: np.ndarray        # "maker" | "taker" (fee on entry)
+    entry_minute: np.ndarray | None = None  # 1m candle (0-14) of the fill in the entry candle; default 0
+    stop_dist: np.ndarray | None = None     # the R unit; default entry price − stop
 
 @dataclass
 class Outcome:                    # arrays of length m
-    exit_idx, exit_ref, exit_reason, exit_role
-    funding_r, gross_r, c_maker_entry, c_maker_exit, c_taker_exit, c_slip
+    exit_idx, exit_minute, exit_ref, exit_reason, exit_role
+    funding_r, gross_r, c_maker_entry, c_maker_exit, c_taker_entry, c_taker_exit, c_slip
 
-def evaluate(spec: TradeSpec, candles15, candles1m | None, funding, exec_cfg) -> Outcome
+def evaluate(spec: TradeSpec, candles15, candles1m | None, funding, exec_cfg, *,
+             last_idx=None, min_batch=32, max_steps=512) -> Outcome
 def net_r(outcome: Outcome, fee_maker, fee_taker, slippage) -> np.ndarray
+def specs_from_trades(trades, candles15) -> TradeSpec   # the simulator's trades as limit specs
 ```
 
-Algorithm: a pending mask over all `m` trades. Step `k = 0` applies the
-same-candle rules of Phase 4 §4.3 to the entry candle (stop allowed,
-target not). For `k = 1, 2, …` gather `idx = entry_idx + k` for pending
-trades, test stop, target (with pierce), and deadline in one vectorized
-pass, resolve with the pessimistic precedence, and, when 1m data is
-present and both stop and target are touched, hand those trades to the
-1m resolver of Phase 4 (shared code, not a copy). Trades whose `idx`
-reaches the series end resolve as `data_end`. When fewer than 32 trades
-remain pending, or after 512 steps, the stragglers are finished with
-per-trade slice scans (`np.argmax` on the boolean hit arrays), so one
-long-lived trade does not force thousands of vectorized steps. Funding is
-summed per trade from the funding table over `[fill close, exit open]`.
+`exit_reason` is `stop`, `target`, `time` (a deadline; the evaluator does
+not know the hold kind) or `data_end`; `exit_role` is `maker` for targets,
+else `taker`; `exit_minute` is the 1m candle of a 1m-resolved exit, −1
+otherwise. `c_taker_entry` is `entry / stop_dist` for a taker entry (fee
+only: slippage is charged on exits, D8), else 0. The simulator's trades
+carry `stop_dist = planned_entry − stop`, which differs from
+`entry_price − stop` on `open_gap` fills, and `entry_minute =
+(entry_ms − τ_entry) / 1 min`.
+
+Algorithm: a pending mask over all `m` trades. Step `k = 0` is the entry
+candle: the bracket is already filled, so the stop may exit (reference
+`min(stop, open)`) and the target may not. When that candle touched two or
+more of {entry, stop, target} and 1m data are in use, its minutes are
+walked *from the fill minute* by Phase 4's `walk_minutes` with the entry
+level set marketable (`fill_at = +inf`, first look): stop allowed and
+target not on the fill minute, both after it, which is the post-fill part
+of the simulator's own walk (the simulator can fill and then hit the
+target inside one 15m candle, so "target not on the entry candle" holds
+only without 1m; changed 2026-10-09 to match Phase 4). For
+`k = 1, 2, …` gather `idx = entry_idx + k` for pending trades, test stop
+and target (with pierce) in one vectorized pass, resolve with the
+pessimistic precedence, and, when 1m data is present and both stop and
+target are touched, hand those trades to the 1m resolver of Phase 4
+(`resolve_candle`, shared code, not a copy); a walk that finds no exit
+(1m data disagreeing with the 15m bar) leaves the trade open. A trade with
+no stop or target exit on its deadline candle exits at that close; one
+still open after the checks of `last_idx` (default the last candle given)
+exits at its close as `data_end` (taker, slippage), as simulator §4.9.
+`deadline_idx` from a deadline in ms is the first candle whose close is at
+or after it, clamped to `≥ entry_idx`. When fewer than `min_batch` (32)
+trades remain pending, or after `max_steps` (512) steps, the stragglers
+are finished with per-trade windowed scans (`np.argmax` on the boolean hit
+arrays), so one long-lived trade does not force thousands of vectorized
+steps. Funding is summed per trade from the funding table over events
+`τ_entry + 15m ≤ f < τ_exit + 15m` (on the grid: `[fill close, exit
+open]`), each at the close of the candle before the one containing `f`
+(the simulator's price); off-grid events raise, as in the simulator.
 
 ## 5.3 Baseline A — timing skill (`stats/baselines.py`)
 
