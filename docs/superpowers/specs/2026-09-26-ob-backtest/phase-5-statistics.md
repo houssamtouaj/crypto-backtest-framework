@@ -140,6 +140,28 @@ Store per run the mean of each `Outcome` component, so the run's mean
 
 Both baselines are recomputed on the holdout with the holdout's own days.
 
+**Details fixed in implementation (2026-10-09).** A slot (A and B) is an
+in-window candle `e` of the period, at or after the listing date, with
+`ATR14[e−1] > 0`; `pierce_abs = pierce × open[e]`; the deadline candle is
+the first candle whose close is at or after the hold deadline
+(`session_end`: the window end; `max_hold`: `τ_e + 15m + hours`). A real
+trade with a NaN `stop_dist_atr` is left out of both baselines and
+counted (`n_excluded`). Baseline trades that reach the data end are left
+out of their run's mean, as the real `data_end` trades are left out of
+the observed mean; in table A such slots are dropped, and a trade left
+with no slot is left out and counted. The observed statistic for A is the
+mean over the trades table A covers. B's sessions are
+`eligible_days(max(period_start, listing), period_end)` with at least one
+slot. Both baselines store per run the component means (`gross_r`, the
+five cost coefficients including `c_taker_entry`, `funding_r`) and the
+number of trades `n`; `z` uses the runs' standard deviation with ddof 1.
+B is evaluated in chunks of runs (one `evaluate` call per chunk of
+concatenated per-run specs, about 200,000 trades); each run's draws come
+from the generator in run order, so the result does not depend on the
+chunk size. Public functions: `make_setup`, `slot_spec`,
+`precompute_table_a`, `table_from_outcome`, `runs_a`, `b_plan`, `b_spec`,
+`runs_b`, `p_value`, `run_means`, `observed_components`.
+
 ## 5.5 Buy-and-hold (`stats/buyhold.py`)
 
 Daily return of a constant 1× long in the perp:
