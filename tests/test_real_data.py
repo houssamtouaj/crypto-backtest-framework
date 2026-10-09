@@ -94,3 +94,46 @@ def test_simulator_smoke_btc_2024(real_cfg, capsys):
     with capsys.disabled():
         print(f"\nsmoke BTCUSDT 2024 UTC: {json.dumps(s, indent=1)}\nskips {res.skips}")
         print(tr.groupby("exit_reason")["net_r"].agg(["count", "mean"]))
+
+
+def test_stats_json_from_the_smoke_run(real_cfg, tmp_path, capsys):
+    """Phase 5 exit criterion: stats.json from the Phase 4 smoke run is produced and read back without loss."""
+    import time
+
+    from perpbt.config import ExecConfig, StatsConfig, VariantConfig
+    from perpbt.execution.simulator import run
+    from perpbt.stats.variant import Market, compute_stats, read_stats, run_baselines, write_stats
+    from perpbt.strategy.order_block import OrderBlockStrategy
+
+    start, end = date_ms("2024-01-01"), date_ms("2025-01-01")
+    cd = CandleStore(real_cfg).load("BTCUSDT", "15m", date_ms(real_cfg.warmup_start), end)
+    m1 = CandleStore(real_cfg).load("BTCUSDT", "1m", start, end)
+    fund = FundingStore(real_cfg).load("BTCUSDT", start, end)
+    cfg = VariantConfig(pair="BTCUSDT", session=UTC, params=StrategyParams(), exec=ExecConfig(), stats=StatsConfig(),
+                        period_start="2024-01-01", period_end="2024-12-31", is_holdout=False)
+    cal = SessionCalendar(UTC, cd.ts)
+    res = run(cd, m1, fund, cal, OrderBlockStrategy(cfg.params), cfg.exec, start, end, variant_id="smoke")
+    market = Market(cd, m1, fund, cal, start, end, listing_ms=date_ms(real_cfg.listing["BTCUSDT"]))
+    t0 = time.perf_counter()
+    base = run_baselines(res, market, cfg, variant_id="smoke", n_runs=500)
+    t1 = time.perf_counter()
+    st = compute_stats(res, market, cfg, variant_id="smoke", baselines=base)
+    t2 = time.perf_counter()
+    write_stats(st, tmp_path / "stats.json")
+    assert read_stats(tmp_path / "stats.json") == st
+    assert st["headline"]["n"] == st["summary"]["n_trades_r"] > 50
+    assert 0 < st["baselines"]["p_a"] <= 1 and 0 < st["baselines"]["p_b"] <= 1
+    assert len(st["repricing"]) == 8 and st["buy_and_hold"]["n_days"] == 366
+    with capsys.disabled():
+        h, b, bh = st["headline"], st["baselines"], st["buy_and_hold"]
+        print(f"\nstats BTCUSDT 2024 UTC: n {h['n']}, mean net R {h['mean_net_r']:.3f} "
+              f"CI [{h['mean_net_r_ci']['lo']:.3f}, {h['mean_net_r_ci']['hi']:.3f}] "
+              f"block [{h['mean_net_r_ci_block']['lo']:.3f}, {h['mean_net_r_ci_block']['hi']:.3f}], "
+              f"Sharpe {h['sharpe_ann']:.2f}, max DD {h['max_dd']:.3f}")
+        print(f"baselines (500 runs, {t1 - t0:.1f} s): p_A {b['p_a']:.3f} z_A {b['z_a']:.2f}, "
+              f"p_B {b['p_b']:.3f} z_B {b['z_b']:.2f}, n_A {b['n_a']} excluded {b['n_excluded_a']}")
+        print(f"B&H Sharpe {bh['sharpe']:.2f}, diff {bh['sharpe_diff']:.2f}, p_BH {bh['p_bh']:.3f}; "
+              f"stats {t2 - t1:.1f} s; cost_r>1 share {st['costs']['share_cost_r_gt_1']:.3f}")
+        for r in st["repricing"]:
+            print(f"  slip {r['slippage']:.4f} maker {r['fee_maker']:.4f}: mean {r['mean_net_r']:.3f} "
+                  f"p_A {r['p_a']:.3f} p_B {r['p_b']:.3f}")

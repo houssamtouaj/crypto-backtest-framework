@@ -265,7 +265,35 @@ CI; max DD; exposure; `p_A, z_A, p_B, z_B` with `n_runs`; buy-and-hold
 block; DSR at both `N`; re-pricing grid; rolling and per-year tables;
 regime and breakdown tables; the R-subset size and the `data_end` count.
 Holm-adjusted p-values are added by the experiments layer once all nine
-primary cells exist.
+primary cells exist; so are the two DSR values (the file stores their
+inputs, see 5.7).
+
+`stats/variant.py` builds the file:
+
+```python
+@dataclass(frozen=True)
+class Market:            # candles15, candles1m, funding, calendar, period_start_ms, period_end_ms, listing_ms=None
+def run_baselines(result, market, cfg: VariantConfig, *, variant_id, n_runs=None) -> Baselines
+                         # table_a, runs_a, runs_b (per-run component means), n_runs
+def compute_stats(result, market, cfg, *, variant_id, baselines=None, insample_ref=None) -> dict
+def write_stats(stats, path); def read_stats(path) -> dict
+```
+
+Top-level keys: `schema`, ids and period, `seeds` (master seed and the
+generator purposes), `summary` (the simulator's counts), `skips`,
+`headline` (n, win rate, mean gross/net R, median, profit factor, both
+mean-R CIs, Sharpe with CI, max DD, exposure, max concurrent),
+`baselines` (`p_a, z_a, p_b, z_b, n_runs`, observed values, run means and
+stds; null until `run_baselines` has run), `buy_and_hold`, `dsr`,
+`repricing` (8 rows), `costs`, `distributions`, `rolling`, `per_year`,
+`regimes`, `breakdowns` (day of week, entry hour, year, exit reason),
+`insample_ref` (`vol_median`, `sigma_strategy`, `sigma_bh`; a holdout run
+receives the in-sample cell's values). Generators come from
+`rng_for(master_seed, variant_id, purpose)`; the re-pricing grid uses the
+trade-bootstrap purpose for every cell, so its primary cell repeats the
+headline CI. The JSON has sorted keys and non-finite numbers as `null`
+(`compute_stats` returns the sanitized dict, so it equals what is read
+back) and is byte-identical across reruns.
 
 ## 5.11 Tasks and tests
 
