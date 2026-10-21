@@ -6,9 +6,15 @@
       "purpose": "tail",
       "rows": 80,
       "start_ms": 1788192060000
+    },
+    {
+      "end_ms": 1792601408826,
+      "purpose": "tail",
+      "rows": 63,
+      "start_ms": 1790784060000
     }
   ],
-  "download_date": "2026-09-27",
+  "download_date": "2026-10-21",
   "files": [
     {
       "name": "SOLUSDT-fundingRate-2020-09.zip",
@@ -441,18 +447,24 @@
       "rows": 93,
       "sha256": "593e99bb628c0b178a5a2c8f415e1ed489dfd7dea497366f1fee91b8768c704d",
       "source": "bulk_monthly"
+    },
+    {
+      "name": "SOLUSDT-fundingRate-2026-09.zip",
+      "rows": 90,
+      "sha256": "8503ce0767496c63929bedc4f43307efcea8216d181a873b32a695f6d85092ef",
+      "source": "bulk_monthly"
     }
   ],
   "first_funding_ms": 1600012800000,
   "intervals": {
     "2": 99,
     "4": 2,
-    "8": 6589
+    "8": 6662
   },
-  "last_funding_ms": 1790496000000,
+  "last_funding_ms": 1792598400000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "SOLUSDT",
-  "rows": 6690
+  "rows": 6763
 }

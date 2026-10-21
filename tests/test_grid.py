@@ -1,4 +1,5 @@
 """Spec §6.4 (test 6.3): grid enumeration from the pre-registration."""
+import dataclasses
 from collections import Counter
 from pathlib import Path
 
@@ -69,5 +70,10 @@ def test_primary_variants_in_sample_and_holdout(prereg):
     ins = primary_variants(prereg)
     assert [(v.cfg.pair, v.cfg.session.name) for v in ins] == [
         (p, s) for p in ("BTCUSDT", "ETHUSDT", "SOLUSDT") for s in ("utc", "ny", "london")]
+    unset = dataclasses.replace(prereg, holdout=dataclasses.replace(prereg.holdout, end=None))
     with pytest.raises(Exception, match="holdout.end"):
-        primary_variants(prereg, holdout=True)  # not set until the data download date
+        primary_variants(unset, holdout=True)  # not set until the data download date
+    if prereg.holdout.end is not None:  # set at the Phase 8 fetch
+        out = primary_variants(prereg, holdout=True)
+        assert [(v.cfg.pair, v.cfg.session.name) for v in out] == [(v.cfg.pair, v.cfg.session.name) for v in ins]
+        assert all(v.cfg.is_holdout and v.cfg.period_end == prereg.holdout.end for v in out)

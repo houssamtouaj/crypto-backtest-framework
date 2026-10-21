@@ -1,9 +1,9 @@
 # Pre-registration (spec phase-6-experiments.md §6.8). Frozen by `perpbt prereg freeze` in Phase 8;
 # after the freeze only data_download_date and holdout.end may change (both excluded from the hash).
 registered_on: 2026-09-26
-data_download_date: null            # set at fetch; excluded from the hash
+data_download_date: 2026-10-21      # set at fetch; excluded from the hash
 insample: {start: 2020-01-01, end: 2025-12-31}
-holdout:  {start: 2026-01-01, end: null}   # end = data_download_date; excluded from the hash
+holdout:  {start: 2026-01-01, end: 2026-10-20}   # last whole UTC day before data_download_date; excluded from the hash
 warmup_start: 2019-11-01
 pairs: [BTCUSDT, ETHUSDT, SOLUSDT]
 listing: {BTCUSDT: 2019-09-08, ETHUSDT: 2019-11-27, SOLUSDT: 2020-09-14}

@@ -15,9 +15,16 @@ PREREG = ROOT / "configs" / "prereg.yaml"
 SPEC = ROOT / "docs" / "superpowers" / "specs" / "2026-09-26-ob-backtest" / "phase-6-experiments.md"
 
 
+def unfrozen(raw_: dict) -> dict:
+    """The file as registered: the two fields set at the Phase 8 fetch (not hashed) back to null."""
+    r = copy.deepcopy(raw_)
+    r["data_download_date"], r["holdout"]["end"] = None, None
+    return r
+
+
 @pytest.fixture(scope="module")
 def raw():
-    return yaml.safe_load(PREREG.read_text(encoding="utf-8"))
+    return unfrozen(yaml.safe_load(PREREG.read_text(encoding="utf-8")))
 
 
 def h(raw_):
@@ -32,7 +39,13 @@ def test_committed_file_is_the_spec_text(raw):
 def test_committed_file_loads(raw):
     p = load_prereg(PREREG)
     assert p.pairs == ("BTCUSDT", "ETHUSDT", "SOLUSDT") and list(p.sessions) == ["utc", "ny", "london"]
-    assert p.primary == StrategyParams() and p.data_download_date is None and p.holdout.end is None
+    assert p.primary == StrategyParams()
+    if lock_path(PREREG).exists():  # frozen in Phase 8: the dates are set and agree with the lock
+        assert p.data_download_date == read_lock(lock_path(PREREG))["data_download_date"]
+        assert p.holdout.end is not None and p.holdout.end <= p.data_download_date
+        assert p.prereg_hash() == read_lock(lock_path(PREREG))["prereg_hash"]
+    else:
+        assert p.data_download_date is None and p.holdout.end is None
     assert p.exec_for("BTCUSDT") == ExecConfig()
     assert p.exec_for("ETHUSDT") == ExecConfig(mmr=0.005)
     assert p.exec_for("SOLUSDT") == ExecConfig(mmr=0.010, slippage=0.0005)
@@ -144,12 +157,11 @@ def test_duplicate_yaml_keys_are_rejected(tmp_path):
 
 def test_freeze_writes_the_lock_once(raw, tmp_path):
     path = tmp_path / "prereg.yaml"
-    path.write_text(PREREG.read_text(encoding="utf-8"), encoding="utf-8")
+    path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     with pytest.raises(ConfigError, match="data_download_date"):
         freeze(path)
     assert not lock_path(path).exists()
-    path.write_text(path.read_text(encoding="utf-8").replace("data_download_date: null",
-                                                             "data_download_date: 2026-09-27"), encoding="utf-8")
+    path.write_text(yaml.safe_dump({**raw, "data_download_date": "2026-09-27"}, sort_keys=False), encoding="utf-8")
     lock = freeze(path)
     assert lock_path(path) == tmp_path / "prereg.lock"
     back = read_lock(lock_path(path))

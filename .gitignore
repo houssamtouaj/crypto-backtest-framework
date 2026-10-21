@@ -5,7 +5,12 @@ __pycache__/
 /data/**
 !/data/**/
 !/data/**/manifest.json
-/runs/
+# run outputs stay ignored except the Phase 8 step-7 files; the primary report.md files are added with -f
+/runs/**
+!/runs/**/
+!/runs/summary.md
+!/runs/registry.jsonl
+!/runs/results.parquet
 *.egg-info/
 build/
 dist/

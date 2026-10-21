@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import yaml
 
 from perpbt import cli
 from perpbt.cli import main
@@ -76,7 +77,9 @@ def config_path(tmp_path):
 
 def test_committed_data_config_loads():
     cfg = load_yaml(ROOT / "configs" / "data.yaml", DataConfig)
-    assert cfg.data_dir == "data" and cfg.insample_end == "2025-12-31" and cfg.holdout_end is None
+    assert cfg.data_dir == "data" and cfg.insample_end == "2025-12-31"
+    prereg = yaml.safe_load((ROOT / "configs" / "prereg.yaml").read_text(encoding="utf-8"))
+    assert cfg.holdout_end == (None if prereg["holdout"]["end"] is None else str(prereg["holdout"]["end"]))
     assert cfg.warmup_start == "2019-11-01"
     assert cfg.listing == {"BTCUSDT": "2019-09-08", "ETHUSDT": "2019-11-27", "SOLUSDT": "2020-09-14"}
     assert cli.DEFAULT_DATA_CONFIG == "configs/data.yaml"

@@ -50,9 +50,12 @@ merged into `main`. This is the only time `main` moves (overview §8.1).
    runs, Holm over the holdout family.
 7. **Summary.** `perpbt report` (the primary reports, in-sample and
    holdout, and `runs/summary.md`). Commit `runs/summary.md`, the
-   nine primary `report.md` files, `runs/registry.jsonl`, and
-   `runs/results.parquet` (the Parquet trade tables stay git-ignored;
+   eighteen primary `report.md` files (in-sample and holdout) with their
+   `figures/` so they render where they are read, `runs/registry.jsonl`,
+   and `runs/results.parquet` (the Parquet trade tables stay git-ignored;
    they are reproducible from the code, data manifests, and seeds).
+   Amended 2026-10-21: the spec named nine reports; the holdout reports
+   and the figures were added at the user's request.
 8. **Merge.** Merge `phase/8-runs` into `dev` with `--no-ff` and delete
    the branch. Then open a pull request from `dev` to `main` containing
    the code, the specs, the manifests, the lock, and the committed
