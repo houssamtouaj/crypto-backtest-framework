@@ -1,0 +1,70 @@
+# Pre-registration (spec phase-6-experiments.md §6.8). Frozen by `perpbt prereg freeze` in Phase 8;
+# after the freeze only data_download_date and holdout.end may change (both excluded from the hash).
+registered_on: 2026-09-26
+data_download_date: null            # set at fetch; excluded from the hash
+insample: {start: 2020-01-01, end: 2025-12-31}
+holdout:  {start: 2026-01-01, end: null}   # end = data_download_date; excluded from the hash
+warmup_start: 2019-11-01
+pairs: [BTCUSDT, ETHUSDT, SOLUSDT]
+listing: {BTCUSDT: 2019-09-08, ETHUSDT: 2019-11-27, SOLUSDT: 2020-09-14}
+sessions:
+  utc:    {tz: UTC,              open: "00:00", close: "24:00", days: [0,1,2,3,4,5,6]}
+  ny:     {tz: America/New_York, open: "09:30", close: "16:00", days: [0,1,2,3,4]}
+  london: {tz: Europe/London,    open: "08:00", close: "16:30", days: [0,1,2,3,4]}
+primary:
+  swing_k: 2
+  confirm_n: 3
+  zone: full
+  entry_level: top
+  stop_buffer: {kind: atr, value: 0.1}
+  r_target: 2.0
+  hold_rule: {kind: none}
+  trend_filter: false
+  pierce: 0.0
+  structure_break: fresh            # D2
+  skip_mitigated: continue          # D4
+execution:
+  fee_maker: 0.0002
+  fee_taker: 0.0005
+  slippage: 0.0002
+  mmr: 0.004
+  risk_per_trade: 0.01
+  max_leverage: 25
+  start_equity: 10000
+  use_1m: true
+  per_pair:
+    ETHUSDT: {mmr: 0.005}
+    SOLUSDT: {mmr: 0.010, slippage: 0.0005}
+grid:                                # other axes held at primary values
+  heatmaps:
+    - {axes: [r_target, entry_level], r_target: [1, 1.5, 2, 3], entry_level: [top, mid]}
+    - {axes: [swing_k, confirm_n], swing_k: [1, 2, 3], confirm_n: [2, 3, 5]}
+    - {axes: [stop_buffer, hold_rule],
+       stop_buffer: [{kind: atr, value: 0}, {kind: atr, value: 0.1}, {kind: atr, value: 0.25}, {kind: atr, value: 0.5}],
+       hold_rule: [{kind: none}, {kind: session_end}, {kind: max_hold, hours: 24}, {kind: max_hold, hours: 72}]}
+  singles:
+    - {zone: body}
+    - {pierce: 0.0005}
+    - {trend_filter: true}
+    - {stop_buffer: {kind: pct, value: 0.001}}
+    - {stop_buffer: {kind: pct, value: 0.0025}}
+stats:
+  bootstrap_n: 10000
+  block_len_days: 10
+  baseline_runs_primary: 5000
+  baseline_runs_grid: 500
+  alpha: 0.05
+  master_seed: 20260926
+  reprice_slippage: [0.0, 0.0002, 0.0005, 0.001]
+  reprice_maker: [0.0, 0.0002]
+primary_family:                      # D11
+  cells: all pairs x all sessions at the primary parameters (9)
+  correction: holm
+  applied_per_benchmark: [baseline_a, baseline_b, buy_and_hold]
+verdict_rule:                        # D11; inlined so it is part of the hash
+  beats_baseline_a: "holm-adjusted one-sided p_a < alpha"
+  beats_baseline_b: "holm-adjusted one-sided p_b < alpha"
+  beats_buy_and_hold: "holm-adjusted one-sided p_bh < alpha and sharpe_diff > 0"
+  reported_for: [insample, holdout]
+  statistic_for_baselines: mean net R over the R subset (exit_reason != data_end)
+  costs_for_verdict: the execution block above (re-pricing is descriptive only)

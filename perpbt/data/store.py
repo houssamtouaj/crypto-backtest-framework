@@ -46,6 +46,9 @@ _FUNDING_DTYPES: dict[str, object] = {
 }
 
 
+_LOAD_COLUMNS = ("open_ms", "open", "high", "low", "close", "volume")
+
+
 class HoldoutAccessError(RuntimeError):
     """A load reached past ``insample_end`` without ``allow_holdout=True``."""
 
@@ -494,7 +497,7 @@ class CandleStore(_ParquetStore):
         d = self.dir(pair, tf)
         if not d.is_dir():
             raise FileNotFoundError(f"no stored candles for {pair} {tf} under {d}")
-        frame = self.read_frame(pair, tf, start_ms, end_ms)
+        frame = self.read_frame(pair, tf, start_ms, end_ms, columns=_LOAD_COLUMNS)  # not source etc.: memory
 
         def col(name: str, dtype: type) -> np.ndarray:
             return _frozen(frame[name].to_numpy(dtype=dtype, copy=True))
