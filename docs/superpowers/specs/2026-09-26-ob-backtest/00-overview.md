@@ -76,7 +76,7 @@ D11–D15 are new in v2 and come from the review.
 | D12 | Displacement and mitigation | A block is valid only if some candle in `c+1..t` closes above `high[c]`. Mitigation is checked only on candles after that displacement candle. The order is placed only if `close[t] > entry`. Replaces v1 §6.5, which skipped nearly every block (see §3). |
 | D13 | Cost sensitivity | The trade table is re-priced at slippage {0, 0.02, 0.05, 0.10}% × maker {0, 0.02}% without re-simulation. Mean net R, CIs, and baseline p-values are reported per cost cell. |
 | D14 | Indicator warmup before 2020 | The futures bulk archive starts 2020-01 (verified: 2019-12 returns 404). 15m candles for 2019-11-01..2019-12-31 are fetched via ccxt for BTCUSDT and ETHUSDT so the daily SMA(50) and ADX(14) are valid on 2020-01-01. |
-| D15 | Code version | SHA-256 of the `perpbt/` source tree, not the git commit, so docs and test commits do not invalidate the run cache. The commit hash is recorded alongside. |
+| D15 | Code version | SHA-256 of the `perpbt/` source tree, not the git commit, so docs and test commits do not invalidate the run cache. `perpbt/report/` is left out (amended 2026-10-21, Phase 7): it only reads the run outputs, so a report or summary edit neither invalidates the runs nor counts as a holdout code change. The commit hash is recorded alongside. |
 
 ## 3. Changes from v1
 
@@ -190,10 +190,11 @@ perpbt/
     runner.py          run one variant end to end; multiprocessing driver; resume
     holdout.py         one-shot holdout runner with guard
   report/
+    markdown.py        number formats and Markdown tables (parsed back by the tests)
     figures.py         all charts
     report.py          per pair × session report
     summary.py         the plain-language verdict
-  cli.py               perpbt data fetch | validate | run | grid | baselines | report | holdout
+  cli.py               perpbt data fetch | validate | prereg | run | grid | baselines | stats | report | holdout
 tests/
   synthetic.py         candle builders, random-walk generator, scenario helpers, causality helper
   test_*.py            one file per module

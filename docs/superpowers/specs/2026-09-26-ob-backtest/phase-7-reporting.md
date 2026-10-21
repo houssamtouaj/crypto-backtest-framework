@@ -32,6 +32,22 @@ returns the path. All figures render from a synthetic `SimResult`.
 | `funnel` | impulses → blocks seen → orders → fills → trades, with every skip reason |
 | `concurrency` | open positions over time, max marked |
 
+**Details fixed in implementation (2026-10-21).** Figures use
+matplotlib's object API (no pyplot, the global backend is untouched).
+The trade figures take the R subset. `equity` and `drawdown` take the
+`daily` and `buyhold` tables and the stored `buy_and_hold.scale`
+(buy-and-hold equity is `start_equity · Π(1 + scale · ret)`); in the
+in-sample primary report they continue into the holdout run when it
+exists, its equity chained onto the in-sample end, holdout shaded. The
+baseline histograms re-price the stored per-run component means
+(`baseline_a_runs.parquet`, `baseline_b.parquet`) at the variant's costs;
+observed value, p and z come from `stats.json`. `heatmap_1..3` take the
+cell's in-sample `results.parquet` rows that belong to the heatmap and
+draw mean net R, Sharpe and n side by side; cells without a run are
+marked. The concurrency figure shows the open positions at each daily
+mark and the intraday maximum (`max_concurrent`) as a line. Number
+formatting and Markdown tables live in `report/markdown.py`.
+
 ## 7.2 Per-variant report (`report/report.py`)
 
 `runs/<variant_id>/report.md`, sections in this order:
@@ -56,6 +72,27 @@ returns the path. All figures render from a synthetic `SimResult`.
 11. DSR at both `N` with the effective-trials caveat.
 12. Notes: any `15m_pessimistic_missing_1m` counts, gap overlaps, and the
     holdout code-change reason if present.
+
+**Details fixed in implementation (2026-10-21).** Every number in a
+report table is a value of `stats.json` (fractions printed as percent);
+the numbers the report derives are stated in prose and marked as
+computed at report time: the shared-trade fraction (siblings are the
+variants of the same pair, period and strategy parameters in the other
+sessions, `diagnostics.shared_fraction` over their `trades.parquet`) and
+the gap overlaps (trades whose `[entry_ms, exit_ms]` overlaps a gap
+listed in the pair's 15m or 1m `manifest.json`; "not checked" without a
+manifest). The three heatmaps of a pair × session are drawn in the
+in-sample primary's report, which also lists every grid variant of the
+cell with a link to its `report.md`; a grid variant's report links back
+to the primary's. The holdout code-change reason is the `reason` of the
+variant's latest `ok` run row in the registry. `perpbt report` reads
+`results.parquet` as the last run or family pass wrote it (it rebuilds it
+only when the file is missing, so a later edit to `cli.py` cannot empty
+it), then writes the in-sample primary reports, the holdout primary
+reports when the holdout ran, and the summary; `perpbt report --grid`
+also writes every in-sample grid variant's report, before the primary
+reports, which link only to grid reports that exist (otherwise they name
+the variant id). `perpbt/report/` is not part of the code version (D15).
 
 ## 7.3 Summary (`report/summary.py`)
 
@@ -94,6 +131,38 @@ returns the path. All figures render from a synthetic `SimResult`.
    correction, in-sample and on holdout, and the single largest caveat
    (typically costs or beta).
 
+**Details fixed in implementation (2026-10-21).** The verdict table and
+the sentences read `results.parquet`. "Raw p would pass" lists, per row,
+the benchmarks whose raw p meets the rule (buy-and-hold also needs
+`sharpe_diff > 0`); a sentence for a benchmark that fails adjusted but
+passes raw says so. A missing adjusted p (Holm not applied) reads "not
+yet corrected for multiplicity", a missing raw p "not tested". Holdout
+power is the minimum detectable mean net R of a one-sided test of mean
+net R > 0 (normal approximation) at 80% power,
+`MDE = (z_{1−α} + z_{0.80}) · σ_in / √n_holdout` with `σ_in` the
+in-sample `std_net_r`, shown at α and at α/9 (the first Holm step, the
+bar the best cell must clear). It is an approximation: the verdict tests
+against the random baselines, whose mean is not 0. Cost sensitivity applies Holm over the
+nine primaries to each re-pricing cell's `p_A`; "first" is the first
+cell, walking from the most expensive (slippage descending, then maker
+descending), whose adjusted `p_A < α`. The grid overview takes the best
+variant per pair × session by mean net R among the in-sample variants
+(the primary included) and counts raw `p_A < α` over the variants with
+baselines against `n · α` expected by chance. Holdout attempts are the
+distinct holdout batches in the registry. The plain-language answer
+states, per period, how many cells beat each benchmark after the Holm
+correction and whether any beats all three (no verdict when some cell
+has a raw p without an adjusted one: the correction is incomplete); the
+number of extra comparisons that would pass at raw p, with the chance
+expectation; and the largest caveat: beta when a cell beats a random
+baseline but not buy-and-hold; otherwise, from the mean gross R and mean
+cost in R across the primaries, "no gross edge" when the gross R is not
+positive, costs when they take at least half of a positive gross R, and
+sample size (the median in-sample MDE at α/9) otherwise. The verdict
+section prints the prereg's text for the three rules it applies
+(`beats_baseline_a`, `beats_baseline_b`, `beats_buy_and_hold`). The
+grid overview's DSR columns carry their `N` from `stats.json`.
+
 ## 7.4 Tasks and tests
 
 - **7.1 Figures.** Every figure renders from a synthetic `SimResult`
@@ -110,6 +179,7 @@ returns the path. All figures render from a synthetic `SimResult`.
   absent and present.
 
 Exit criterion: `perpbt report` produces the nine primary reports and the
-summary from synthetic runs in the test suite; the summary reads
+summary from synthetic runs in the test suite (3 pairs × 3 sessions,
+`tests/report_harness.py`); the summary reads
 correctly to someone who has not seen the code. Then merge into `dev` and
 delete the branch.

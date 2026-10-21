@@ -32,11 +32,12 @@ merged into `main`. This is the only time `main` moves (overview §8.1).
    any edit to `perpbt/` is a code change the holdout will report.
 3. **In-sample primary.** `perpbt run --primary` (nine cells), then
    `perpbt baselines --primary --runs 5000`, then `perpbt stats holm`.
-   Generate the nine reports.
+   Generate the nine reports (`perpbt report`).
 4. **Grid.** `perpbt grid --run --workers 4` (eight workers exceed the
    free memory, Phase 6 §6.5), then
    `perpbt baselines --grid --runs 500`, then `perpbt stats dsr` (the DSR
-   needs every grid cell). Generate the grid reports and the heatmaps.
+   needs every grid cell). Generate the grid reports and the heatmaps
+   (`perpbt report --grid`).
 5. **Review gate.** Read the nine primary reports and the heatmaps. Fix
    bugs if any are found, commit them, and rerun steps 3–4 (the registry
    keeps every attempt and the summary will show the code-version
@@ -47,7 +48,8 @@ merged into `main`. This is the only time `main` moves (overview §8.1).
 6. **Holdout, once.** `perpbt holdout` (with `--allow-code-change --reason`
    only if step 5 changed `perpbt/`). Nine cells, baselines at 5,000
    runs, Holm over the holdout family.
-7. **Summary.** `perpbt report --summary`. Commit `runs/summary.md`, the
+7. **Summary.** `perpbt report` (the primary reports, in-sample and
+   holdout, and `runs/summary.md`). Commit `runs/summary.md`, the
    nine primary `report.md` files, `runs/registry.jsonl`, and
    `runs/results.parquet` (the Parquet trade tables stay git-ignored;
    they are reproducible from the code, data manifests, and seeds).

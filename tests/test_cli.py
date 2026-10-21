@@ -1,4 +1,4 @@
-"""CLI: data fetch/validate wiring, the Phase 6 experiment commands, and the remaining 'not implemented' stub."""
+"""CLI: data fetch/validate wiring, the Phase 6 experiment commands and the Phase 7 report."""
 import subprocess
 import sys
 from datetime import date
@@ -13,7 +13,6 @@ from perpbt.data.bulk import DownloadError
 
 ROOT = Path(__file__).resolve().parents[1]
 TOP_LEVEL = ["data", "prereg", "run", "grid", "baselines", "stats", "report", "holdout"]
-STUB_ARGV = [["report"]]
 
 
 def test_help_lists_every_subcommand(capsys):
@@ -54,14 +53,6 @@ def test_python_dash_m_perpbt_help_runs():
     assert result.returncode == 0, result.stderr
     for name in TOP_LEVEL:
         assert name in result.stdout
-
-
-@pytest.mark.parametrize("argv", STUB_ARGV, ids=lambda a: " ".join(a))
-def test_stub_reports_not_implemented_and_fails(argv, capsys):
-    assert main(argv) == 2
-    err = capsys.readouterr().err
-    assert "not implemented" in err
-    assert " ".join(argv) in err
 
 
 def test_no_subcommand_is_a_usage_error():
@@ -235,3 +226,32 @@ def test_the_full_pipeline_end_to_end_on_a_synthetic_data_directory(tmp_path, ca
     ins = res[~res["is_holdout"]]
     assert ins.loc[ins["is_primary"], "p_a_adj"].notna().all() and ins["dsr_local"].notna().all()
     assert set(ins.loc[~ins["is_primary"], "n_baseline_runs"]) == {5}
+
+
+def test_report_writes_the_nine_primary_reports_and_the_summary(tmp_path, capsys):
+    """Phase 7 exit criterion: `perpbt report` on nine synthetic primary cells (3 pairs × 3 sessions)."""
+    from perpbt.experiments.registry import read_results
+    from tests.report_harness import build_runs
+
+    w = build_runs(tmp_path, full=True, grid=False)
+    capsys.readouterr()
+    assert main(["report", *w.common]) == 0
+    out = capsys.readouterr().out
+    res = read_results(w.runs)
+    prim = res[res["is_primary"]]
+    assert len(prim) == 18 and prim["is_holdout"].sum() == 9
+    for vid in prim["variant_id"]:
+        assert (w.runs / vid / "report.md").exists()
+    assert "perpbt report: 18 reports; summary" in out
+    summary = (w.runs / "summary.md").read_text(encoding="utf-8")
+    for cell in ("BTCUSDT / UTC", "ETHUSDT / NY", "SOLUSDT / London"):
+        assert f"- {cell}, in-sample: " in summary and f"- {cell}, holdout: " in summary
+    assert "The grid has not run yet" in summary
+
+
+def test_report_without_runs_is_exit_1(tmp_path, capsys):
+    from tests.experiment_harness import write_prereg
+
+    path = write_prereg(tmp_path / "prereg.yaml")
+    assert main(["report", "--prereg", str(path), "--runs-dir", str(tmp_path / "runs")]) == 1
+    assert "no primary variant" in capsys.readouterr().err

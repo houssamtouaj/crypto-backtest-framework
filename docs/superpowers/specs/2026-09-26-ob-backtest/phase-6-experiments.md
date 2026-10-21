@@ -47,8 +47,8 @@ the hash and the holdout runner refuses to run.
 `VariantConfig.variant_id(code_version)` = SHA-256 of the canonical JSON of
 the config plus the code version (D15). Two runs with the same id are the
 same experiment and produce byte-identical outputs. A change to any file
-under `perpbt/` yields new ids for everything; a change to docs, tests, or
-configs does not.
+under `perpbt/` yields new ids for everything; a change to docs, tests,
+configs or `perpbt/report/` (presentation only, D15) does not.
 
 ## 6.3 Registry (`experiments/registry.py`)
 
