@@ -190,10 +190,11 @@ perpbt/
     runner.py          run one variant end to end; multiprocessing driver; resume
     holdout.py         one-shot holdout runner with guard
   report/
+    markdown.py        number formats and Markdown tables (parsed back by the tests)
     figures.py         all charts
     report.py          per pair × session report
     summary.py         the plain-language verdict
-  cli.py               perpbt data fetch | validate | run | grid | baselines | report | holdout
+  cli.py               perpbt data fetch | validate | prereg | run | grid | baselines | stats | report | holdout
 tests/
   synthetic.py         candle builders, random-walk generator, scenario helpers, causality helper
   test_*.py            one file per module

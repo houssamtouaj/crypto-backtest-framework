@@ -1,11 +1,10 @@
 """Command-line entry point.
 
-Phase 0 registered every subcommand as a stub. Phase 1 implements ``data
-fetch`` and ``data validate``; Phase 6 implements ``prereg``, ``grid``,
-``run``, ``baselines``, ``stats`` and ``holdout``; ``report`` prints "not
-implemented" and exits with status 2 until Phase 7. Exit codes: 0 success,
-1 a download, checksum, validation or run failure (or a refused holdout or
-family pass), 2 a usage or config error.
+Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
+``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
+Phase 7 ``report``. Exit codes: 0 success, 1 a download, checksum,
+validation or run failure (or a refused holdout or family pass, or nothing
+to report), 2 a usage or config error.
 """
 from __future__ import annotations
 
@@ -14,6 +13,7 @@ import logging
 import sys
 from collections.abc import Callable, Sequence
 from datetime import date
+from pathlib import Path
 
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
 from perpbt.data.bulk import ChecksumError, DownloadError
@@ -30,20 +30,6 @@ DEFAULT_DATA_CONFIG = "configs/data.yaml"
 DEFAULT_PREREG = "configs/prereg.yaml"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_RUNS_DIR = "runs"
-
-# (name, help text, phase that implements it)
-_TOP_LEVEL: tuple[tuple[str, str, int], ...] = (
-    ("report", "write per-variant reports and the summary", 7),
-)
-
-
-def _not_implemented(name: str, phase: int) -> Handler:
-    def handler(args: argparse.Namespace) -> int:
-        print(f"perpbt {name}: not implemented (Phase {phase})", file=sys.stderr)
-        return 2
-
-    return handler
-
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -248,6 +234,30 @@ def _holdout(args: argparse.Namespace) -> int:
     return 0 if done["status"] == "ok" else 1
 
 
+def _report(args: argparse.Namespace) -> int:
+    # imported here so the other commands do not load matplotlib
+    from perpbt.experiments.registry import read_results, rebuild_results
+    from perpbt.report.report import write_reports
+    from perpbt.report.summary import write_summary
+
+    prereg = _load_prereg(args, "report")
+    if prereg is None:
+        return 2
+    runs = Path(args.runs_dir)
+    rebuild_results(runs)
+    results = read_results(runs)
+    if not results["is_primary"].fillna(False).astype(bool).any():
+        print(f"perpbt report: no primary variant of the current code in {runs}; run `perpbt run --primary` first",
+              file=sys.stderr)
+        return 1
+    paths = write_reports(runs, results, prereg, prereg.data_config(args.data_dir), grid=args.grid)
+    summary = write_summary(runs, prereg, args.prereg, results)
+    for p in paths:
+        print(p.as_posix())
+    print(f"perpbt report: {len(paths)} reports; summary {summary.as_posix()}")
+    return 0
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -337,9 +347,10 @@ def build_parser() -> argparse.ArgumentParser:
     _add_exp_args(holdout)
     holdout.set_defaults(handler=_holdout)
 
-    for name, help_text, phase in _TOP_LEVEL:
-        p = sub.add_parser(name, help=help_text)
-        p.set_defaults(handler=_not_implemented(name, phase))
+    report = sub.add_parser("report", help="write the per-variant reports and the summary")
+    report.add_argument("--grid", action="store_true", help="also write a report for every in-sample grid variant")
+    _add_exp_args(report)
+    report.set_defaults(handler=_report)
 
     return parser
 

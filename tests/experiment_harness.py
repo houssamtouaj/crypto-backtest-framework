@@ -28,10 +28,9 @@ insample: {{start: 2020-01-02, end: 2020-01-12}}
 holdout:  {{start: 2020-01-13, end: {holdout_end}}}
 warmup_start: 2020-01-01
 pairs: [{pairs}]
-listing: {{BTCUSDT: 2019-09-08, ETHUSDT: 2019-11-27, SOLUSDT: 2020-09-14}}
+listing: {{BTCUSDT: 2019-09-08, ETHUSDT: 2019-11-27, SOLUSDT: {sol_listing}}}
 sessions:
-  utc:    {{tz: UTC,              open: "00:00", close: "24:00", days: [0,1,2,3,4,5,6]}}
-  ny:     {{tz: America/New_York, open: "09:30", close: "16:00", days: [0,1,2,3,4]}}
+{sessions}
 primary:
   swing_k: 2
   confirm_n: 3
@@ -77,8 +76,18 @@ verdict_rule:
 """
 
 
-def prereg_text(*, download: str = "null", holdout_end: str = "null", pairs=PAIRS, r_target: str = "2.0") -> str:
-    return PREREG.format(download=download, holdout_end=holdout_end, pairs=", ".join(pairs), r_target=r_target)
+SESSION_LINES = {
+    "utc": '  utc:    {tz: UTC,              open: "00:00", close: "24:00", days: [0,1,2,3,4,5,6]}',
+    "ny": '  ny:     {tz: America/New_York, open: "09:30", close: "16:00", days: [0,1,2,3,4]}',
+    "london": '  london: {tz: Europe/London,    open: "08:00", close: "16:30", days: [0,1,2,3,4]}',
+}
+
+
+def prereg_text(*, download: str = "null", holdout_end: str = "null", pairs=PAIRS, r_target: str = "2.0",
+                sessions=("utc", "ny"), sol_listing: str = "2020-09-14") -> str:
+    """The prereg text; ``sol_listing`` before 2020-01 lets a synthetic SOLUSDT trade in January 2020."""
+    return PREREG.format(download=download, holdout_end=holdout_end, pairs=", ".join(pairs), r_target=r_target,
+                         sessions="\n".join(SESSION_LINES[k] for k in sessions), sol_listing=sol_listing)
 
 
 def write_prereg(path: Path, **kw) -> Path:
