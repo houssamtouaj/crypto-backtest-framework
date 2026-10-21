@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm, to_rgba
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
@@ -263,16 +263,27 @@ def baseline_b(runs, path, **kw) -> Path:
 
 # --- heatmaps ------------------------------------------------------------------------------------
 
+def text_color(rgba) -> str:
+    """INK or SURFACE, whichever contrasts more with the cell (WCAG relative luminance; crossover ~0.18)."""
+    r, g, b = (((x / 12.92) if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4) for x in to_rgba(rgba)[:3])
+    lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return INK if (lum + 0.05) / 0.05 >= 1.05 / (lum + 0.05) else SURFACE
+
+
+def _cell_ink(cmap, norm, v: float) -> str:
+    return text_color(cmap(norm(v))) if np.isfinite(v) else INK
+
+
 def _annotated(ax, mat: np.ndarray, cmap, norm, fmt, x_labels, y_labels, primary) -> None:
     masked = np.ma.masked_invalid(mat)
     ax.imshow(masked, cmap=cmap, norm=norm, aspect="auto")
     ax.grid(False)
     for (r, c), v in np.ndenumerate(mat):
         text = "not run" if not np.isfinite(v) else fmt(v)
-        ax.text(c, r, text, ha="center", va="center", fontsize=8, color=INK)
+        ax.text(c, r, text, ha="center", va="center", fontsize=8, color=_cell_ink(cmap, norm, v))
     if primary is not None:
         r, c = primary
-        ax.add_patch(Rectangle((c - 0.5, r - 0.5), 1, 1, fill=False, ec=INK, lw=2.2))
+        ax.add_patch(Rectangle((c - 0.5, r - 0.5), 1, 1, fill=False, ec=_cell_ink(cmap, norm, mat[r, c]), lw=2.2))
     ax.set_xticks(range(len(x_labels)), x_labels, fontsize=8)
     ax.set_yticks(range(len(y_labels)), y_labels, fontsize=8)
 
@@ -348,13 +359,16 @@ def reprice(rows: Sequence[Mapping], path) -> Path:
             primary = (i, j)
     fig, (ax,) = _figure(size=(6.5, 1.6 + 0.8 * len(slips)))
     masked = np.ma.masked_invalid(mat)
-    ax.imshow(masked, cmap=DIVERGING, norm=_div_norm(mat), aspect="auto")
+    norm = _div_norm(mat)
+    ax.imshow(masked, cmap=DIVERGING, norm=norm, aspect="auto")
     ax.grid(False)
     for (i, j), v in np.ndenumerate(mat):
         p = "p_A n/a" if not np.isfinite(pa[i, j]) else f"p_A {pa[i, j]:.3g}"
-        ax.text(j, i, f"{v:.3f}\n{p}" if np.isfinite(v) else "n/a", ha="center", va="center", fontsize=8, color=INK)
+        ax.text(j, i, f"{v:.3f}\n{p}" if np.isfinite(v) else "n/a", ha="center", va="center", fontsize=8,
+                color=_cell_ink(DIVERGING, norm, v))
     if primary is not None:
-        ax.add_patch(Rectangle((primary[1] - 0.5, primary[0] - 0.5), 1, 1, fill=False, ec=INK, lw=2.2))
+        ax.add_patch(Rectangle((primary[1] - 0.5, primary[0] - 0.5), 1, 1, fill=False,
+                               ec=_cell_ink(DIVERGING, norm, mat[primary]), lw=2.2))
     ax.set_xticks(range(len(makers)), [f"{100 * m:.2f}%" for m in makers])
     ax.set_yticks(range(len(slips)), [f"{100 * s:.2f}%" for s in slips])
     ax.set_xlabel("maker fee")

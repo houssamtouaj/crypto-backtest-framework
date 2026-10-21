@@ -102,3 +102,18 @@ def test_missing_inputs_render_placeholders(sim, tmp_path):
     empty = render_all(sim, tmp_path / "empty", empty=True)
     for name in ("cost_r", "stop_dist", "mae_mfe", "hold_time"):
         assert empty[name].read_bytes().startswith(PNG), name
+
+
+def test_heatmap_text_contrasts_with_the_cell(tmp_path):
+    """Dark cells (the top of the sequential map, both ends of the diverging map) get light text and outline."""
+    from matplotlib.colors import Normalize, to_rgba
+    from matplotlib.figure import Figure
+
+    assert fg.text_color(fg.SEQUENTIAL(1.0)) == fg.SURFACE
+    assert fg.text_color(fg.SEQUENTIAL(0.0)) == fg.INK
+    assert fg.text_color(fg.DIVERGING(0.5)) == fg.INK
+    ax = Figure().subplots()
+    mat = pd.DataFrame([[0.0, 100.0]]).to_numpy()
+    fg._annotated(ax, mat, fg.SEQUENTIAL, Normalize(0.0, 100.0), lambda v: f"{int(v)}", ["a", "b"], [""], (0, 1))
+    assert [t.get_color() for t in ax.texts] == [fg.INK, fg.SURFACE]
+    assert ax.patches[0].get_edgecolor() == pytest.approx(to_rgba(fg.SURFACE))
