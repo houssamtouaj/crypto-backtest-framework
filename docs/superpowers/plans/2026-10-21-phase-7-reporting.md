@@ -27,7 +27,8 @@
 5. **Shared-trade fraction.** Siblings are the variants of the same pair, period and strategy parameters in the other sessions (`diagnostics.shared_fraction` over their `trades.parquet`).
 6. **Gap overlaps.** Trades whose `[entry_ms, exit_ms]` overlaps a gap of the pair's 15m or 1m `manifest.json` (`gaps`); "not checked" when no manifest is found.
 7. **Raw-pass column.** Per cell, the benchmarks whose raw p would pass (`B&H` also needs `sharpe_diff > 0`); the sentence for a benchmark that fails adjusted but passes raw says so.
-8. **Largest caveat.** Beta when some in-sample cell beats a timing baseline (A or B, adjusted) but not buy-and-hold; otherwise costs, stated with the mean cost in R and the share of trades with cost above 1 R across the primaries.
+8. **Largest caveat.** Beta when some in-sample cell beats a timing baseline (A or B, adjusted) but not buy-and-hold; otherwise "no gross edge" (gross R ≤ 0), costs (they take at least half of a positive gross R) or sample size (median MDE at α/9).
+9. **From the whole-branch review (2026-10-21).** `perpbt/report/` is left out of `code_version` (D15 amended): a report edit after the runs would otherwise empty `results.parquet` and count as a holdout code change. `perpbt report` reads `results.parquet` as written and rebuilds it only when missing. A partially applied Holm gives no verdict. Grid reports are written before the primaries, which link only to existing reports. Ragged rows for a missing cell fixed; the power sentence corrected; the DSR `N` comes from `stats.json`.
 
 ## Tasks
 

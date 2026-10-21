@@ -10,8 +10,9 @@ from perpbt.data.store import CandleStore
 from perpbt.experiments.registry import read_results
 from perpbt.report.markdown import numbers_in, parse_tables
 from perpbt.report.report import (
-    SECTIONS,
     REPORT_FILE,
+    SECTIONS,
+    Heatmap,
     ReportContext,
     VariantRun,
     gap_overlaps,
@@ -166,6 +167,19 @@ def test_shared_fraction_and_gap_notes(world):
             assert f"Data gaps overlapping a trade (computed at report time from the candle manifests): 15m: {n} "                    f"trades over {1 if n else 0} gaps." in text
         else:
             assert "Data gaps: not checked" in text
+
+
+def test_grid_links_only_to_written_reports(world):
+    w, results, paths = world
+    run = VariantRun.load(paths[0].parent)
+    empty = Heatmap(1, ("r_target",), ["2"], [""], pd.DataFrame(), 1)
+    ctx = ReportContext(heatmaps=[empty], grid_links=[("single_1", "zone=body", None, "ab" * 32),
+                                                 ("heatmap_1", "r_target=1.5", "../x/report.md", "cd" * 32)])
+    text = render_report(run, ctx)
+    assert f"- single_1: zone=body (`{'ab' * 32}`; report not written, `perpbt report --grid`)" in text
+    assert "- heatmap_1: r_target=1.5 ([report](../x/report.md))" in text
+    hold = VariantRun.load(w.runs / results[results["is_holdout"]]["variant_id"].iloc[0])
+    assert "The DSR is computed for the in-sample grid only" in render_report(hold, ReportContext())
 
 
 def test_report_without_baselines_holm_or_dsr(tmp_path):

@@ -73,6 +73,8 @@ primary_family:
   correction: holm
 verdict_rule:
   beats_baseline_a: "holm-adjusted one-sided p_a < alpha"
+  beats_baseline_b: "holm-adjusted one-sided p_b < alpha"
+  beats_buy_and_hold: "holm-adjusted one-sided p_bh < alpha and sharpe_diff > 0"
 """
 
 

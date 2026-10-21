@@ -109,3 +109,19 @@ def test_git_commit_returns_none_outside_a_repo(monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", failed)
     assert git_commit() is None
+
+
+def test_the_report_package_is_left_out(tmp_path):
+    """perpbt/report/ only reads outputs: editing it changes no variant id (overview D15)."""
+    (tmp_path / "a.py").write_text("x = 1\n")
+    (tmp_path / "report").mkdir()
+    (tmp_path / "report" / "summary.py").write_text("y = 1\n")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "report").mkdir()
+    (tmp_path / "sub" / "report" / "b.py").write_text("z = 1\n")
+    before = code_version(tmp_path)
+    (tmp_path / "report" / "summary.py").write_text("y = 2\n")
+    assert code_version(tmp_path) == before
+    assert code_version(tmp_path, exclude=()) != code_version(tmp_path)
+    (tmp_path / "sub" / "report" / "b.py").write_text("z = 2\n")  # only the top-level directory is left out
+    assert code_version(tmp_path) != before

@@ -2,7 +2,9 @@
 
 ``code_version`` is the SHA-256 of the ``perpbt`` source tree, so edits to
 docs, tests, or configs do not change ``variant_id`` and the run cache stays
-valid. ``git_commit`` is recorded alongside, best effort.
+valid. ``perpbt/report/`` is left out: it only reads the run outputs, so a
+report or summary edit neither invalidates the runs nor counts as a holdout
+code change. ``git_commit`` is recorded alongside, best effort.
 """
 from __future__ import annotations
 
@@ -11,10 +13,11 @@ import subprocess
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parent
+EXCLUDED = ("report",)  # top-level subpackages that never affect a run's outputs
 
 
-def code_version(root: Path | str = PACKAGE_DIR) -> str:
-    """SHA-256 over every ``*.py`` under ``root``.
+def code_version(root: Path | str = PACKAGE_DIR, *, exclude: tuple[str, ...] = EXCLUDED) -> str:
+    """SHA-256 over every ``*.py`` under ``root`` outside the top-level directories ``exclude``.
 
     Files are visited in sorted order of their POSIX relative path (``/``
     separators on every OS). For each file the hash absorbs the relative path
@@ -25,7 +28,8 @@ def code_version(root: Path | str = PACKAGE_DIR) -> str:
     if not root.is_dir():
         raise FileNotFoundError(f"code_version: {root} is not a directory")
     entries = sorted(
-        (p.relative_to(root).as_posix(), p) for p in root.rglob("*.py") if p.is_file() and p.suffix == ".py"
+        (p.relative_to(root).as_posix(), p) for p in root.rglob("*.py")
+        if p.is_file() and p.suffix == ".py" and p.relative_to(root).parts[0] not in exclude
     )
     h = hashlib.sha256()
     for rel, path in entries:

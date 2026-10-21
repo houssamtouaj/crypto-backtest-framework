@@ -34,6 +34,7 @@ from perpbt.stats.multiplicity import holm
 SUMMARY_FILE = "summary.md"
 POWER = 0.80
 BENCHMARKS = (("a", "random timing", "A"), ("b", "random days", "B"), ("bh", "buy-and-hold", "B&H"))
+RULE_KEYS = ("beats_baseline_a", "beats_baseline_b", "beats_buy_and_hold")  # the rule `verdict` applies (spec §6.8)
 
 
 def _v(x):
@@ -92,8 +93,9 @@ def _clause(key: str, name: str, row: Mapping, v: Verdict, alpha: float) -> str:
         pre = f"Sharpe difference {_sn(d)}" + (" is not positive, " if sign_fails else ", ")
     if v.passes is None:
         if v.raw_passes is None:
-            return f"has not been tested against {name} (no p-value yet)"
-        return f"is not yet corrected for multiplicity against {name} ({pre}raw p = {fp(p)})"
+            why = "no trades" if row.get("n_trades_r") == 0 else "no p-value yet"
+            return f"not tested against {name} ({why})"
+        return f"not yet corrected for multiplicity against {name} ({pre}raw p = {fp(p)})"
     verb = f"beats {name}" if v.passes else f"does not beat {name}"
     extra = f"; raw p = {fp(p)} would pass without the correction" if v.raw_passes and not v.passes else ""
     return f"{verb} ({pre}adjusted p = {fp(p_adj)}{extra})"
@@ -162,7 +164,7 @@ def _verdict_rows(inp: Inputs) -> list[tuple]:
             r = found.get(cell)
             label, period = cell_label(*cell), "holdout" if holdout else "in-sample"
             if r is None:
-                rows.append((label, period, *[NA] * 14, "not run"))
+                rows.append((label, period, *[NA] * 13, "not run"))
                 continue
             vs = verdicts(r, inp.alpha)
             raw = ", ".join(short for k, _, short in BENCHMARKS if vs[k].raw_passes) or "none"
@@ -180,9 +182,11 @@ VERDICT_HEADERS = ["Cell", "Period", "n", "Mean net R", "95% CI", "p_A", "p_A (H
 
 def _section_verdict(inp: Inputs) -> list[str]:
     vr = inp.prereg.verdict_rule
-    rule = "; ".join(f"{k}: {v}" for k, v in vr.items() if k.startswith("beats_"))
+    rule = "; ".join(f"{k}: {vr.get(k, 'not stated in the prereg')}" for k in RULE_KEYS)
+    other = sorted(k for k in vr if k.startswith("beats_") and k not in RULE_KEYS)
+    note = (f" The prereg also names {', '.join(other)}, which this summary does not apply." if other else "")
     return ["## 1. Verdict", "",
-            f"The pre-registered rule ({rule}; α = {inp.alpha}). p-values are one-sided; Holm adjusts each "
+            f"The pre-registered rule ({rule}; α = {inp.alpha}).{note} p-values are one-sided; Holm adjusts each "
             "benchmark over the primary family of one period. \"Raw p would pass\" lists the benchmarks whose "
             "unadjusted p is below α, so the effect of the correction is visible. A: random entry time in the "
             "strategy's own sessions; B: random sessions and entry times; B&H: vol-scaled buy-and-hold.", "",
@@ -210,7 +214,8 @@ def _section_power(inp: Inputs) -> list[str]:
              f"The smallest mean net R the holdout could detect with {POWER:.0%} power in a one-sided test of mean "
              f"net R > 0 (normal approximation), given the in-sample standard deviation of net R: "
              f"(z(1−α) + z(0.8)) · σ / √n, at α = {a} and at α/{n_cells} = {a1:.4g}, the bar the best cell must "
-             "clear under Holm. Computed at report time.", ""]
+             "clear under Holm. Computed at report time. It is an approximation: the verdict compares the cell with "
+             "the random baselines, whose mean is not 0, rather than with 0.", ""]
     hold = inp.primary(True)
     if not hold:
         return lines + ["The holdout has not been run yet.", ""]
@@ -224,8 +229,8 @@ def _section_power(inp: Inputs) -> list[str]:
                      fnum(min_detectable_effect(sigma, n, a1)), fnum(h["mean_net_r"]) if h else NA))
     return lines + [table(["Cell", "In-sample std of net R", "Holdout n", f"MDE at α = {a}",
                            f"MDE at α/{n_cells}", "Holdout mean net R"], rows), "",
-                    "A holdout mean below the MDE that does not pass is not evidence against an edge of that size.",
-                    ""]
+                    "A holdout that does not pass rules out little below the MDE: edges smaller than the MDE would "
+                    "often go undetected.", ""]
 
 
 def _shared(inp: Inputs, found: Mapping[tuple[str, str], dict]) -> dict[tuple[str, str], dict]:
@@ -247,7 +252,7 @@ def _section_sessions(inp: Inputs) -> list[str]:
     for cell in inp.cells:
         r = found.get(cell)
         if r is None:
-            rows.append((cell_label(*cell), *[NA] * 6))
+            rows.append((cell_label(*cell), *[NA] * 7))
             continue
         fr = shared.get(cell) or {}
         others = ", ".join(f"{session_label(k)} {fpct(v)}" for k, v in fr.items() if k != "any") or NA
@@ -266,18 +271,25 @@ def _cost_key(r: Mapping) -> tuple[float, float]:
     return float(r["slippage"]), float(r["fee_maker"])
 
 
+def _cost_label(k: tuple[float, float]) -> str:
+    return f"s {fpct(k[0], 2)} / m {fpct(k[1], 2)}"
+
+
 def _section_costs(inp: Inputs) -> list[str]:
     found = inp.primary(False)
     tables = {cell: json.loads(found[cell]["reprice_json"]) for cell in inp.cells if cell in found}
     lines = ["## 5. Cost sensitivity", "",
-             "Mean net R of each primary re-priced at other costs (slippage × maker fee, taker fixed; D13). "
-             "Descriptive only: the verdict uses the registered costs.", ""]
+             "Mean net R of each primary re-priced at other costs (s: slippage on stop and time exits, m: maker "
+             "fee; taker fixed; D13). Descriptive only: the verdict uses each pair's registered costs (last column).",
+             ""]
     if not tables:
         return lines + ["No primary cell has run yet.", ""]
     keys = sorted({_cost_key(r) for t in tables.values() for r in t})
-    head = [f"s {fpct(s, 2)} / m {fpct(m, 2)}" for s, m in keys]
+    head = [_cost_label(k) for k in keys]
     by = {cell: {_cost_key(r): r for r in t} for cell, t in tables.items()}
-    mean_rows = [(cell_label(*cell), *[fnum(by[cell].get(k, {}).get("mean_net_r")) for k in keys]) for cell in tables]
+    registered = {cell: next((_cost_label(_cost_key(r)) for r in t if r["is_primary"]), NA) for cell, t in tables.items()}
+    mean_rows = [(cell_label(*cell), *[fnum(by[cell].get(k, {}).get("mean_net_r")) for k in keys], registered[cell])
+                 for cell in tables]
     adj = {}
     for k in keys:
         cells = list(tables)
@@ -287,9 +299,9 @@ def _section_costs(inp: Inputs) -> list[str]:
     p_rows = []
     for cell in tables:
         first = next((k for k in order if adj[(cell, k)] is not None and adj[(cell, k)] < inp.alpha), None)
-        first_s = "none" if first is None else f"s {fpct(first[0], 2)} / m {fpct(first[1], 2)}"
+        first_s = "none" if first is None else _cost_label(first)
         p_rows.append((cell_label(*cell), *[fp(adj[(cell, k)]) for k in keys], first_s))
-    lines += [table(["Mean net R", *head], mean_rows), "",
+    lines += [table(["Mean net R", *head, "Registered costs"], mean_rows), "",
               f"Holm-adjusted p_A over the {len(tables)} primaries at each cost cell (computed at report time), and "
               f"the first cost cell, from the most expensive (slippage, then maker fee, descending), at which "
               f"the adjusted p_A falls below α = {inp.alpha}:", "",
@@ -307,19 +319,23 @@ def _section_grid(inp: Inputs) -> list[str]:
     for cell in inp.cells:
         g = grid[(grid["pair"] == cell[0]) & (grid["session_variant"] == cell[1]) & grid["mean_net_r"].notna()]
         if len(g) == 0:
-            rows.append((cell_label(*cell), NA, *[NA] * 6))
+            rows.append((cell_label(*cell), *[NA] * 9))
             continue
         best = {k: _v(v) for k, v in g.loc[g["mean_net_r"].idxmax()].items()}
         prim = _primary_params_json(inp, cell)
         diff = NA if prim is None else _diff_text(json.loads(best["params_json"])["params"],
                                                   json.loads(prim)["params"])
+        dsr = inp.run(best["variant_id"]).stats["dsr"]
+        n_loc, n_glob = ((dsr.get(k) or {}).get("N") for k in ("local", "global"))
         rows.append((cell_label(*cell), diff, fint(len(g)), fint(best["n_trades_r"]), fnum(best["mean_net_r"]),
-                     fp(best["p_a"]), fnum(best["dsr_local"], 3), fnum(best["dsr_global"], 3)))
+                     fp(best["p_a"]), fnum(best["dsr_local"], 3), fint(n_loc), fnum(best["dsr_global"], 3),
+                     fint(n_glob)))
     tested = grid["p_a"].notna()
     k, n = int((grid.loc[tested, "p_a"] < inp.alpha).sum()), int(tested.sum())
-    per_cell = len(grid) // max(1, len(inp.cells))
-    lines += [table(["Cell", "Best variant (vs primary)", "Variants", "n", "Mean net R", "p_A", f"DSR (N = {per_cell})",
-                     f"DSR (N = {len(grid)})"], rows), "",
+    lines += [table(["Cell", "Best variant (vs primary)", "Variants", "n", "Mean net R", "p_A", "DSR (cell)",
+                     "N (cell)", "DSR (all)", "N (all)"], rows), "",
+              "DSR (cell) deflates against the pair × session's grid, DSR (all) against every grid variant; N is the "
+              "number of trials.", "",
               f"{k} of {n} grid variants with baselines have raw p_A < {inp.alpha}; about {n * inp.alpha:.1f} would "
               "by chance if none had an edge. The best cell is selected after the fact, so its raw p overstates; "
               "the DSR deflates its Sharpe for the number of trials (conservatively, since the variants share most "
@@ -370,13 +386,21 @@ def _section_prereg(inp: Inputs) -> list[str]:
 
 def _period_answer(found: Mapping, alpha: float, period: str, n_cells: int) -> str:
     lead = period[0].upper() + period[1:]
+    how = ("the holdout runner applies it only when every holdout cell succeeds" if "holdout" in period
+           else "run `perpbt stats holm`")
     if not found:
         return f"{lead}: no primary cell has run yet."
-    if all(r.get("p_a_adj") is None and r.get("p_b_adj") is None and r.get("p_bh_adj") is None
-           for r in found.values()):
-        return f"{lead}, the Holm correction has not been applied yet, so there is no verdict (`perpbt stats holm`)."
+    keys = [k for k, _, _ in BENCHMARKS]
+    if all(r.get(f"p_{k}_adj") is None for r in found.values() for k in keys):
+        return f"{lead}, the Holm correction has not been applied, so there is no verdict ({how})."
+    partial = [c for c, r in found.items()
+               if any(r.get(f"p_{k}") is not None and r.get(f"p_{k}_adj") is None for k in keys)]
+    if partial:
+        return (f"{lead}, the Holm correction is incomplete: {len(partial)} of {len(found)} primary cells have a raw "
+                f"p-value without an adjusted one ({', '.join(cell_label(*c) for c in partial)}; a rerun or a "
+                f"baselines pass after the correction drops it), so there is no verdict ({how}).")
     ran = f"{len(found)} of {n_cells}" if len(found) < n_cells else f"{n_cells}"
-    passing = {key: [c for c, r in found.items() if verdicts(r, alpha)[key].passes] for key, _, _ in BENCHMARKS}
+    passing = {key: [c for c, r in found.items() if verdicts(r, alpha)[key].passes] for key in keys}
     if not any(passing.values()):
         return (f"{lead}, after the Holm correction, none of the {ran} primary cells beats random timing, random "
                 "days or buy-and-hold.")
@@ -388,23 +412,44 @@ def _period_answer(found: Mapping, alpha: float, period: str, n_cells: int) -> s
     return f"{lead}, after the Holm correction ({ran} primary cells): {'; '.join(parts)}; {end}"
 
 
-def largest_caveat(found: Mapping, alpha: float) -> str:
-    """Beta when a cell beats a random baseline but not buy-and-hold; otherwise costs, with the numbers."""
-    beta = [cell_label(*c) for c, r in found.items()
-            if (verdicts(r, alpha)["a"].passes or verdicts(r, alpha)["b"].passes) and not verdicts(r, alpha)["bh"].passes]
+def largest_caveat(found: Mapping, alpha: float, n_cells: int | None = None) -> str:
+    """The single largest caveat, from the in-sample primary rows (averages computed at report time).
+
+    Beta when a cell beats a random baseline but not buy-and-hold. Otherwise,
+    from the mean gross R and the mean cost in R over the primaries: no gross
+    edge when the gross R is not positive; costs when they take at least half
+    of a positive gross R; else sample size, with the median in-sample MDE at
+    the first Holm step (the rows carry ``std_net_r``).
+    """
+    vs = {c: verdicts(r, alpha) for c, r in found.items()}
+    beta = [cell_label(*c) for c, v in vs.items() if (v["a"].passes or v["b"].passes) and not v["bh"].passes]
     if beta:
         return (f"The largest caveat is beta: {', '.join(beta)} beat{'s' if len(beta) == 1 else ''} a random "
                 "baseline but not vol-scaled buy-and-hold, so a long-only strategy's gains there are not "
                 "distinguishable from holding the market.")
-    vals = [r for r in found.values() if r.get("avg_cost_r") is not None]
+    vals = [r for r in found.values() if r.get("avg_cost_r") is not None and r.get("mean_gross_r") is not None]
     if not vals:
         return "The largest caveat is that no primary cell has trades to judge."
     cost = sum(r["avg_cost_r"] for r in vals) / len(vals)
+    gross = sum(r["mean_gross_r"] for r in vals) / len(vals)
     share = [r["share_cost_r_gt_1"] for r in vals if r.get("share_cost_r_gt_1") is not None]
-    gross = [r["mean_gross_r"] for r in vals if r.get("mean_gross_r") is not None]
-    return (f"The largest caveat is costs: averaged over the primary cells a trade costs {_sn(cost)} R, "
-            f"{fpct(sum(share) / len(share)) if share else NA} of trades cost more than 1 R, and the mean gross R "
-            f"before costs is {_sn(sum(gross) / len(gross)) if gross else NA}.")
+    avg = "averaged over the primary cells (computed at report time)"
+    if gross <= 0:
+        return (f"The largest caveat is not costs: even before costs the mean R is {_sn(gross)}, {avg}, so the rule "
+                "does not select profitable entries in the first place.")
+    if cost >= 0.5 * gross:
+        return (f"The largest caveat is costs: {avg}, a trade costs {_sn(cost)} R against a mean gross R of "
+                f"{_sn(gross)} before costs, and {fpct(sum(share) / len(share)) if share else NA} of trades cost "
+                "more than 1 R.")
+    k = n_cells or len(found)
+    mdes = sorted(m for m in (min_detectable_effect(r.get("std_net_r"), r.get("n_trades_r"), alpha / k)
+                              for r in found.values()) if m is not None)
+    ns = sorted(r["n_trades_r"] for r in found.values() if r.get("n_trades_r") is not None)
+    mde = (f"; at that size only a mean net R above about {_sn(mdes[len(mdes) // 2])} R would pass at α/{k} with "
+           "80% power" if mdes else "")
+    return (f"The largest caveat is sample size: the median primary cell has {ns[len(ns) // 2]} trades{mde}"
+            f"; averaged over the primary cells (computed at report time), costs take {_sn(cost)} R of a mean "
+            f"gross {_sn(gross)} R.")
 
 
 def plain_answer(insample: Mapping, holdout: Mapping, alpha: float, n_cells: int) -> list[str]:
@@ -419,7 +464,7 @@ def plain_answer(insample: Mapping, holdout: Mapping, alpha: float, n_cells: int
         out.append(f"Without the correction, {raw} more in-sample comparison{'s' if raw > 1 else ''} (cell × "
                    f"benchmark) would pass at raw p < {alpha}; about {tested * alpha:.1f} of the {tested} "
                    "comparisons would pass by chance alone if there were no edge.")
-    out.append(largest_caveat(insample, alpha))
+    out.append(largest_caveat(insample, alpha, n_cells))
     return out
 
 
@@ -429,8 +474,12 @@ def build_summary(runs_dir: str | Path, prereg: Prereg, prereg_path: str | Path,
              f"Pairs {', '.join(prereg.pairs)}; sessions {', '.join(prereg.sessions)}; in-sample "
              f"{prereg.insample.start} to {prereg.insample.end}. Every number below comes from `results.parquet` "
              "or the variants' `stats.json` unless marked as computed at report time. Per-cell detail is in each "
-             "variant's `report.md`.", ""]
-    answer = plain_answer(inp.primary(False), inp.primary(True), inp.alpha, len(inp.cells))
+             "variant's `report.md`. R is a trade's planned risk (entry minus stop); net R is its result after "
+             "fees, slippage and funding, in units of R.", ""]
+    ins = inp.primary(False)
+    for r in ins.values():  # the in-sample σ of net R, for the sample-size caveat
+        r["std_net_r"] = inp.run(r["variant_id"]).stats["headline"]["std_net_r"]
+    answer = plain_answer(ins, inp.primary(True), inp.alpha, len(inp.cells))
     lines += ["## Answer", "", " ".join(answer), ""]
     lines += (_section_verdict(inp) + _section_sentences(inp) + _section_power(inp) + _section_sessions(inp)
               + _section_costs(inp) + _section_grid(inp) + _section_prereg(inp))

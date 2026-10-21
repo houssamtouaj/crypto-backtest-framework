@@ -122,7 +122,7 @@ class ReportContext:
 
     alpha: float = 0.05
     heatmaps: list[Heatmap] | None = None  # in-sample primary only
-    grid_links: list[tuple[str, str, str]] = field(default_factory=list)  # (members, differing params, link)
+    grid_links: list[tuple[str, str, str | None, str]] = field(default_factory=list)  # members, params, link, id
     primary_link: str | None = None  # a grid variant's link to its primary report
     shared: dict | None = None  # other session -> fraction of this variant's trades, and "any"
     holdout: VariantRun | None = None  # continues the equity curve
@@ -335,7 +335,8 @@ def _robustness(run: VariantRun, ctx: ReportContext, out: Path) -> list[str]:
         _fig(lines, path, f"heatmap {h.n}")
     if ctx.grid_links:
         lines += ["Grid variants of this pair × session:", ""]
-        lines += [f"- {m}: {d} ([report]({link}))" for m, d, link in ctx.grid_links]
+        lines += [f"- {m}: {d} ([report]({link}))" if link else f"- {m}: {d} (`{vid}`; report not written, "
+                  "`perpbt report --grid`)" for m, d, link, vid in ctx.grid_links]
         lines.append("")
     return lines
 
@@ -417,7 +418,10 @@ def _dsr(run: VariantRun) -> list[str]:
         rows.append((label, NA, NA, NA, NA) if not x else
                     (label, fint(x["N"]), fnum(x["V"], 6), fnum(x["sr_star"], 4), fnum(x["dsr"], 3)))
     lines += [table(["Trials", "N", "V (variance of daily Sharpe)", "SR*", "DSR"], rows), ""]
-    if not d.get("local"):
+    if run.cfg.is_holdout:
+        lines += ["The DSR is computed for the in-sample grid only; the holdout tests one pre-registered "
+                  "configuration per cell.", ""]
+    elif not d.get("local"):
         lines += ["Not computed yet: `perpbt stats dsr` runs after the whole grid.", ""]
     lines += ["Caveat: the grid cells share most of their trades, so the effective number of independent trials "
               "is far below N and the DSR is conservative.", ""]
@@ -529,8 +533,8 @@ def _same_params(a: dict, b: dict) -> bool:
 
 def write_reports(runs_dir: str | Path, results: pd.DataFrame, prereg, data_cfg: DataConfig | None = None, *,
                   grid: bool = False) -> list[Path]:
-    """Write ``report.md`` for the primary variants of ``results`` (in-sample, then holdout) and, with ``grid``,
-    for every in-sample grid variant; returns the paths in that order."""
+    """Write ``report.md`` for the primary variants of ``results`` and, with ``grid``, every in-sample grid
+    variant; returns the paths, primaries (in-sample, then holdout) first."""
     runs_dir = Path(runs_dir)
     if len(results) == 0:
         return []
@@ -563,7 +567,8 @@ def write_reports(runs_dir: str | Path, results: pd.DataFrame, prereg, data_cfg:
 
     primary_vid = {(r.pair, r.session_variant): r.variant_id
                    for r in rows.itertuples() if r.is_primary and not r.is_holdout}
-    order = sorted(rows.itertuples(), key=lambda r: (not r.is_primary, r.is_holdout, r.pair, r.session_variant))
+    # grid reports first, so the primary reports link only to grid reports that exist
+    order = sorted(rows.itertuples(), key=lambda r: (bool(r.is_primary), r.is_holdout, r.pair, r.session_variant))
     written = []
     for r in order:
         if not r.is_primary and (r.is_holdout or not grid):
@@ -576,7 +581,9 @@ def write_reports(runs_dir: str | Path, results: pd.DataFrame, prereg, data_cfg:
             cell = rows[(rows["pair"] == r.pair) & (rows["session_variant"] == r.session_variant)
                         & ~rows["is_holdout"]]
             ctx.heatmaps = heatmaps_for(cell, prereg.grid) if (~cell["is_primary"]).any() else None
-            ctx.grid_links = [(", ".join(c.members_list), _diff_text(c.params, r.params), f"../{c.variant_id}/{REPORT_FILE}")
+            ctx.grid_links = [(", ".join(c.members_list), _diff_text(c.params, r.params),
+                               f"../{c.variant_id}/{REPORT_FILE}" if (runs_dir / c.variant_id / REPORT_FILE).exists()
+                               else None, c.variant_id)
                               for c in cell.itertuples() if not c.is_primary]
             hold = rows[(rows["pair"] == r.pair) & (rows["session_variant"] == r.session_variant)
                         & rows["is_holdout"] & rows["is_primary"]]
@@ -584,7 +591,7 @@ def write_reports(runs_dir: str | Path, results: pd.DataFrame, prereg, data_cfg:
         elif not r.is_primary and key in primary_vid:
             ctx.primary_link = f"../{primary_vid[key]}/{REPORT_FILE}"
         written.append(write_report(run, ctx))
-    return written
+    return sorted(written, key=lambda p: not loaded[p.parent.name].is_primary)  # primaries first
 
 
 __all__ = ["SECTIONS", "Heatmap", "ReportContext", "VariantRun", "cell_label", "fbool", "gap_overlaps",

@@ -85,10 +85,14 @@ manifest). The three heatmaps of a pair × session are drawn in the
 in-sample primary's report, which also lists every grid variant of the
 cell with a link to its `report.md`; a grid variant's report links back
 to the primary's. The holdout code-change reason is the `reason` of the
-variant's latest `ok` run row in the registry. `perpbt report` rebuilds
-`results.parquet`, then writes the in-sample primary reports, the
-holdout primary reports when the holdout ran, and the summary;
-`perpbt report --grid` also writes every in-sample grid variant's report.
+variant's latest `ok` run row in the registry. `perpbt report` reads
+`results.parquet` as the last run or family pass wrote it (it rebuilds it
+only when the file is missing, so a later edit to `cli.py` cannot empty
+it), then writes the in-sample primary reports, the holdout primary
+reports when the holdout ran, and the summary; `perpbt report --grid`
+also writes every in-sample grid variant's report, before the primary
+reports, which link only to grid reports that exist (otherwise they name
+the variant id). `perpbt/report/` is not part of the code version (D15).
 
 ## 7.3 Summary (`report/summary.py`)
 
@@ -137,7 +141,8 @@ power is the minimum detectable mean net R of a one-sided test of mean
 net R > 0 (normal approximation) at 80% power,
 `MDE = (z_{1−α} + z_{0.80}) · σ_in / √n_holdout` with `σ_in` the
 in-sample `std_net_r`, shown at α and at α/9 (the first Holm step, the
-bar the best cell must clear). Cost sensitivity applies Holm over the
+bar the best cell must clear). It is an approximation: the verdict tests
+against the random baselines, whose mean is not 0. Cost sensitivity applies Holm over the
 nine primaries to each re-pricing cell's `p_A`; "first" is the first
 cell, walking from the most expensive (slippage descending, then maker
 descending), whose adjusted `p_A < α`. The grid overview takes the best
@@ -146,11 +151,17 @@ variant per pair × session by mean net R among the in-sample variants
 baselines against `n · α` expected by chance. Holdout attempts are the
 distinct holdout batches in the registry. The plain-language answer
 states, per period, how many cells beat each benchmark after the Holm
-correction and whether any beats all three; the number of extra
-comparisons that would pass at raw p, with the chance expectation; and
-the largest caveat: beta when a cell beats a random baseline but not
-buy-and-hold, otherwise costs (mean cost in R, the share above 1 R and
-the mean gross R across the primaries).
+correction and whether any beats all three (no verdict when some cell
+has a raw p without an adjusted one: the correction is incomplete); the
+number of extra comparisons that would pass at raw p, with the chance
+expectation; and the largest caveat: beta when a cell beats a random
+baseline but not buy-and-hold; otherwise, from the mean gross R and mean
+cost in R across the primaries, "no gross edge" when the gross R is not
+positive, costs when they take at least half of a positive gross R, and
+sample size (the median in-sample MDE at α/9) otherwise. The verdict
+section prints the prereg's text for the three rules it applies
+(`beats_baseline_a`, `beats_baseline_b`, `beats_buy_and_hold`). The
+grid overview's DSR columns carry their `N` from `stats.json`.
 
 ## 7.4 Tasks and tests
 

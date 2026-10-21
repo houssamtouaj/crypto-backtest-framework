@@ -244,10 +244,11 @@ def _report(args: argparse.Namespace) -> int:
     if prereg is None:
         return 2
     runs = Path(args.runs_dir)
-    rebuild_results(runs)
+    if not (runs / "results.parquet").exists():  # every run and family pass rebuilds it; never overwrite it here
+        rebuild_results(runs)
     results = read_results(runs)
     if not results["is_primary"].fillna(False).astype(bool).any():
-        print(f"perpbt report: no primary variant of the current code in {runs}; run `perpbt run --primary` first",
+        print(f"perpbt report: no primary variant in {runs}/results.parquet; run `perpbt run --primary` first",
               file=sys.stderr)
         return 1
     paths = write_reports(runs, results, prereg, prereg.data_config(args.data_dir), grid=args.grid)
