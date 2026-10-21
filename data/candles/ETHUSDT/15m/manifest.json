@@ -11,10 +11,16 @@
       "purpose": "tail",
       "rows": 58,
       "start_ms": 1790467200000
+    },
+    {
+      "end_ms": 1792601100000,
+      "purpose": "tail",
+      "rows": 67,
+      "start_ms": 1792540800000
     }
   ],
   "consistency_1m_15m": {
-    "candles_compared": 236314,
+    "candles_compared": 238627,
     "mismatch_fields": {
       "close": 0,
       "high": 1,
@@ -23,9 +29,9 @@
       "volume": 14
     },
     "mismatching_candles": 18,
-    "months_checked": 81
+    "months_checked": 82
   },
-  "download_date": "2026-09-27",
+  "download_date": "2026-10-21",
   "files": [
     {
       "name": "ETHUSDT-15m-2020-01.zip",
@@ -662,14 +668,140 @@
       "rows": 96,
       "sha256": "7d0bf0544edb1817b5126f28289cbd07677cf7522673300cb4321e15aea97f7f",
       "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "1dc572ea53979b37c55d950b2a8ad337eb3846cdcfd85864a609c70c526d934a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "3c2621fada8ae069986c661152738c775a1f9c17515a4abaf221b773ea97ce6a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "1920007a2ad141d54a00ec5a8ead8c9ac88fc7e82f5bc508bf991475fc9a5745",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "c51fb05f8924f010b1cded1530d0a39852d946be2343a66369bda4905fef8905",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "d39ae3a566b4e2eb21350f43e7779c58f586350698ee7688981d1909b2e06572",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "8bd285a502108161b9915dcd9b6684c14971973ba305d2ee8952230fea0a0d1b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "2b51763418adbbb0bfafb9cf888d279e742454d3cb640b39f2a3114d206bfc9d",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "9e03d391b4afd989860f47c6a1fe7b85bb9b567ccbcd0c3c8d7c29376c2589bd",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "ac02ac32b634adc46a46ddb1a03dbcb472eaf0ffd2848b4256aea2480b1d2555",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "5d820a5df62c1057622ad3b35714397a7c4316c96dd2a147ef6c551e9e0041f8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "358b415840dc334768e8084ddc24a66e28cb73b4637d091a3a6792baa0bd8570",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "a7bf52037878a80ca49979de58d0c75289083e931705316a0933222225447126",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "39d79582856ef6447b3962868cf7380330fe248092db21aa46d62cbb46550d34",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "0399fe4a27e8b6d81eb0f58fe758f9edd532884fb4fcf4d7ea838c8b38bd0747",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "fa3eb25cb0590abd59eb69384990a010cac0f83551dd233987bcdcfdb0dc74fb",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "806ce2597c04c992eb2e375f82a4b7cbff5fa8c43b61f061167dff4bca878b93",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "bd583a313a924451c647eb63d7999d47563ae806d26f10d6ce387d90cd118f22",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "5c184138d89422ff51732cfe7a30b13d3b066121d27c6439acd907b374bec08e",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "6f6d6ccd851520bb431c8f4e6812513a786c8e3dacfb6ea50771b90d280b6bb6",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "dd90e2e1bf3bb3bc8f65612a48062e62d863b3eea996eafad18d087ca1f77f7b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "3fb4417b01a8f6cdbfc371f7a9fcd431dcba2d95ca17f56d93cc1839a716c7d4",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1574840700000,
   "gaps": [],
-  "last_open_ms": 1790518500000,
+  "last_open_ms": 1792600200000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "ETHUSDT",
-  "rows": 239643,
+  "rows": 241956,
   "tf": "15m"
 }

@@ -17,10 +17,16 @@
       "purpose": "tail",
       "rows": 59,
       "start_ms": 1790467200000
+    },
+    {
+      "end_ms": 1792601100000,
+      "purpose": "tail",
+      "rows": 67,
+      "start_ms": 1792540800000
     }
   ],
   "consistency_1m_15m": {
-    "candles_compared": 236315,
+    "candles_compared": 238627,
     "mismatch_fields": {
       "close": 1,
       "high": 3,
@@ -29,9 +35,9 @@
       "volume": 15
     },
     "mismatching_candles": 18,
-    "months_checked": 81
+    "months_checked": 82
   },
-  "download_date": "2026-09-27",
+  "download_date": "2026-10-21",
   "files": [
     {
       "name": "BTCUSDT-15m-2020-01.zip",
@@ -668,14 +674,140 @@
       "rows": 96,
       "sha256": "5d54c0c9681785e7a1fabf95d5f4cb7b186030b4fc27f8c269e4e6d98d1154c1",
       "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "e879fa6903fd905201bd1f59e456773638cdf8c13848da79331cee89b0046964",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "07fad98f8134a909c5d4a4862e00b7583a90104ad5a0f17414ccab8968cb251b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "62742a246cee4ec9363e96f2270e00e9f23fd54f137c08ba732113a7a2e284be",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "5d0ebfadcba91e889406d987389ef25602f7b91b0ee9e2cdd332c2727cfebfb7",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "8dbdfe1a444c2c388d947852cbb7ef3416be6ed52506c742fddf612ebe8bb5c4",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "804736e477efe14f08321dc74f4bac8ff90e8dbd7117ed77b7df70713d7cde36",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "62719a43cf49fba672760224b1d01ae848d1005a78a2e25295a810ac2f60e061",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "94d8615cafdced6bf3054f5959732cb25a437b3970d70250bf68e373b6e29330",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "859f429876a16f072e8544bbe0efea756d56c6996c3c548d14c134bfe9072dbb",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "4f889fc262dcf69a3c8a442b3794553ecd79562db8188470ee77773b6f66c90b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "443d78b891228a338b0ff23d16566380ef4d7853fbc72439d457ab7461d59e2a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "f546fc0aa0772fe7e4e833e3d2714a2f098fb4c594016bf105ab82fa276bea80",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "922e10e23079e760146dcc3d9c4cb03504814d2ffe93e5d937ecdb41b12892a4",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "5172f1ba721bce83bf5f7cd691a041961f84ecc4e50841b7f15b2befad5d8535",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "4d05e5dce0b4832527814c2b2758a6355de4d91c732f6feeb8c830366232e44f",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "bff1276ec55f2934b93037df965a51ea79336e94c915df67a5aded8fb1deb1f1",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "e1c4218bb0e21b6c55d2b9f4282a9403743c3cf10cfc13639061002aa03e6310",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "be745b241631bb66f3ec99861358e4fa242ce61fb20b2bd262b7d6adbe08081c",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "48c55a33621c0fb121c96870cacdf2684baf1abf0e921dedc5a28ccbe6aca1be",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "47f130b08f45c073f5423a2d6b1ae1b513e8f175b25a3f680741bda6ad097f56",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "a04d08f321ab7491a527f63955b8b36adb0c94bf51772b1ea717f68aa4b60f56",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1572566400000,
   "gaps": [],
-  "last_open_ms": 1790519400000,
+  "last_open_ms": 1792600200000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BTCUSDT",
-  "rows": 242171,
+  "rows": 244483,
   "tf": "15m"
 }

@@ -4,7 +4,7 @@ data_dir: data
 insample_start: "2020-01-01"
 insample_end: "2025-12-31"
 holdout_start: "2026-01-01"
-holdout_end: null
+holdout_end: "2026-10-20"
 warmup_start: "2019-11-01"
 listing:
   BTCUSDT: "2019-09-08"
