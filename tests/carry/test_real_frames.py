@@ -52,7 +52,7 @@ def test_pairframe_in_sample(cfg, pair):
     assert pf.fill_ok[15][1:].all() and pf.fill_ok[60][1:].all()
     for leg in ("perp", "spot"):
         assert np.isfinite(pf.fill_px_late[leg][15]).all()
-    assert set(np.unique(pf.funding_interval_h)) <= {1, 2, 4, 8}
+    assert set(np.unique(pf.funding_interval_h)) == {8}  # interval changes come after the in-sample
     assert pf.perp.funding_ts.max() <= pf.last_common_ms
     for w in (3, 7, 14):  # the primary and the exploratory lookbacks
         s = compute_signals(pf, from_dict(CarrySignalConfig, {"lookback_days": w, "entry_annual": 0.10,
@@ -63,7 +63,7 @@ def test_pairframe_in_sample(cfg, pair):
 
 @pytest.mark.parametrize("config", ["carry/data.yaml", "trend/data.yaml"])
 def test_real_load_refused_past_in_sample(config):
-    with pytest.raises(HoldoutAccessError):
+    with pytest.raises(HoldoutAccessError, match="carry in-sample end"):  # the carry guard, before any read
         load_pairframe(_cfg(config), "BTCUSDT", end="2024-01-01")
 
 

@@ -95,6 +95,19 @@ rule.
   with no event; otherwise the mean of the per-day-normalised rates of the
   window's events. A funding event at exactly 00:00 belongs to the new day,
   so `f̄_d` uses only events before `d`'s close.
+  - *Warmup* *(my call)*: a listing day that starts mid-day (2 events
+    instead of 3) counts as one of the `W` days; §1.2's "W full days" is read
+    as "W frame days". It cannot touch trading: every pair is warm months
+    before 2020-07-01.
+  - *Annualisation across an interval change* *(my call: §1.2's formula as
+    written)*: the mean is over events, so in a window that mixes 8 h and
+    4 h events the 4 h events carry twice the weight per hour. The steady
+    state is exact. No in-sample event is anything but 8 h, so this touches
+    only transition windows in the holdout and forward periods. It is
+    fixed now, before the Phase 2 freeze, and not tuned.
+- **Causality wording.** §1.4's "days ≤ the cut's day" is tested as "days
+  whose end is at or before the cut": a mid-day cut legitimately moves that
+  day's close, basis and `f̄`.
 - **Config.** `carry/config.py` holds `CarrySignalConfig` (`lookback_days`,
   `entry_annual`, `exit_annual`: the prereg `signal` block; no defaults;
   `exit ≤ entry`, so `always_on`'s −1e9/−1e9 is valid). The sleeve, cost and
@@ -111,9 +124,28 @@ longer than 5, finite basis, and `f̄` finite from day `W − 1` for W = 3, 7 an
 14. Seven perps (EOS, ETC, LINK, LTC, TRX, XLM 08:00; XRP 08:15) start
 mid-day on their listing day, so day 0 has no on-time 00:15 or 01:00 fill
 (only a late fill). From day 1 every pair has both legs' 00:15 and 01:00
-candles on every in-sample day. Every in-sample funding interval is one of
-1, 2, 4 or 8 h. EOSUSDT, from the manifests only: the perp's last candle is
+candles on every in-sample day. Every in-sample funding event of all ten
+pairs is 8 h (interval changes come later). XLMUSDT has a 00:00 event on its
+listing day, before its first candle at 08:00: it is in `perp.funding_ts`
+with `funding_px` NaN and enters `f̄` on warmup days only. EOSUSDT, from the manifests only: the perp's last candle is
 2025-05-21 09:00, the spot's is on 2025-05-26, so the pair's common last day
 is the perp's (outside the in-sample; the cut itself is tested on synthetic
 data of the same shape). No return, P&L or funding statistic and no share of
 days on was computed or printed.
+
+**Pointers for Phase 3.**
+
+- Never charge funding before the position exists (the XLM pre-candle
+  event above).
+- `last_common_ms` is also the load end (2023-12-31 23:45 for every pair
+  in-sample). The PairFrame does not say whether the cut is a delisting or
+  the window's end, so the in-sample end must not be treated as a delisting
+  (overview §5.4: delisting = data ending before the period end).
+- Late fills are per leg, so the two legs can fill at different times, and a
+  late fill can fall after that day's 08:00 funding event. Phase 3 decides
+  the funding quantity in that case. An event at exactly `last_common_ms` is
+  kept.
+- `pf.perp.ret` subtracts funding; a test forbids any `.ret` read in
+  `perpbt/carry`. Another test allows only `frames.py` and `basis.py` to read
+  the stores: the perp and funding stores have no carry ceiling, so
+  `load_pairframe` is their only guard at 2023-12-31.

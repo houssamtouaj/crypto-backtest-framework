@@ -107,6 +107,13 @@ def test_perp_ends_first_mid_day_eos_shape():
     assert pf.spot.c[-1] == spot.c[int(np.searchsorted(spot.ts, cut))]
 
 
+def test_funding_event_at_last_common_kept():
+    perp = keep(walk(3, seed=3), walk(3, seed=3).ts <= T0_MS + 2 * DAY_MS + 8 * H_MS)
+    pf = build_pairframe(perp, funding(every_8h(3)), walk(4, seed=4), first_day=FIRST)
+    assert pf.last_common_ms == T0_MS + 2 * DAY_MS + 8 * H_MS == pf.perp.funding_ts[-1]
+    assert len(pf.perp.funding_ts) == 8
+
+
 def test_last_common_skips_one_leg_gap():
     perp = walk(3, seed=1)
     spot = walk(4, seed=2)
@@ -176,7 +183,7 @@ def test_load_refuses_past_carry_insample_under_both_configs(tmp_path, config):
     cfg = _with(load_yaml(ROOT / "configs" / config, DataConfig), data_dir=str(tmp_path))
     assert CARRY_INSAMPLE_END == "2023-12-31"
     for end in ("2024-01-01", "2026-10-20"):
-        with pytest.raises(HoldoutAccessError, match="2023-12-31"):  # empty store: refused before any read
+        with pytest.raises(HoldoutAccessError, match="carry in-sample end 2023-12-31"):  # empty store: before any read
             load_pairframe(cfg, "BTCUSDT", end=end)
     with pytest.raises(FileNotFoundError):  # the last in-sample day passes the guard and reaches the store
         load_pairframe(cfg, "BTCUSDT", end=CARRY_INSAMPLE_END)
@@ -186,20 +193,44 @@ def test_load_allow_holdout_passes_through(tmp_path):
     cfg = _with(load_yaml(ROOT / "configs" / "trend" / "data.yaml", DataConfig), data_dir=str(tmp_path),
                 listing={"BTCUSDT": "2023-12-30"}, warmup_start="2023-12-30")
     _write_pair(cfg, "BTCUSDT", date_ms("2023-12-30"), 4)
-    with pytest.raises(HoldoutAccessError):
+    with pytest.raises(HoldoutAccessError, match="carry in-sample end"):
         load_pairframe(cfg, "BTCUSDT", end="2024-01-02")
     pf = load_pairframe(cfg, "BTCUSDT", end="2024-01-02", allow_holdout=True)
     assert pf.day_ms[-1] == date_ms("2024-01-02") and len(pf) == 4
 
 
-def test_no_allow_holdout_true_in_carry():
-    # only Phase 5's carry/holdout.py and carry/forward.py may pass it (spec Phase 0 §0.2)
+def _carry_modules():
+    return [p for p in sorted((ROOT / "perpbt" / "carry").glob("*.py"))]
+
+
+def test_allow_holdout_only_passed_through_in_carry():
+    # only Phase 5's carry/holdout.py and carry/forward.py may pass True (spec Phase 0 §0.2); everywhere else
+    # an allow_holdout= keyword is False or the caller's own allow_holdout parameter
     bad = []
-    for path in sorted((ROOT / "perpbt" / "carry").glob("*.py")):
+    for path in _carry_modules():
         if path.name in ("holdout.py", "forward.py"):
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if (isinstance(node, ast.keyword) and node.arg == "allow_holdout"
-                    and isinstance(node.value, ast.Constant) and node.value.value is True):
-                bad.append(f"{path.name}:{node.value.lineno}")
+            if isinstance(node, ast.keyword) and node.arg == "allow_holdout":
+                v = node.value
+                if not ((isinstance(v, ast.Name) and v.id == "allow_holdout")
+                        or (isinstance(v, ast.Constant) and v.value is False)):
+                    bad.append(f"{path.name}:{v.lineno}")
+            elif isinstance(node, ast.keyword) and node.arg is None:  # **kwargs could smuggle the flag
+                bad.append(f"{path.name}:{node.value.lineno} (**)")
     assert not bad, bad
+
+
+def test_carry_never_reads_dayframe_ret():
+    # DayFrame.ret subtracts funding for a long; the carry perp leg's return is its price return
+    bad = [f"{p.name}:{n.lineno}" for p in _carry_modules() for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
+           if isinstance(n, ast.Attribute) and n.attr == "ret"]
+    assert not bad, bad
+
+
+def test_only_guarded_modules_read_the_stores():
+    # load_pairframe is the only perp/funding guard at the carry in-sample end; basis.py has a fixed window
+    names = {"CandleStore", "FundingStore", "load_dayframe"}
+    users = {p.name for p in _carry_modules() for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
+             if isinstance(n, ast.Name) and n.id in names}
+    assert users <= {"frames.py", "basis.py"}, users

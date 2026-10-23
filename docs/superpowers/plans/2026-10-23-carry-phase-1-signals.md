@@ -92,3 +92,8 @@ Task 2: complete (b50c7bc; tests/carry/test_frames.py → 12 passed)
 Task 3: complete (506c494; tests/carry/test_signals.py → 16 passed). Fixture: the sine period was lengthened (k/15, 60 days) so the 7-day f̄ crosses both thresholds. Mutation check: an f̄ that reads the next day's funding fails the truncation and funding-perturbation tests.
 Task 4: complete (558e154; real data 13 passed in 1 s; full suite 1177 passed in 2 min 40 s).
 - Task 4: Ruling: seven perps' listing days start mid-day (08:00; XRP 08:15), so `fill_ok` is asserted from day 1. The late fill is asserted on every day — cost: none (trading starts 2020-07-01).
+Final review: fresh reviewer (opus) — "merge"; 0 Critical, 0 Important, 10 Minor; tests/carry 64 passed; facts in §1.6 confirmed; mutation runs confirmed that the causality, late-fill and guard tests are not vacuous.
+- Final: fixed (Minor) the guard tests match "carry in-sample end", so the store's own refusal cannot satisfy them (mutation: carry guard off → 3 failures); the real-data refusal too.
+- Final: fixed (Minor) the allow_holdout scan flags any value but False / the pass-through parameter, and any `**` kwargs; new AST tests: no `.ret` read in perpbt/carry; only frames.py and basis.py read the stores.
+- Final: fixed (Minor) real-data intervals pinned to {8}; §1.6: all in-sample events 8 h, XLM pre-candle event, §1.4 wording, Phase 3 pointers; a test keeps an event at exactly last_common_ms.
+- Final: Ruling (labelled, not changed) the warmup counts a partial listing day as one of W days, and annualisation is per event as §1.2 states (only interval-change windows differ, none in-sample) — cost if wrong: transition-window f̄ in the holdout/forward weights 4 h events more; can be changed before the Phase 2 freeze.
