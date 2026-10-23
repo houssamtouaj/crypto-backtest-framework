@@ -1,0 +1,2574 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "EOSUSDT-15m-2020-01.zip",
+      "rows": 2976,
+      "sha256": "5fefa21f75b6e27495524bfe2262e5c8e51e2c62088168a72941921cbd9474c6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-02.zip",
+      "rows": 2757,
+      "sha256": "1392b8c7a0272e55db0bb7e766629884423013bad6613f90b828e46af3202128",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-03.zip",
+      "rows": 2968,
+      "sha256": "c6dfb125c02e1010957db3c890c225db6accede8b39005072323993b09fae7ba",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-04.zip",
+      "rows": 2870,
+      "sha256": "4a1fb9fce5116f023d7dd110845d69beb958e367c1fd0aac7071fc6c725ac03f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "9d2f5405ec50d16bfc77e82927573960445db111f9a5e7cf7c6cc38e13c7eb75",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-06.zip",
+      "rows": 2866,
+      "sha256": "c7a74d71fef9c90b138ee27fc4c913482c226a79b0c4cd1688d1e656f01f806d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "f98308eeddb08c18f66fb59fa5efca84c02259b048810bb4ac83dfbf89783d69",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "a24ce730d52f764a082c111ff3bc662ce4e485aacc305a4f4d2b446c202303ea",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "aa76ce337591d5ea1d365624c6a466212816fd2d3385f8f4d9c290576268fd77",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "9063d8270666ebd7fd131a6c46fd236e718a86a4b2e5529243ba499d3d745c3f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-11.zip",
+      "rows": 2876,
+      "sha256": "aecae2a95fd9f1f6e0f7b8aa9e5cd3d4c229f86a135d6a49a4d8b4bc41f1eb1f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2020-12.zip",
+      "rows": 2957,
+      "sha256": "8f4b630b03fe8015d893a905fdcb6a2c2b81c04961a109f0f3a8d2b4f1a98c4d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "65a039496602406e127c2365cd6091cf5f4a470cd83757f4cae1982eb6d2b26d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-02.zip",
+      "rows": 2683,
+      "sha256": "0860b9929743a97407e2328dd2e240533b5e7c8cfb5a874c03e466d35c1396b9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-03.zip",
+      "rows": 2970,
+      "sha256": "562f357ed9e04d612ec11adcc93f8bd44034228082ae2f2f3f47a787cbd68656",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-04.zip",
+      "rows": 2852,
+      "sha256": "716fca45cbd561f5aad5885ab0ef50fb9e93d00ba04bfaeab846f7659867970f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "3a8c9ac134c6f3ea914d3e638c091eb0b1a01d2ccce698580abd520aaccbf5e2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "03aed9ce4dd4f89a63f847e663524df49f535499e3350896f4ff2d398d38445c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "bfca0317400c9ca7e73f42415d54f74853e5a757b478c59abb23b5adf47c826b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-08.zip",
+      "rows": 2958,
+      "sha256": "f3d221a7fbdc3c68fc16f979f94bd9c99a87e1262f5bb2e9dba788ed1a1a376f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-09.zip",
+      "rows": 2872,
+      "sha256": "0ea403f315ae5a90405667ec7b96f900fec117b889447cb9cd7099eddd3a610b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "b9a329638d89c50c7042c838ee1e96cf9beab0a64a06a65c01dd60bd219f17ef",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "9130f74abc36cfbefa6a7b02da4fe6e30bdcb26e51cfb0b1a35fae176736c44b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "9e6cec1b00eb4fbe1b453a685d314712d8640b37bc6378f133693a172fc37c71",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "835c6afb6ffd72fb9a6f219eeed82e585a0705ff5144c5847e601fbe90606793",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-02.zip",
+      "rows": 2688,
+      "sha256": "3a7564485981f5d028e62d59198be71f24d882e96855ac3c0da9885088566b9d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "10c5ab98c19e37e0f026880793c3add9a7f2ea715da70a68efc852756f675613",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-04.zip",
+      "rows": 2880,
+      "sha256": "3bccd6a87d2a0e0c9d9776d693cdc9018fe8de5afe07d16935fffeffd0ee38bc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "5bcc3caea76c76d6fe51374f6f54e47cc2adee41487df022b0b4dffc386e56bd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "cb17aed67f790b7662d58e4009c4613e454874db68e483f1d784abe8fec4f6b5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "67b09305dd6c1afa04f019c73df35bebd869bc3aa6bae8a967fa84a531aef03c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "8b42325f5988e92c3467b18bbe0dafadf30a1e88bc6290ad54ac761bc012563f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "db12f3e902fecc9b5676176b2732801e8338d436f6f1e2a5cdef6c47abffe5f0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "e4e025ee5842fe8aeb1302f8cf0fcdb07237c97b7834858342326655258c453b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "024bca3e4bcb5ac1ef02d6f635b2153bcce797e13429de068d9efed1b5139850",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "84c3911486fe4aa168e634156ddf8d3239bb6073716913a35ac2c21262e516e8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "fb6921dd6063164397d38c92b6a4eed6fa0fe43412d102347bbb069ce692a9a8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "8be7593ee84e41a883ae70a27695916ad3a4e676b921812d70aae53756ac400a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-03.zip",
+      "rows": 2971,
+      "sha256": "a5a4387fa2cb638aee08a876a0ede8e4517c99f53373c59225c94bd9b7e6656a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "7e0ef4e19e0d120e86e2e46b880c5b05ad06134b1cd38097b3b3d66527ad5d3a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "1bc5384be88e0bd33d66f14f98830babb35337ac8f8f40dd8b61ed471611025d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "7472a21acbf505e9b36db12ec13b721b8a303feb06301437d117373ea97ed4f2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "15fff787fa917726bf795301f3533d3aea17ef61ee7a3e0cb6069e33b5c9ec9a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "ebb26b7fa38b883737f2f97fc5a3939a55ebfbe572cc65b6f1833c3e1a986020",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "632e11087315878e8d379dee75d90144efdd926c1e03ef1552e67b8e725209ae",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "caecb4938a06736ffda5820e383bb68555fcfa4b3a83aaf653b6bc39bdb27e75",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "f0d268cdbe5a2101d9a2f2b87bf03d54bfeecedc21043510c6a3d3e3fdab7ff6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "f896ac44f8ccc4a0e833b1efbcf2870b23d88aa9ffce96b3df3958870220b007",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "e647614b95215c2726fc850339a388e5022275f8dba55543dcd9be94449e47ca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "012577e6042a51ebe5f9b1d7e64df37789d1b0076ac9d6ccef37ada35ba72c93",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "2f7d627f6045ca99ea1a230e34f90c6488d63253e6e9a5035385c76fcf570400",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "db9422e08e6087d76e3acc529d5d693743a8ff49bd6c843e0638da2300e21873",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "3ad59399aca9bdbee73a74eb154f8a6ce8d90b24c92ff7b7d90adb8750e51454",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "b7f3438b67155c49126dbb3d5b2ce5f36176a26266215ce30245f996518f78f3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "0450dfdaed471f69a82e488a38364664e87b124a24c0086a1d3544472354a7f7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "5925b60e1d519c57dac7b608a387ac0b800c4e2a8a99efbb2e3cf9a77a18e67f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "43be0b6533b747147b34808a51170caaf72f60fbbb222d57ca4fb45cc7c618e1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "6241aff23a5376a0a771f7e927d32f8ad395f29800024757677cddbc09762461",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "8fcf83d010b3a25f340d1d18fa88b65f56532790f980271575a623ddb13afbf1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "08538cbff23d61e8026e03879ff97fb84089d9a0f9aed3fa279e45294f3b85ee",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "ed9f86d10bb42b4ae71b0d4c2c0b37dd28f40b607e8957466f21581b06cd7da5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "4590f83848e641ccd829f711a304337f7d0bc5859831d90f2020ff4b533968ca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "2ec20f0b54c4297c693a3315e51124841a85a762ed35186264461d998e3d0a77",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "c855ff7419128c9204521e1652c3d1a3111627d36881ab92a47be3c8cc0fc9e2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-15m-2025-05.zip",
+      "rows": 2412,
+      "sha256": "9ffbb0a0b4f7aeb2460703e9c1c3d4e17c7c9516e06447d92b577dbb67f70026",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_open_ms": 1577836800000,
+  "gaps": [
+    {
+      "end_ms": 1581217200000,
+      "missing": 4,
+      "start_ms": 1581213600000
+    },
+    {
+      "end_ms": 1582133400000,
+      "missing": 23,
+      "start_ms": 1582112700000
+    },
+    {
+      "end_ms": 1583321400000,
+      "missing": 8,
+      "start_ms": 1583314200000
+    },
+    {
+      "end_ms": 1587789000000,
+      "missing": 10,
+      "start_ms": 1587780000000
+    },
+    {
+      "end_ms": 1593322200000,
+      "missing": 14,
+      "start_ms": 1593309600000
+    },
+    {
+      "end_ms": 1606719600000,
+      "missing": 4,
+      "start_ms": 1606716000000
+    },
+    {
+      "end_ms": 1608573600000,
+      "missing": 15,
+      "start_ms": 1608560100000
+    },
+    {
+      "end_ms": 1608865200000,
+      "missing": 4,
+      "start_ms": 1608861600000
+    },
+    {
+      "end_ms": 1613019600000,
+      "missing": 5,
+      "start_ms": 1613015100000
+    },
+    {
+      "end_ms": 1615001400000,
+      "missing": 6,
+      "start_ms": 1614996000000
+    },
+    {
+      "end_ms": 1618893000000,
+      "missing": 10,
+      "start_ms": 1618884000000
+    },
+    {
+      "end_ms": 1619340300000,
+      "missing": 18,
+      "start_ms": 1619324100000
+    },
+    {
+      "end_ms": 1628836200000,
+      "missing": 18,
+      "start_ms": 1628820000000
+    },
+    {
+      "end_ms": 1632906000000,
+      "missing": 8,
+      "start_ms": 1632898800000
+    },
+    {
+      "end_ms": 1679666400000,
+      "missing": 5,
+      "start_ms": 1679661900000
+    }
+  ],
+  "last_open_ms": 1748227500000,
+  "missing": [
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2025-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08-31.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-20.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-21.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-22.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-23.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-24.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-25.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-26.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-27.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-28.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-29.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09-30.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-01.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-02.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-03.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-04.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-05.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-06.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-07.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-08.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-09.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-10.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-11.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-12.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-13.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-14.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-15.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-16.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-17.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-18.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-19.zip"
+    },
+    {
+      "checked": "2026-10-23",
+      "name": "EOSUSDT-15m-2026-10-20.zip"
+    }
+  ],
+  "overlap_mismatches": 0,
+  "pair": "EOSUSDT",
+  "rows": 189172,
+  "tf": "15m"
+}

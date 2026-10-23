@@ -2,7 +2,8 @@
 
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
-Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``. Exit codes: 0 success, 1 a download, checksum,
+Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
+``carry basis``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -16,9 +17,11 @@ from collections.abc import Callable, Sequence
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from perpbt.carry.basis import basis_check
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
 from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
+from perpbt.data.store import HoldoutAccessError
 from perpbt.data.validate import run_validate
 from perpbt.experiments import holdout as holdout_mod
 from perpbt.experiments import runner
@@ -34,6 +37,8 @@ DEFAULT_RUNS_DIR = "runs"
 DEFAULT_UNIVERSE = "configs/trend/universe.json"
 DEFAULT_TREND_PREREG = "configs/trend/prereg.yaml"
 DEFAULT_TREND_DATA = "configs/trend/data.yaml"
+DEFAULT_CARRY_DATA = "configs/carry/data.yaml"
+DEFAULT_BASIS_OUT = "runs/carry/basis_check.json"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -336,6 +341,45 @@ def _trend_screen(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- carry ---------------------------------------------------------------------------------------
+
+
+def _carry_basis(args: argparse.Namespace) -> int:
+    cfg = _load_data_config(args.config, "carry basis")
+    if cfg is None:
+        return 2
+    pairs = args.pairs or list(cfg.listing)
+    try:
+        result = basis_check(cfg, pairs)
+    except FileNotFoundError as e:
+        print(f"perpbt carry basis: {e}", file=sys.stderr)
+        return 2
+    except HoldoutAccessError as e:
+        print(f"perpbt carry basis: {e}", file=sys.stderr)
+        return 1
+    try:
+        text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    except ValueError as e:  # a zero or non-finite close
+        print(f"perpbt carry basis: non-finite basis statistic: {e}", file=sys.stderr)
+        return 1
+    print(f"window {result['window'][0]}..{result['window'][1]}; flag |median| > {result['limits']['median_abs']}"
+          f" or max |basis| > {result['limits']['max_abs']}")
+    for pair, st in result["pairs"].items():
+        if st["common"] == 0:
+            print(f"{pair}: no common slots  FLAGGED")
+            continue
+        flag = f"  FLAGGED ({', '.join(st['reasons'])})" if st["flagged"] else ""
+        print(f"{pair}: coverage {st['coverage']:.4f} (perp {st['perp_rows']}, spot {st['spot_rows']}, "
+              f"common {st['common']} of {st['slots']}); median {st['median']:+.5f}, p01 {st['p01']:+.5f}, "
+              f"p99 {st['p99']:+.5f}, max |basis| {st['max_abs']:.4f} ({st['basis_at_max_abs']:+.4f}) "
+              f"at {st['max_abs_at']}{flag}")
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8", newline="\n")
+    print(f"wrote {out.as_posix()}")
+    return 0
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -450,6 +494,14 @@ def build_parser() -> argparse.ArgumentParser:
     screen.add_argument("--data-config", default=DEFAULT_TREND_DATA, help="perp DataConfig (default: %(default)s)")
     screen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     screen.set_defaults(handler=_trend_screen)
+
+    carry = sub.add_parser("carry", help="the funding-rate carry strategy")
+    carry_sub = carry.add_subparsers(dest="carry_command", metavar="SUBCOMMAND", required=True)
+    basis = carry_sub.add_parser("basis", help="perp/spot basis sanity check over 2020-07-01..2023-12-31 (no returns)")
+    basis.add_argument("--config", default=DEFAULT_CARRY_DATA, help="DataConfig for both stores (default: %(default)s)")
+    basis.add_argument("--pairs", nargs="+", metavar="PAIR", help="pairs (default: every pair listed in the config)")
+    basis.add_argument("--out", default=DEFAULT_BASIS_OUT, help="JSON output (default: %(default)s)")
+    basis.set_defaults(handler=_carry_basis)
 
     return parser
 

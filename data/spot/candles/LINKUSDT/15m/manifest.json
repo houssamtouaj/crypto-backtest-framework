@@ -1,0 +1,697 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "LINKUSDT-15m-2020-01.zip",
+      "rows": 2976,
+      "sha256": "8698bf6bacbc282e8eded88650580955fbb0bec255f199be7a95eb6d67518ed4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-02.zip",
+      "rows": 2757,
+      "sha256": "af331de6dcd1ace4ff5141e2da4d633fb0798630be1d9264abba416f0e3ad6fa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-03.zip",
+      "rows": 2968,
+      "sha256": "699c8e141fc1168d1cf33b43b641de2e742932fa70e33381502b733c66168186",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-04.zip",
+      "rows": 2870,
+      "sha256": "65574108b47586ff8065eb307e42962b931c88373622b417cc5b625b2d26a259",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "8ed49cca10b32dcee0d3448c1dfbadb2f566084da669d0e8d6edf926ac8c5e6d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-06.zip",
+      "rows": 2866,
+      "sha256": "ade0d60d23d56265781ceb6e7f87798cb5b2493f0798cb9c8b088cca6e91964a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "deff9a834c38265cc185b884b09576629c5880b52ec3315fe2a18887f481d184",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "6ab35868291fb8b2b6b0e6eae38c373d6acf8fa00d4e5ae4894fbad8d9433490",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "706ae15ab67127a8918ce9d5678647e9ee85cc14abbde2af33cee9b848e91fff",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "f84d66438989d0803e1a5543c1d648926ab47c917dc4bc2ab7e161ace223c19a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-11.zip",
+      "rows": 2876,
+      "sha256": "db0203a899b9ca83f4d3c2ae9a38b517f73270adfccb89a1ba46daf42db85de6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2020-12.zip",
+      "rows": 2957,
+      "sha256": "65c4c825ae612bb74f4bcfbc1c6e276e9324f70f66019e46ea9ba79b2a176b9c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "0684400b6d1355f391a9f32cd668be804a94e30a4d8c4fffaecef041821be989",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-02.zip",
+      "rows": 2683,
+      "sha256": "b2b062402729cd7ca90943d0a5ec5e59fff1e95b791c6814dd4095b7283ed5fe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-03.zip",
+      "rows": 2970,
+      "sha256": "27b27639b667143e541c7d1eb0ec73ee523a82328c66b5719754af73daa7ea6e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-04.zip",
+      "rows": 2852,
+      "sha256": "0873fc2c5b48e0b3171a858f129c9b823bf57bebffc566149004ddc83daab8b5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "715564713d0436b1a04452862492eebc555820dd97667df2e0955956965d058d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "7334f6514cf324d5efad396197f9a2a37b60afeaa7df2a2383b34679e19e971b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "acc771833cc1ccdcb35fe1827d89a0cb8e72402e7235b37724a267ba692d7c37",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-08.zip",
+      "rows": 2958,
+      "sha256": "9ec4476a6e1e4b1011aa7ac0bfca56c8b57cc352e7d201aaa50b2f27407e8f22",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-09.zip",
+      "rows": 2872,
+      "sha256": "a3efcd560d979bf024165c39c10fa397c51c59a56832227a6eaaa0789d61563b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "4014602ce39deb4751b9b1d1dbfa2676e244815e5c02669f0d7657e8bfb00645",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "c23a0b2dc849fde3be8c3f8f43afc2877b5e17e335460e53689e63cb256a8973",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "de8942a9d00384f0442adfef335f6688bcab9464c85ef9d23dc3bc74254b6dbe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "2e24e8a7f93fb650d054ebb6aa72085947590fa354b41f15a24851ed2cf3d6a6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-02.zip",
+      "rows": 2688,
+      "sha256": "540bba9e478a17d597073715116520520f44361daa99e4cf96c42f77a6406b23",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "f51f4841f9de4ee2572ef9385ed70e8c7e52bb7394272d443a0a2fb590bff7a4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-04.zip",
+      "rows": 2880,
+      "sha256": "c00ee484dc4622797ea484617db3214412101dfefd84df3da54352d3c7d3701e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "1f77bac6f64368885ff17f903ce5d1c5918d047dfffa69ac779fd96669314346",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "66c1be3ef0c9c2f7b4a3420292c89aa78f960c2b2aefb826e70d45f6d3d2d436",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "c18a0482701a6833b3915ee7dedc1557695858f0abd44fc9130e8e79014c5963",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "bf30b8a8cf2fc70b8b72ed2de883d3ad79dd404dd8aa99790ea93ebc058965db",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "e99461045c84032f9873cb2ca78f8e0b081a68bf3bd8714215592c85b054c288",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "ac84e32090d97efefdd4ca3fcfd4c7819a2f950382503b113e6f8803684eede0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "cd886e65825cd972b7a310f08e2192d2c633280c10300be99f682a0368552233",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "1cfac50f9e259f0c24d64ff47c630a81b16adb4b16b7f05f58651b9b9c825b9e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "c9ac5ecc71bd2802601b9d8282e024e635b26eaa9fd86b02e355bcb90deffb60",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "1ab32677438893ced8a1cf4636eac825ca5983ccebd4a8bdd80dc4c812bcc5c7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-03.zip",
+      "rows": 2971,
+      "sha256": "b068957b5c6af8535ace304445ea76a1a120d917e01d9a5dac342e0de67ae274",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "1b5b4b47bbc293a5595f46610a826110dcdea4bbb2d30426fcbe7e6107b0ddca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "40a433867f921f828da8f3efadcae79e1318df87d9e49a75c15a416a72e960ec",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "182d8c34da342382284cc0b4b2a2393ed52f4a18299f01d822ffcddd4a65f8c7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "a575134850d40a39bd4c485e913e50187d5c5928a9327f3ea072b07ae1589f7e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "99832a67e6e8d9c0f628578fe0dccf9b52134bf2fd077a61806da60abcfb583f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "76031f4d60c1a68520e2ddb2e10da8e17481fb1bb599aab75342179f532b8889",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "0b825000d5f33dfc3543374ab325a4d7f80f9424e079c91c45ae92dd2f85b718",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "6fc8e3afdd7863b8a4c8339713fcb9eec76a8e5dc00439aeeccaa045d70c73c1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "10a76f5a842c6295b6fc1100c7336cec3b7f5bdffd4e33c0f16ffecc37dc1749",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "01451d23d9998360e8cebdf2684a8aae90b7fbd33f8a32846113bdd97f49be7b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "4b3ebdd81278420e051f9773d54aa400813d0d51bca04c7ccbfcbbda0490e882",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "b1db1dad406a4cd788346aa6836398dd3504fb29881454849708d00991e8ee69",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "904b307ebad7e5f0d9f969a1aebd383959d8fa8432e8150e25f40121c28ca024",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "4ba328611659bfbf0b651a0e816b5497872259b3df34a34917247db2c3bd4a36",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "c0b64dc32c4831e2eb1ebf007cd33dcb84797c6d2894f6122e896e15583e1ff9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "3eba81c2f45b0efecadc1bdfa56165b5c8d1f7f6a92983030fabcb84c9994824",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "1d54a9063a73605d4c2d5a74f13da8ce15ac1719d64647a8e4d669e046bbcdf7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "34a2060d2194e7420e1a6de3eb6bb540d7589fff8b4019f6bd04db64d0b2d5d5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "81359f084feec51a9592a059cd6674a04d73f801a88834f0fbc4b3893850ff4c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "9c44046c809cb7567e99bde3ae8d3453987a859962c3724876d131dba9995b3e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "26f84eb2b839c1953f75d9a11e0bcbc75d504b30048dad8ab0cd279ec9686b25",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "e46ba0fd00f8a879e98d3db899aacbd493b27c797e1ad170b4cb1737a8da1caa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "342968ce638ea0c7483448a6e548b8cdfb351ec2fcf9da62a73c00bddc496fad",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "41e542415de910b7e4990fde7f04750ae9dd85c62d1bc8821e9348834d79a06f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "b798312387ad07028cb3645570cb5401dbe5973254202003900c0ae8553edd3f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-05.zip",
+      "rows": 2976,
+      "sha256": "4f19a28a42deb7a6f48c7efc38db181bf776e5a0b9dd3cc0726fb4735d78f40e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-06.zip",
+      "rows": 2880,
+      "sha256": "4e3ae6c8f59a276af792437d8b09b1faac89338f80691573983347b3f6843cdb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-07.zip",
+      "rows": 2976,
+      "sha256": "6fdd0676f3938f59f0361afa613fa1380d572f77e0334c8ebf63a8c28d467bee",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-08.zip",
+      "rows": 2976,
+      "sha256": "b9c1522b96ed65c862f7acee0ce5953ecba9dc27d43061b50aadece4558ed9e9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-09.zip",
+      "rows": 2880,
+      "sha256": "bc96c03864769ee3fa0da9278103803548e359f428c5da71efac5386580d72b3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-10.zip",
+      "rows": 2976,
+      "sha256": "bb4712d6b8c9c9d3cdc0a0f96e399aea3a3b7c143c43dd61a6d8c4ed599ca0eb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-11.zip",
+      "rows": 2880,
+      "sha256": "58940edc239e4cba5a59aa5c01ee4205e113055829dffe9ddbaa64ba278cdc16",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2025-12.zip",
+      "rows": 2976,
+      "sha256": "e903d6b03edf29315721c0557d3bc9f7b3091d720169118a94c54f1a12fdbbc2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-01.zip",
+      "rows": 2976,
+      "sha256": "b0ba064552b7c15c06f2a4427a2989497e27ea168566c067d29e45880e1cbca1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-02.zip",
+      "rows": 2688,
+      "sha256": "5ae26a64cbedf6dab4ac7a077c4066fb568a6d8c7a8a99401bfdd513296c23c9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-03.zip",
+      "rows": 2976,
+      "sha256": "3134f79a68f6492c01ea59a949238fa352e49a1c6ae9f394fe2ec26be5369d80",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-04.zip",
+      "rows": 2880,
+      "sha256": "0a4701d008622116f26f95e2b8ab95ecc970d385854a4f5308d1ae1ea5584433",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-05.zip",
+      "rows": 2976,
+      "sha256": "26f76663f14dc3ce7ed659e8b2928ed3dacc78705d56ded39ec699f9394971f1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-06.zip",
+      "rows": 2880,
+      "sha256": "e8e5d66a264f3d36751a025e6ee758e8026b1fe59bcab1007df85488dc395cab",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-07.zip",
+      "rows": 2976,
+      "sha256": "69b2708e48bf3a6f36551e5e23d04b4ac98f1b3276cb0b80588088c3f83162c7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-08.zip",
+      "rows": 2976,
+      "sha256": "eddf390061a158e91d0ba40a3d2c63f3f5f34fc2b3f81edc37ed007c456a4920",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "8a6c0a46361c93d7125f851028bc0436cf6d6593280f61247ce134f3256fbdc2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "ffee83dd76fa2390e91658eb46480ad416ec68edd4652750b9f619c7ad984687",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "cf4b2489e688352f89d794632926d83bd934e8c318378eef52bda5b5f9ca53b9",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "b88632aa33d7887bd09bfd514665f6c87e38a2c9a1a166cf9afb9f4f6e15f979",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "0227e1a8d2880b22a31003038880fa08ff9145a76d7695dfbdb9ae3eb994823a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "fecaf99aba721f8830a3b4cea01c0cec240ce4a7d2f33e29c212337d2793bce2",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "4164c1f5c48a7d953e96c5b1af5f440120aca5350a2de58bdf46d9d0337856a0",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "ac1c92173fb6edac7e75d51956b5aa79213206c9bce9ada09742820aaeb1b028",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "aed6ebe12621a645881f52807d742e7127380365d33933fd54dea2d2e04998d7",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "929512af0374d23ee8ebcf71624eda8fef67693cfada08926c96af47ef2a1dd1",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "e219bbd4bfbd5a3f428ec576b853633794ae5f16e8b1a735074b1b2b081ae687",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "85f58bdb182c42bd30ca3b48f865ffa317212427303443eafddd4973cee4a91a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "6320eadbe5a9407fb35516068d6664d01e915e9678721de23b82f77572cee113",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "ef46ac26696bd976943a5676d99f1be217719d129546c17b63f6b100c30276cc",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "4cd1fb23cfd412d630c142afa27318bedc5f6e3f4817b78179ae481ffe47ca11",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "6c20aff13a659147887351abd3d1a71a9cae033f4e887b59d2c6ffd7cb1cb3f2",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "1d86ada55ade808e64a7fa7544b844d49f7f650d90d8c48004ec9d3715ab9616",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "495e753d730dd9153fc964f97edf917d2364fde50611b3cae57b98afc5484485",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "2219984beea7db2127b87665506a81304e42da5d01841fb0c0da5742f4fd62b3",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "bf615f8f8874ce85abc405d31c2c0284e12d12fa05b786b82d46881335e3b592",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "c129e50294e2679afb662b569ada713b1375c495919b7d99ab02663d6df13553",
+      "source": "bulk_daily"
+    }
+  ],
+  "first_open_ms": 1577836800000,
+  "gaps": [
+    {
+      "end_ms": 1581217200000,
+      "missing": 4,
+      "start_ms": 1581213600000
+    },
+    {
+      "end_ms": 1582133400000,
+      "missing": 23,
+      "start_ms": 1582112700000
+    },
+    {
+      "end_ms": 1583321400000,
+      "missing": 8,
+      "start_ms": 1583314200000
+    },
+    {
+      "end_ms": 1587789000000,
+      "missing": 10,
+      "start_ms": 1587780000000
+    },
+    {
+      "end_ms": 1593322200000,
+      "missing": 14,
+      "start_ms": 1593309600000
+    },
+    {
+      "end_ms": 1606719600000,
+      "missing": 4,
+      "start_ms": 1606716000000
+    },
+    {
+      "end_ms": 1608573600000,
+      "missing": 15,
+      "start_ms": 1608560100000
+    },
+    {
+      "end_ms": 1608865200000,
+      "missing": 4,
+      "start_ms": 1608861600000
+    },
+    {
+      "end_ms": 1613019600000,
+      "missing": 5,
+      "start_ms": 1613015100000
+    },
+    {
+      "end_ms": 1615001400000,
+      "missing": 6,
+      "start_ms": 1614996000000
+    },
+    {
+      "end_ms": 1618893000000,
+      "missing": 10,
+      "start_ms": 1618884000000
+    },
+    {
+      "end_ms": 1619340300000,
+      "missing": 18,
+      "start_ms": 1619324100000
+    },
+    {
+      "end_ms": 1628836200000,
+      "missing": 18,
+      "start_ms": 1628820000000
+    },
+    {
+      "end_ms": 1632906000000,
+      "missing": 8,
+      "start_ms": 1632898800000
+    },
+    {
+      "end_ms": 1679666400000,
+      "missing": 5,
+      "start_ms": 1679661900000
+    }
+  ],
+  "last_open_ms": 1792539900000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "LINKUSDT",
+  "rows": 238408,
+  "tf": "15m"
+}
