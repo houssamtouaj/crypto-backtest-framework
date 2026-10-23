@@ -1,0 +1,221 @@
+{
+  "spot": {
+    "computed_on": "2026-10-23",
+    "dropped": [],
+    "members": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BCCUSDT",
+      "NEOUSDT",
+      "BNBUSDT",
+      "LTCUSDT"
+    ],
+    "ranked": [
+      {
+        "first_day": "2017-08-17",
+        "last_day": "2026-09-30",
+        "pair": "BTCUSDT",
+        "quote_volume": 5975573892.335595
+      },
+      {
+        "first_day": "2017-08-17",
+        "last_day": "2026-09-30",
+        "pair": "ETHUSDT",
+        "quote_volume": 1095175756.3566394
+      },
+      {
+        "first_day": "2017-11-11",
+        "last_day": "2018-11-20",
+        "pair": "BCCUSDT",
+        "quote_volume": 472215444.0263461
+      },
+      {
+        "first_day": "2017-11-20",
+        "last_day": "2026-09-30",
+        "pair": "NEOUSDT",
+        "quote_volume": 256847675.18146297
+      },
+      {
+        "first_day": "2017-11-06",
+        "last_day": "2026-09-30",
+        "pair": "BNBUSDT",
+        "quote_volume": 200681337.32606596
+      },
+      {
+        "first_day": "2017-12-13",
+        "last_day": "2026-09-30",
+        "pair": "LTCUSDT",
+        "quote_volume": 140294404.7475202
+      }
+    ],
+    "rule": "spot *USDT pairs (delisted included) with an archive 1d kline for every day from their first archived day (no later than 2017-12-31) through 2017-12-31, ranked by quote volume over 2017-12-01..2017-12-31 (ties by symbol), stablecoin bases and leveraged tokens excluded; up to 10; each enters the holdout when warm, holdout ends 2019-12-31",
+    "window": [
+      "2017-12-01",
+      "2017-12-31"
+    ]
+  },
+  "um": {
+    "computed_on": "2026-10-23",
+    "dropped": [
+      {
+        "pair": "ADAUSDT",
+        "reason": "first day 2020-01-31 is after 2020-01-23"
+      },
+      {
+        "pair": "ALGOUSDT",
+        "reason": "first day 2020-06-16 is after 2020-01-23"
+      },
+      {
+        "pair": "ATOMUSDT",
+        "reason": "first day 2020-02-07 is after 2020-01-23"
+      },
+      {
+        "pair": "BATUSDT",
+        "reason": "first day 2020-02-13 is after 2020-01-23"
+      },
+      {
+        "pair": "BNBUSDT",
+        "reason": "first day 2020-02-10 is after 2020-01-23"
+      },
+      {
+        "pair": "COMPUSDT",
+        "reason": "first day 2020-06-30 is after 2020-01-23"
+      },
+      {
+        "pair": "DASHUSDT",
+        "reason": "first day 2020-02-04 is after 2020-01-23"
+      },
+      {
+        "pair": "IOSTUSDT",
+        "reason": "first day 2020-02-21 is after 2020-01-23"
+      },
+      {
+        "pair": "IOTAUSDT",
+        "reason": "first day 2020-02-12 is after 2020-01-23"
+      },
+      {
+        "pair": "KNCUSDT",
+        "reason": "first day 2020-06-22 is after 2020-01-23"
+      },
+      {
+        "pair": "NEOUSDT",
+        "reason": "first day 2020-02-17 is after 2020-01-23"
+      },
+      {
+        "pair": "ONTUSDT",
+        "reason": "first day 2020-02-11 is after 2020-01-23"
+      },
+      {
+        "pair": "QTUMUSDT",
+        "reason": "first day 2020-02-20 is after 2020-01-23"
+      },
+      {
+        "pair": "THETAUSDT",
+        "reason": "first day 2020-05-27 is after 2020-01-23"
+      },
+      {
+        "pair": "VETUSDT",
+        "reason": "first day 2020-02-14 is after 2020-01-23"
+      },
+      {
+        "pair": "XMRUSDT",
+        "reason": "first day 2020-02-03 is after 2020-01-23"
+      },
+      {
+        "pair": "XTZUSDT",
+        "reason": "first day 2020-02-06 is after 2020-01-23"
+      },
+      {
+        "pair": "ZECUSDT",
+        "reason": "first day 2020-02-05 is after 2020-01-23"
+      },
+      {
+        "pair": "ZILUSDT",
+        "reason": "first day 2020-06-18 is after 2020-01-23"
+      },
+      {
+        "pair": "ZRXUSDT",
+        "reason": "first day 2020-06-24 is after 2020-01-23"
+      }
+    ],
+    "members": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BCHUSDT",
+      "LINKUSDT",
+      "ETCUSDT",
+      "LTCUSDT",
+      "XRPUSDT",
+      "EOSUSDT",
+      "TRXUSDT",
+      "XLMUSDT"
+    ],
+    "ranked": [
+      {
+        "first_day": "2020-01-01",
+        "last_day": "2026-09-30",
+        "pair": "BTCUSDT",
+        "quote_volume": 417317776784.80115
+      },
+      {
+        "first_day": "2020-01-01",
+        "last_day": "2026-09-30",
+        "pair": "ETHUSDT",
+        "quote_volume": 53993039847.266556
+      },
+      {
+        "first_day": "2020-01-01",
+        "last_day": "2026-09-30",
+        "pair": "BCHUSDT",
+        "quote_volume": 19903723142.134808
+      },
+      {
+        "first_day": "2020-01-17",
+        "last_day": "2026-09-30",
+        "pair": "LINKUSDT",
+        "quote_volume": 11733197537.11639
+      },
+      {
+        "first_day": "2020-01-16",
+        "last_day": "2026-09-30",
+        "pair": "ETCUSDT",
+        "quote_volume": 8181266766.84215
+      },
+      {
+        "first_day": "2020-01-09",
+        "last_day": "2026-09-30",
+        "pair": "LTCUSDT",
+        "quote_volume": 7382669664.57202
+      },
+      {
+        "first_day": "2020-01-06",
+        "last_day": "2026-09-30",
+        "pair": "XRPUSDT",
+        "quote_volume": 6911461004.50771
+      },
+      {
+        "first_day": "2020-01-08",
+        "last_day": "2025-05-21",
+        "pair": "EOSUSDT",
+        "quote_volume": 6840748114.3636
+      },
+      {
+        "first_day": "2020-01-15",
+        "last_day": "2026-09-30",
+        "pair": "TRXUSDT",
+        "quote_volume": 2785811079.20814
+      },
+      {
+        "first_day": "2020-01-20",
+        "last_day": "2026-09-30",
+        "pair": "XLMUSDT",
+        "quote_volume": 1814690583.5918798
+      }
+    ],
+    "rule": "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from their first archived day through 2020-06-30, that first day no later than 2020-01-23 (warm for the 160-day members on 2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and leveraged tokens excluded; top 10; trading from 2020-07-01",
+    "window": [
+      "2020-01-01",
+      "2020-06-30"
+    ]
+  }
+}

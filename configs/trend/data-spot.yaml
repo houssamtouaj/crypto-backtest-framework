@@ -1,0 +1,16 @@
+# DataConfig for the trend strategy's spot holdout (trend spec Phase 0 §0.2, §0.4).
+# listing: the members of configs/trend/universe.json "spot", first archived day.
+# The whole spot store is holdout data: every load needs allow_holdout=True.
+data_dir: data
+insample_start: "2017-08-01"
+insample_end: "2019-12-31"
+holdout_start: "2020-01-01"
+holdout_end: null
+warmup_start: "2017-08-01"
+listing:
+  BTCUSDT: "2017-08-17"
+  ETHUSDT: "2017-08-17"
+  BCCUSDT: "2017-11-11"
+  NEOUSDT: "2017-11-20"
+  BNBUSDT: "2017-11-06"
+  LTCUSDT: "2017-12-13"
