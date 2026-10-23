@@ -11,13 +11,13 @@ NaN: the day before the first day is not part of the pair's history.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 
 import numpy as np
 
 from perpbt.config import DataConfig
 from perpbt.data.store import DAY_MS, CandleStore, Candles, Funding, FundingStore, date_ms
-from perpbt.execution.trades import utc_date
 from perpbt.indicators.daily import daily_bars
 
 log = logging.getLogger(__name__)
@@ -131,7 +131,8 @@ def build_dayframe(
     runs = filled_runs(day_ms, filled)
     for start, length in runs:
         if length > MAX_FILLED_RUN:
-            log.warning("%s: %d consecutive days without a 15m candle from %s", pair, length, utc_date(start))
+            log.warning("%s: %d consecutive days without a 15m candle from %s", pair, length,
+                        time.strftime("%Y-%m-%d", time.gmtime(start // 1000)))
     return DayFrame(
         pair, _frozen(day_ms), _frozen(o), _frozen(h), _frozen(lo), _frozen(c), _frozen(filled), _frozen(fsum),
         _frozen(ret), fill_px, _frozen(fts), _frozen(frate), _frozen(_px_at(cd, fts, cd.o)), _frozen(ptr),

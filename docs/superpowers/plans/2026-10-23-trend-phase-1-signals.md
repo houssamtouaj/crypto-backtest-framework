@@ -156,3 +156,17 @@ Task 3: complete (commits 68259d9..40fe9d0, tests: python -m pytest tests/trend 
 - Task 4: Ruling: real-data perp test also runs long/short and checks all 12 members finite from 2020-07-01; spot check also asserts the listing day holds the first candle — cost: none.
 - Task 4: real data: 10 perps, 0 filled days, valid from 2020-06-09 (BTC ETH BCH) .. 2020-06-28 (XLM); EOS last day 2025-05-21, 5881 funding events kept; each pair loads + signals in < 0.1 s. Spot (manifests only): no filled run > 5; warm BTC/ETH 2018-01-24, BNB 04-15, BCC 04-20, NEO 04-29, LTC 05-22.
 Task 4: complete (commits 40fe9d0..56e7492, tests: python -m pytest -q (full, slow included) → 1053 passed in 154.04s)
+Final review: fresh reviewer (opus) — "merge with fixes"; 0 Critical, 1 Important, 9 Minor; all five Review Focus items hold; agrees with every ruling.
+- Final: fixed trend/daily.py imported perpbt.execution.trades (utc_date), outside the Phase 5 §5.4 trend code-version scope — test_trend_imports_stay_in_scope (direct imports of perpbt/trend/*.py) RED→GREEN, suite 1054/1054
+- Final: Ruling (declined to judge, reviewer): members order is not normalised before hashing ([donchian, ma_filter, return_sign] hashes differently) — leave to Phase 2, whose prereg validates the exact file; exposure is order-independent — cost if wrong: two equivalent preregs hash differently.
+- Final: Ruling (declined to judge, reviewer): funding at exactly the fill time and the Phase 5 scope list (indicators/daily imports indicators/atr; stats/buyhold imports execution) are Phase 3 / Phase 5 calls — recorded as pointers — cost: none now.
+- Final: minor (deferred): DayFrame has no last_day_complete flag; the last day's c can be a partial close (EOS 2025-05-21 09:00, spot BCC 2018-11-20 02:45, a forward run past the fetched data) — pointer for Phases 3/5
+- Final: minor (deferred): no late-fill price (first candle at/after d+h on day d) precomputed; Phase 3 §3.6 will extend DayFrame
+- Final: minor (deferred): test_first_day_from_config_not_store has no funding before the first day (code correct at daily.py funding filter, not pinned)
+- Final: minor (deferred): no hand test for the short Donchian's inputs (lows to enter, highs to exit) or an exit tie (c == min l over N/2 keeps the long)
+- Final: minor (deferred): mid-day causality test could also truncate if confirmed_at were the day's last grid slot
+- Final: minor (deferred): test_donchian_uses_highs_and_lows comment is wrong (11.8 is not above 12) and the l3 bar has low > close
+- Final: minor (deferred): real spot test skips on data/candles, not data/spot/candles, and re-derives first_day by hand
+- Final: minor (deferred): target_weight errstate does not cover over (subnormal σ̂ raises an overflow warning; unreachable on real data)
+- Final: minor (deferred): DayFrame.fill_px is a mutable dict (MappingProxyType would freeze it)
+- Pointers for Phase 3: reuse signals.vol_forecast, do not re-implement σ̂; funding_px is NaN on listing days before the first candle (XRP 2020-01-06 08:00, XLM 2020-01-20 00:00); fill_px keys (15, 60, 240, 480) match rebalance.fill_offset_min.
