@@ -526,3 +526,15 @@ def test_hold_rule_hours_changes_the_hash():
     a = primary_variant(params=StrategyParams(hold_rule=HoldRule("max_hold", 24)))
     b = primary_variant(params=StrategyParams(hold_rule=HoldRule("max_hold", 72)))
     assert a.config_hash() != b.config_hash()
+
+
+def test_read_yaml_unique_rejects_duplicates(tmp_path):
+    from perpbt.config import read_yaml_unique
+
+    ok = tmp_path / "ok.yaml"
+    ok.write_text("a:\n  b: 1\n  c: 2\n", encoding="utf-8")
+    assert read_yaml_unique(ok) == {"a": {"b": 1, "c": 2}}
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("a:\n  b: 1\n  b: 2\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match=r"duplicate key 'b' at line 3"):
+        read_yaml_unique(bad)

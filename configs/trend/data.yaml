@@ -1,0 +1,21 @@
+# DataConfig for the trend strategy's perpetuals (trend spec Phase 0 §0.2).
+# listing: the members of configs/trend/universe.json "um", first archived day.
+# Loads past insample_end are refused except through trend/forward.py; the
+# forward period's real start is set by the code lock in the pre-registration.
+data_dir: data
+insample_start: "2020-01-01"
+insample_end: "2026-10-20"
+holdout_start: "2026-10-21"
+holdout_end: null
+warmup_start: "2020-01-01"
+listing:
+  BTCUSDT: "2020-01-01"
+  ETHUSDT: "2020-01-01"
+  BCHUSDT: "2020-01-01"
+  LINKUSDT: "2020-01-17"
+  ETCUSDT: "2020-01-16"
+  LTCUSDT: "2020-01-09"
+  XRPUSDT: "2020-01-06"
+  EOSUSDT: "2020-01-08"
+  TRXUSDT: "2020-01-15"
+  XLMUSDT: "2020-01-20"

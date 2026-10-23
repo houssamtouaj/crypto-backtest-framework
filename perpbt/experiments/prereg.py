@@ -34,6 +34,7 @@ from perpbt.config import (
     canonical_json,
     config_hash,
     from_dict,
+    read_yaml_unique,
     to_dict,
 )
 from perpbt.version import code_version, git_commit
@@ -62,28 +63,7 @@ PARAM_FIELDS = tuple(f.name for f in fields(StrategyParams))
 EXEC_FIELDS = tuple(f.name for f in fields(ExecConfig))
 
 
-# --- YAML without duplicate keys -----------------------------------------------------------------
-
-class _UniqueKeyLoader(yaml.SafeLoader):
-    pass
-
-
-def _construct_mapping(loader: yaml.SafeLoader, node: yaml.MappingNode, deep: bool = False) -> dict:
-    seen = set()
-    for key_node, _ in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if key in seen:
-            raise ConfigError(f"duplicate key {key!r} at line {key_node.start_mark.line + 1}")
-        seen.add(key)
-    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
-
-
-_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping)
-
-
-def _read_yaml(path: str | Path) -> Any:
-    with open(path, encoding="utf-8") as f:
-        return yaml.load(f, Loader=_UniqueKeyLoader)  # noqa: S506 - a SafeLoader subclass
+_read_yaml = read_yaml_unique  # the duplicate-key loader lives in perpbt.config (shared with the trend prereg)
 
 
 # --- parts ---------------------------------------------------------------------------------------

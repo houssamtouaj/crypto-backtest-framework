@@ -1,0 +1,503 @@
+{
+  "bad_intervals": [],
+  "ccxt_ranges": [],
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "EOSUSDT-fundingRate-2020-01.zip",
+      "rows": 71,
+      "sha256": "c9091e7af126fc559601ad5d7b433db7c44018b037b4dbeb00ac1a946401d4b9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-02.zip",
+      "rows": 87,
+      "sha256": "a9199a7c0284092907d566472d119c556e22874d6542c76176bb0d6b34a8136e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-03.zip",
+      "rows": 93,
+      "sha256": "8bb16859a587ae0ae380161b2c0f9aec0ba9c1c9358a90b952f1053fa7627a26",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-04.zip",
+      "rows": 90,
+      "sha256": "dc177079833b69c0d6d142265f5c543af24e50637c1033ef758a4defaefbfbd1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-05.zip",
+      "rows": 93,
+      "sha256": "1ed0a7c6e3b6eaf4e9c3f22c365da146b052ce1654f42ed1534bab66da88b5a8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-06.zip",
+      "rows": 90,
+      "sha256": "3fb77e15279d114bb0d7d8bd6316c93d431bbdedff2820120f5b3ecfff3f9bf1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-07.zip",
+      "rows": 93,
+      "sha256": "316a56ff87ebe28eeb2ab8c3a90f0a9aa1b69ec25c42d48c9f3b6711d04d4727",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-08.zip",
+      "rows": 93,
+      "sha256": "40022a3a67f020b56a8ba8ed71033989048cad076055b9b124ee3c153c01d7ec",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-09.zip",
+      "rows": 90,
+      "sha256": "ba72ca12c81c59d30b837333002ea2a1d72d21675dcac82d386ae5ae590751b1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-10.zip",
+      "rows": 93,
+      "sha256": "190353b6bfe22e1de548a0b3e0b4fa88004c1feac1d683949f1184693f37236a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-11.zip",
+      "rows": 90,
+      "sha256": "d478de65b17d8e05033e98226e1c1c573107d4259a215bc2a9a9aaa57464572e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2020-12.zip",
+      "rows": 93,
+      "sha256": "69401532cef3cf3b89e154de9eb119ee7640cf8a97aff8cfe6db7be674f5ab6f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-01.zip",
+      "rows": 93,
+      "sha256": "92ad3159a3ba175a42ce97347242a4742f25d9383608a4942d057c934a526c5a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-02.zip",
+      "rows": 84,
+      "sha256": "3742e8b629b705c936a04308a24f488126dfd108a367b0c14423126513fdf059",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-03.zip",
+      "rows": 93,
+      "sha256": "ce391815ae465eac7ad0380d7d123c2e15eb0a69d824c72c8819d108d5cd8437",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-04.zip",
+      "rows": 90,
+      "sha256": "3a2eeeb284838ffd525adbf64f42a43e9725db5f4beef7947e93322060d2fbaa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-05.zip",
+      "rows": 93,
+      "sha256": "e4becc5625161bc3eeba902f189abd1b9940bbf172716613dfd9dc149cb97e8e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-06.zip",
+      "rows": 90,
+      "sha256": "a1993fbd3a13bdb8e13068e9ead47b223b98cdf37db6fde6179857513b8277c5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-07.zip",
+      "rows": 93,
+      "sha256": "b37558c5fa6dae9b0ee4d1a75d6eb8d1c326d709092a68c8717e925285b417aa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-08.zip",
+      "rows": 93,
+      "sha256": "eb4ff3ffe747988448ee7f4e85e06d11437fee62f19dcd35d1118d5bf15790e2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-09.zip",
+      "rows": 90,
+      "sha256": "738c17d4d18f7299954fbfb9611c7f33a14f161650ce3a05052af3044b75f5bc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-10.zip",
+      "rows": 93,
+      "sha256": "9d489ca8673eaa1fa7a0fac7d3462abc3a70ac4264232c8ab84bc2575caadc45",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-11.zip",
+      "rows": 90,
+      "sha256": "ec55fcac28da4bf1aa7dab12a4b7e8413b1e78eba58c3bdd47db1b177d6559dc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2021-12.zip",
+      "rows": 93,
+      "sha256": "ff4398c455b06ad6a995662b365c5a757f79aa68555e382c1512c9897ec5124a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-01.zip",
+      "rows": 93,
+      "sha256": "4b3cad6cb65f2766cee03f1533a403714e5875ed91c994177796c25e92dd8b6e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-02.zip",
+      "rows": 84,
+      "sha256": "9ec1bad99bb600deed67695dd43dc0de9d8769a9b3154b356856d99a7b6403a9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-03.zip",
+      "rows": 93,
+      "sha256": "d3c8200a67a5ce6a9d7265a094cf612cc308e1260ca197b2fc88e2be165d3632",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-04.zip",
+      "rows": 90,
+      "sha256": "f8618591dc459c466a57fd8f8c740e9c5e9eeb5db1a283f16f5dfad5debe5b47",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-05.zip",
+      "rows": 93,
+      "sha256": "c56a765e4b81310d6a6022b0047a2ed871fd337687aa3dd082eb5518dd3c141a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-06.zip",
+      "rows": 90,
+      "sha256": "470cd0143f10f36e581ec00e6743c4a1b04f577cf4a946ae64f9f011814b410f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-07.zip",
+      "rows": 93,
+      "sha256": "eb9cfa5ee5e30e6178cde193173847069803d07a8346ba90670bb53a028fe480",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-08.zip",
+      "rows": 93,
+      "sha256": "3eae29b82869e12cd749f8c8766ef9288629d555ea24bb9f5bf563c593ba7ab3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-09.zip",
+      "rows": 90,
+      "sha256": "4476f75208de0db4301080dfcaf94bf15d8d3a9713f2bcd7ed00237602bea4ab",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-10.zip",
+      "rows": 93,
+      "sha256": "8c8478e122380f8cf1e6320494bd4d326ff8761c48ffca8ef3efab0ca77dccf3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-11.zip",
+      "rows": 90,
+      "sha256": "f53fb848b3b970598b75eef990d8681c61854830270e58c5744bf97fd746b023",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2022-12.zip",
+      "rows": 93,
+      "sha256": "0bd40e839d83acff2db93e7b7599b8b1edc73269ed7c5d12830fd64c498fac78",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-01.zip",
+      "rows": 93,
+      "sha256": "5f5fb0162b8457c3fc41a9e1afbc8bd4d9b4c466ee8a04040de2a49aa0766d74",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-02.zip",
+      "rows": 84,
+      "sha256": "f53ccd127f154006c6dcb4409d212b1f712b8260a903cc849eed883c43247ffe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-03.zip",
+      "rows": 93,
+      "sha256": "4d1f90423053645a47f2b30570faf9a47e31e53f9137d94d1021229d57d5fcd4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-04.zip",
+      "rows": 90,
+      "sha256": "4151b29c92b69e397071fc590e02756e4c34f5681a1e683b5583e00e3723d8db",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-05.zip",
+      "rows": 93,
+      "sha256": "e6749b5a25481a785084bea3ae629841f18dacdad61b404fac4b124ab41bced0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-06.zip",
+      "rows": 90,
+      "sha256": "dec96931695ac6d8f519ee6724fa954c33011c16e0c00b7e91b990ce915757b7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-07.zip",
+      "rows": 93,
+      "sha256": "00e1a3ed536c9348816dd40fcc12bd2b4761d5dbf6a44e240a6285cf064a0346",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-08.zip",
+      "rows": 93,
+      "sha256": "0e703cf555ef1866ef473d97fd8e12d91107ef38fd5fec9772961d02912b9be6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-09.zip",
+      "rows": 90,
+      "sha256": "42661fe54c9779e9837d967b6667f510586b9b83b60042cdc58fd168da07b387",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-10.zip",
+      "rows": 93,
+      "sha256": "3946cc8e0253ca02a886a8041dd5b06667e5799212c17771c12a8d6b5536fee3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-11.zip",
+      "rows": 90,
+      "sha256": "3cac97c74276cd7139c22528ec16904eac4a996bb9dad6a6fc86c3177271caed",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2023-12.zip",
+      "rows": 93,
+      "sha256": "fe7db55491b26495a56b0a61cb7c17240d6f284a22978117be524db2d6afc495",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-01.zip",
+      "rows": 93,
+      "sha256": "b4f04c55d581252ef0262e30663502f5302125813e5dba6c09faa4db5a62cf7d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-02.zip",
+      "rows": 87,
+      "sha256": "a70aaa24ee6a6a2778b46d270293230076bb9855bc0baaa8620cc1fe08cf3407",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-03.zip",
+      "rows": 93,
+      "sha256": "e5f6b8337ea8227a2394ffe6211d2852e320b6d869d9f6d6b54af98ab487a881",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-04.zip",
+      "rows": 90,
+      "sha256": "29029a106fb28e4daac673f4056857e7793032191fd48a70302f6ae413a1eb5c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-05.zip",
+      "rows": 93,
+      "sha256": "b479787520250c1a237b985e53cf6821f279ea0458fe8a8c36033134fc0270ce",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-06.zip",
+      "rows": 90,
+      "sha256": "45bcf13fb17f4ec1827d08b4bb6d19c4a793e166786f99cb2b7197aefa9a535e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-07.zip",
+      "rows": 93,
+      "sha256": "9ef13ffde34adc03294961e4a668289343dee9053b41c13cd5cb31d45f7a3ef1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-08.zip",
+      "rows": 93,
+      "sha256": "a0ca8c2cd89fe7401589413a659276ce627a75c9ac3995ba905b7da086422b9c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-09.zip",
+      "rows": 90,
+      "sha256": "f1def66ceb7b4a496151e81eaf4e05a54aed3a68495e8f49c0f049ecaa439251",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-10.zip",
+      "rows": 93,
+      "sha256": "096a3c3ec4de856eaea5365c0d9ce5f727d0653e2cec888dd6b4eed141928978",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-11.zip",
+      "rows": 90,
+      "sha256": "6cf7452a703471af7c11c7c671ab69d559feb2a8467fd1bb07bdee8222a62173",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2024-12.zip",
+      "rows": 93,
+      "sha256": "2fecf2aa7ced400f7c94c9fbb51c5cb0e761b67f9f31abea08a549053fb8fa89",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-01.zip",
+      "rows": 93,
+      "sha256": "1bba04ff8e9a69d7278de0c9da6128b9fcc4a0d313a7ff29b9970edf22a76300",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-02.zip",
+      "rows": 84,
+      "sha256": "ab255ce7dabd44da888981a2ab30cd01e006e50b67a45f059cd64642e045cede",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-03.zip",
+      "rows": 93,
+      "sha256": "647e6fd9d77eaaf4afe2113a83e84e866adbedd588f2b1ff394f25f6632bb1f9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-04.zip",
+      "rows": 90,
+      "sha256": "bd4fe3fc3debc97ee64e89788fe081b91d8dbf4f64e4bb98f67fa279ca37f4e9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-05.zip",
+      "rows": 93,
+      "sha256": "385a84f38ea3ad4cbd4d1177e20a0a7c83d0c5f9b4d94c3ed8b9f3641262ca76",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-06.zip",
+      "rows": 90,
+      "sha256": "a3164b670073051b3cb1710868306f380c27f9f4d24c34c5fa4928d7636f92e4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-07.zip",
+      "rows": 93,
+      "sha256": "e50edcee3337c0edd29717653cd3e7f74899f2e0069afb3c0430651cd4ceb1e9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-08.zip",
+      "rows": 93,
+      "sha256": "1ecd369fea5eddfae4fb920794eb53f7c513323528c36547e162c6ca1a0ea484",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-09.zip",
+      "rows": 90,
+      "sha256": "477be73c73522ad45e0d5a4ddb71d0ec7087a642b6e44ed0f01573e2ec5475fe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-10.zip",
+      "rows": 93,
+      "sha256": "8cd217dc263fad384f845a8181718d25c7011da3f9f403cf4a4d00cede08fed6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-11.zip",
+      "rows": 90,
+      "sha256": "501f63e9e4f8db20cc862c3cc5bc6242e68927b121c6a055188f6164f5e09d56",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2025-12.zip",
+      "rows": 93,
+      "sha256": "b7bc2917e5fbcd87b8614dee4d831a2f4dd029ab056da397dee7ba7e585faecf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-01.zip",
+      "rows": 93,
+      "sha256": "f5738ac9837685d99d9bfc2446469ce2dbc2de51158eb070874c4b9a07d75650",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-02.zip",
+      "rows": 84,
+      "sha256": "3743ee60b0ff1f030313ca847e10c308766e6c344af758ba79c4f9be4ddf25c8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-03.zip",
+      "rows": 93,
+      "sha256": "02e15474b8d816276a2d531b7e551ad8b89e433b284c7bab397961870afab0c6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-04.zip",
+      "rows": 90,
+      "sha256": "9cb48e9b0173d57094d6d71e44c73fe501c5ec80bc8f4405772edea6bffc54f4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-05.zip",
+      "rows": 93,
+      "sha256": "f31b528f7a156eb988aa27d12f88f2143b74e1b6ce977e52ed27cd209d35123c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-06.zip",
+      "rows": 90,
+      "sha256": "c8a72ee5213135b727c9478da5107ad8ed74e3594d8a6c7c3853f805ae8fcb3f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-07.zip",
+      "rows": 93,
+      "sha256": "48b81a7d744ee5f7fb92c778736ffd1ae1551a75016ceb318cfba83fa5108da1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-08.zip",
+      "rows": 93,
+      "sha256": "3c294005214ba851e8aa1eebfe1ef8d4cf853065bfcdee7719998b070d42fa95",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "EOSUSDT-fundingRate-2026-09.zip",
+      "rows": 90,
+      "sha256": "975be02708a6f2b8d9a129dff41f0536b746c0ae0771f553e5c62b0e443809af",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_funding_ms": 1578470400000,
+  "intervals": {
+    "8": 7373
+  },
+  "last_funding_ms": 1790784000000,
+  "last_interval_h": 8,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "EOSUSDT",
+  "rows": 7373
+}

@@ -1,0 +1,222 @@
+"""The gross signal screen (trend spec Phase 2 §2.3) and its random-days paths (Phase 4 §4.1).
+
+A deliberately simple return model, independent of the Phase 3 executor:
+the decision on day ``d`` earns ``w*_d × (c_{d+1} / c_d − 1)`` on day ``d+1``,
+with no fill delay, drift band, fees, slippage or funding. The portfolio
+return is the mean over the pairs active on ``d``. Decision days run from
+the day before ``insample.start`` to the day before ``insample.end``, so the
+returns fall on the in-sample days.
+
+Each random path draws one offset ``k`` on ``[margin, n − margin]`` and
+shifts every pair's exposure by it within the pair's own active days
+(``e'_t = e_{(t + k) mod n_i}``); weights are recomputed from the shifted
+exposure with the actual vol forecast. Time in market, exposure levels and
+the number of exposure changes are kept; only the timing moves.
+"""
+from __future__ import annotations
+
+import json
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+import numpy as np
+
+from perpbt.config import ConfigError, DataConfig, config_hash, to_dict
+from perpbt.data.store import DAY_MS, date_ms
+from perpbt.stats.bootstrap import sharpe
+from perpbt.stats.seeds import rng_for
+from perpbt.trend.config import SizingConfig
+from perpbt.trend.daily import DayFrame, load_dayframe
+from perpbt.trend.prereg import TrendPrereg
+from perpbt.trend.signals import Signals, compute_signals, target_weight
+
+DELISTED_AFTER_DAYS = 7  # Phase 3 §3.6: data ending more than this before the period end is a delisting
+
+
+@dataclass(frozen=True, eq=False)  # eq=False: the generated __eq__ raises on ndarray fields
+class ScreenInputs:
+    """Pairs aligned on decision days; arrays are ``(pairs, days)``. NaN where a pair has no row."""
+
+    pairs: tuple[str, ...]
+    day_ms: np.ndarray
+    ret_next: np.ndarray  # c_{d+1} / c_d − 1: price only, no funding
+    exposure: np.ndarray
+    sigma: np.ndarray
+    active: np.ndarray  # signal valid on d and day d+1 in the frame
+
+
+def screen_inputs(
+    frames: dict[str, DayFrame], signals: dict[str, Signals], *, start: str, end: str,
+) -> ScreenInputs:
+    """Align every pair on the decision days ``start − 1 .. end − 1`` (ISO dates, returns on ``start .. end``)."""
+    first, last = date_ms(start) - DAY_MS, date_ms(end) - DAY_MS
+    if last < first:
+        raise ValueError(f"screen period {start}..{end} is empty")
+    day_ms = np.arange(first, last + DAY_MS, DAY_MS, dtype=np.int64)
+    pairs = tuple(frames)
+    shape = (len(pairs), len(day_ms))
+    ret_next, exposure, sigma = (np.full(shape, np.nan) for _ in range(3))
+    active = np.zeros(shape, dtype=bool)
+    for i, pair in enumerate(pairs):
+        f, s = frames[pair], signals[pair]
+        idx = (day_ms - f.day_ms[0]) // DAY_MS
+        ok = (idx >= 0) & (idx + 1 < len(f))
+        j = idx[ok]
+        ret_next[i, ok] = f.c[j + 1] / f.c[j] - 1.0
+        exposure[i, ok] = s.exposure[j]
+        sigma[i, ok] = s.sigma[j]
+        active[i, ok] = s.valid[j]
+    return ScreenInputs(pairs, day_ms, ret_next, exposure, sigma, active)
+
+
+def portfolio_returns(weight: np.ndarray, inputs: ScreenInputs) -> np.ndarray:
+    """Per day, the mean of ``weight × ret_next`` over active pairs (0 when none is active).
+
+    ``weight`` is ``(pairs, days)`` or ``(paths, pairs, days)``; the result drops the pairs axis.
+    """
+    contrib = np.where(inputs.active, np.asarray(weight, dtype=np.float64) * inputs.ret_next, 0.0)
+    count = inputs.active.sum(axis=0)
+    return np.where(count > 0, contrib.sum(axis=-2) / np.maximum(count, 1), 0.0)
+
+
+def shift_offsets(n: int, M: int, margin: int, rng: np.random.Generator) -> np.ndarray:
+    """``M`` offsets uniform on ``[margin, n − margin]`` (both ends included)."""
+    if n - margin < margin:
+        raise ValueError(f"no offset in [{margin}, {n - margin}]: {n} days are too few for a {margin}-day margin")
+    return rng.integers(margin, n - margin, size=M, endpoint=True).astype(np.int64)
+
+
+def shifted_exposure(inputs: ScreenInputs, k: np.ndarray) -> np.ndarray:
+    """``(paths, pairs, days)``: each pair's active exposures rotated by ``k mod n_i``; NaN where not active."""
+    k = np.asarray(k, dtype=np.int64)
+    out = np.full((len(k), *inputs.exposure.shape), np.nan)
+    for i in range(len(inputs.pairs)):
+        idx = np.flatnonzero(inputs.active[i])
+        if len(idx) == 0:
+            continue
+        e = inputs.exposure[i, idx]
+        out[:, i, idx] = e[(np.arange(len(idx))[None, :] + k[:, None]) % len(idx)]
+    return out
+
+
+def _summary(x: np.ndarray) -> dict:
+    return {
+        "n": int(len(x)), "mean": float(np.nanmean(x)), "std": float(np.nanstd(x, ddof=1)),
+        "p05": float(np.nanpercentile(x, 5)), "p50": float(np.nanpercentile(x, 50)),
+        "p95": float(np.nanpercentile(x, 95)),
+    }
+
+
+def run_screen(
+    inputs: ScreenInputs, sizing: SizingConfig, *, paths: int, margin: int, rng: np.random.Generator,
+    stop_if_p_at_least: float, chunk: int = 100,
+) -> dict:
+    """Observed gross Sharpe against ``paths`` shifted paths; ``p_screen`` and the go/stop decision.
+
+    ``bh_sharpe`` is the same model with ``e ≡ 1`` on active days (vol-targeted buy-and-hold), descriptive only.
+    """
+    observed = sharpe(portfolio_returns(target_weight(inputs.exposure, inputs.sigma, sizing), inputs))
+    k = shift_offsets(len(inputs.day_ms), paths, margin, rng)
+    path_sharpe = np.empty(paths)
+    for a in range(0, paths, chunk):
+        e = shifted_exposure(inputs, k[a:a + chunk])
+        r = portfolio_returns(target_weight(e, inputs.sigma[None], sizing), inputs)
+        path_sharpe[a:a + chunk] = [sharpe(row) for row in r]
+    bad = int(np.sum(~np.isfinite(path_sharpe)))
+    if not np.isfinite(observed) or bad:
+        # a NaN compares False with everything and would read as "go": refuse instead of deciding
+        raise ValueError(f"screen Sharpe not finite: observed {observed}, {bad} of {paths} paths NaN")
+    p = (1 + int(np.sum(path_sharpe >= observed))) / (paths + 1)
+    ones = np.where(inputs.active, 1.0, np.nan)
+    return {
+        "n_days": int(len(inputs.day_ms)),
+        "n_pairs": len(inputs.pairs),
+        "observed_sharpe": observed,
+        "paths": _summary(path_sharpe),
+        "p_screen": p,
+        "stop_if_p_at_least": stop_if_p_at_least,
+        "decision": "stop" if p >= stop_if_p_at_least else "go",
+        "bh_sharpe": sharpe(portfolio_returns(target_weight(ones, inputs.sigma, sizing), inputs)),
+        "mean_active_pairs": float(inputs.active.sum(axis=0).mean()),
+    }
+
+
+def screen_from_store(prereg: TrendPrereg, data_cfg: DataConfig) -> dict:
+    """The screen on the stored in-sample perps: every ``universe.um`` member, the primary signal and sizing.
+
+    Seeded from ``(stats.master_seed, prereg_hash, "screen")``. ``data_cfg.insample_end`` must equal the
+    prereg's, so the store guard and the period agree.
+    """
+    p = prereg.periods
+    for name in ("insample_end", "warmup_start"):
+        if getattr(data_cfg, name) != getattr(p, name):
+            raise ConfigError(f"data config {name} {getattr(data_cfg, name)} differs from the prereg's {getattr(p, name)}")
+    pairs = prereg.universe["um"]["members"]
+    frames = {pair: load_dayframe(data_cfg, pair, end=p.insample_end) for pair in pairs}
+    end_ms = date_ms(p.insample_end)
+    for pair, f in frames.items():
+        short = (end_ms - int(f.day_ms[-1])) // DAY_MS
+        if 0 < short <= DELISTED_AFTER_DAYS:
+            # neither complete nor a delisting by Phase 3 §3.6: most likely an incomplete fetch
+            raise ConfigError(f"{pair}: stored data ends {short} day(s) before {p.insample_end}; fetch it first")
+    signals = {pair: compute_signals(f, prereg.signal, prereg.sizing) for pair, f in frames.items()}
+    inputs = screen_inputs(frames, signals, start=p.insample_start, end=p.insample_end)
+    h = prereg.prereg_hash()
+    result = run_screen(
+        inputs, prereg.sizing, paths=prereg.screen.baseline_runs, margin=prereg.stats.shift_margin_days,
+        rng=rng_for(prereg.stats.master_seed, h, "screen"), stop_if_p_at_least=prereg.screen.stop_if_p_at_least,
+    )
+    return {
+        "prereg_hash": h, "data_config_hash": config_hash({k: v for k, v in to_dict(data_cfg).items() if k != "data_dir"}),
+        "period": [p.insample_start, p.insample_end], "pairs": list(pairs),
+        "pair_last_day": {pair: _iso_day(int(f.day_ms[-1])) for pair, f in frames.items()}, **result,
+    }
+
+
+def _iso_day(ms: int) -> str:
+    return time.strftime("%Y-%m-%d", time.gmtime(ms // 1000))
+
+
+def screen_path(runs_dir: str | Path) -> Path:
+    return Path(runs_dir) / "trend" / "screen.json"
+
+
+def _summary_md(result: dict) -> str:
+    q = result["paths"]
+    return "\n".join([
+        "# Trend following — summary",
+        "",
+        f"**Decision: {result['decision']}.** The gross signal screen (trend spec Phase 2 §2.3) gave "
+        f"p_screen = {result['p_screen']:.4f}, at or above the pre-registered stop threshold "
+        f"{result['stop_if_p_at_least']}. Phases 3–7 are not built.",
+        "",
+        "| | value |",
+        "|---|---|",
+        f"| period (return days) | {result['period'][0]} .. {result['period'][1]} ({result['n_days']} days) |",
+        f"| pairs | {' '.join(result['pairs'])} |",
+        f"| observed gross Sharpe | {result['observed_sharpe']:.3f} |",
+        f"| random-days paths | {q['n']}: mean {q['mean']:.3f}, std {q['std']:.3f}, "
+        f"5/50/95% {q['p05']:.3f} / {q['p50']:.3f} / {q['p95']:.3f} |",
+        f"| p_screen | {result['p_screen']:.4f} |",
+        f"| vol-targeted buy-and-hold gross Sharpe (descriptive) | {result['bh_sharpe']:.3f} |",
+        "",
+        f"Pre-registration hash {result['prereg_hash']}; computed {result['computed_on']} at "
+        f"{result['git_commit']}. Gross model: no fill delay, drift band, fees, slippage or funding.",
+        "",
+    ])
+
+
+def write_screen(result: dict, runs_dir: str | Path) -> list[Path]:
+    """Write ``runs/trend/screen.json`` once (and ``summary.md`` on stop); refuses to overwrite."""
+    text = json.dumps(result, indent=2, allow_nan=False) + "\n"  # serialise first: a failure leaves no file
+    path = screen_path(runs_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "x", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    written = [path]
+    if result["decision"] == "stop":
+        summary = path.parent / "summary.md"
+        summary.write_text(_summary_md(result), encoding="utf-8", newline="\n")
+        written.append(summary)
+    return written

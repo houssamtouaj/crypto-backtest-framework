@@ -2,21 +2,22 @@
 
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
-Phase 7 ``report``. Exit codes: 0 success, 1 a download, checksum,
+Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 from collections.abc import Callable, Sequence
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
-from perpbt.data.bulk import ChecksumError, DownloadError
+from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
 from perpbt.data.validate import run_validate
 from perpbt.experiments import holdout as holdout_mod
@@ -30,6 +31,9 @@ DEFAULT_DATA_CONFIG = "configs/data.yaml"
 DEFAULT_PREREG = "configs/prereg.yaml"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_RUNS_DIR = "runs"
+DEFAULT_UNIVERSE = "configs/trend/universe.json"
+DEFAULT_TREND_PREREG = "configs/trend/prereg.yaml"
+DEFAULT_TREND_DATA = "configs/trend/data.yaml"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -61,6 +65,7 @@ def _data_fetch(args: argparse.Namespace) -> int:
             ccxt_head=args.ccxt_head,
             ccxt_tail=args.ccxt_tail,
             ccxt_gaps=args.ccxt_gaps,
+            market=args.market,
         )
     except (DownloadError, ChecksumError, ValueError) as e:
         print(f"perpbt data fetch: {e}", file=sys.stderr)
@@ -77,7 +82,7 @@ def _data_validate(args: argparse.Namespace) -> int:
         return 2
     pairs = args.pairs or sorted(cfg.listing)
     try:
-        report = run_validate(cfg, pairs)
+        report = run_validate(cfg, pairs, market=args.market)
     except ValueError as e:
         print(f"perpbt data validate: {e}", file=sys.stderr)
         return 1
@@ -259,6 +264,78 @@ def _report(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- trend strategy ------------------------------------------------------------------------------
+
+
+def _trend_universe(args: argparse.Namespace) -> int:
+    from perpbt.trend.universe import rank_universe, write_universe
+
+    _log_to_stderr()
+    try:
+        block = rank_universe(args.market, today=datetime.now(timezone.utc).date())
+    except (DownloadError, ChecksumError) as e:
+        print(f"perpbt trend universe: {e}", file=sys.stderr)
+        return 1
+    write_universe(args.out, args.market, block)
+    print(f"{args.market}: {len(block['ranked'])} candidates, {len(block['dropped'])} dropped; "
+          f"members: {' '.join(block['members'])}")
+    print(f"wrote {Path(args.out).as_posix()}")
+    return 0
+
+
+def _trend_prereg(args: argparse.Namespace) -> int:
+    from perpbt.trend.prereg import check_universe, freeze, load_prereg
+
+    try:
+        prereg = load_prereg(args.prereg)
+        check_universe(prereg, json.loads(Path(args.universe).read_text(encoding="utf-8")))
+    except (ConfigError, OSError, ValueError) as e:
+        print(f"perpbt trend prereg: {e}", file=sys.stderr)
+        return 2
+    if args.trend_prereg_command == "validate":
+        print(f"{Path(args.prereg).as_posix()}: valid; prereg_hash {prereg.prereg_hash()}")
+        return 0
+    try:
+        lock = freeze(args.prereg, universe_path=args.universe)
+    except FileExistsError as e:
+        print(f"perpbt trend prereg freeze: {e}", file=sys.stderr)
+        return 1
+    print(f"frozen on {lock['frozen_on']}: prereg_hash {lock['prereg_hash']} (git {lock['git_commit']})")
+    return 0
+
+
+def _trend_screen(args: argparse.Namespace) -> int:
+    from perpbt.trend.prereg import check_frozen
+    from perpbt.trend.screen import screen_from_store, screen_path, write_screen
+    from perpbt.version import git_commit
+
+    _log_to_stderr()
+    try:
+        prereg = check_frozen(args.prereg)
+    except ConfigError as e:
+        print(f"perpbt trend screen: refused: {e}", file=sys.stderr)
+        return 1
+    out = screen_path(args.runs_dir)
+    if out.exists():
+        print(f"perpbt trend screen: refused: {out.as_posix()} exists; the screen runs once", file=sys.stderr)
+        return 1
+    try:
+        result = screen_from_store(prereg, load_yaml(args.data_config, DataConfig))
+    except ConfigError as e:
+        print(f"perpbt trend screen: {e}", file=sys.stderr)
+        return 2
+    result = {**result, "computed_on": datetime.now(timezone.utc).date().isoformat(), "git_commit": git_commit()}
+    paths = write_screen(result, args.runs_dir)
+    q = result["paths"]
+    print(f"observed gross Sharpe {result['observed_sharpe']:.3f}; {q['n']} random-days paths: "
+          f"5/50/95% {q['p05']:.3f} / {q['p50']:.3f} / {q['p95']:.3f}")
+    print(f"p_screen {result['p_screen']:.4f} (stop if >= {result['stop_if_p_at_least']}): {result['decision']}")
+    print(f"vol-targeted buy-and-hold gross Sharpe (descriptive) {result['bh_sharpe']:.3f}")
+    for p in paths:
+        print(f"wrote {p.as_posix()}")
+    return 0
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -273,6 +350,10 @@ def _add_data_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--config", default=DEFAULT_DATA_CONFIG, help="DataConfig YAML (default: %(default)s)")
     p.add_argument(
         "--pairs", nargs="+", metavar="PAIR", help="pairs to process (default: every pair listed in the config)"
+    )
+    p.add_argument(
+        "--market", choices=MARKETS, default="um",
+        help="um (USDT-M perpetuals) or spot (the trend holdout; no funding, no ccxt) (default: %(default)s)",
     )
 
 
@@ -352,6 +433,23 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--grid", action="store_true", help="also write a report for every in-sample grid variant")
     _add_exp_args(report)
     report.set_defaults(handler=_report)
+
+    trend = sub.add_parser("trend", help="the daily trend-following strategy")
+    trend_sub = trend.add_subparsers(dest="trend_command", metavar="SUBCOMMAND", required=True)
+    universe = trend_sub.add_parser("universe", help="rank the point-in-time universe from the archive")
+    universe.add_argument("--market", choices=MARKETS, required=True, help="um (perpetuals) or spot (the holdout)")
+    universe.add_argument("--out", default=DEFAULT_UNIVERSE, help="universe file (default: %(default)s)")
+    universe.set_defaults(handler=_trend_universe)
+    tprereg = trend_sub.add_parser("prereg", help="validate or freeze the trend pre-registration")
+    tprereg.add_argument("trend_prereg_command", choices=("validate", "freeze"))
+    tprereg.add_argument("--prereg", default=DEFAULT_TREND_PREREG, help="trend pre-registration (default: %(default)s)")
+    tprereg.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe file (default: %(default)s)")
+    tprereg.set_defaults(handler=_trend_prereg)
+    screen = trend_sub.add_parser("screen", help="the one-shot gross signal screen (go / stop), after the freeze")
+    screen.add_argument("--prereg", default=DEFAULT_TREND_PREREG, help="trend pre-registration (default: %(default)s)")
+    screen.add_argument("--data-config", default=DEFAULT_TREND_DATA, help="perp DataConfig (default: %(default)s)")
+    screen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    screen.set_defaults(handler=_trend_screen)
 
     return parser
 

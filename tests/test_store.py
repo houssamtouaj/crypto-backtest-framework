@@ -1,4 +1,6 @@
 """Candles, Funding, source merge, CandleStore and FundingStore (perpbt.data.store)."""
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -456,3 +458,34 @@ def test_read_frame_can_select_columns(data_cfg):
     fs = FundingStore(data_cfg)
     fs.write("BTCUSDT", fframe([(T0, 1e-4, 8)]))
     assert list(fs.read_frame("BTCUSDT", columns=["funding_ms", "interval_h"]).columns) == ["funding_ms", "interval_h"]
+
+
+# --- markets (trend Phase 0 §0.1) ---------------------------------------------------------
+
+
+def test_default_market_paths_unchanged(data_cfg):
+    store = CandleStore(data_cfg)
+    assert store.market == "um"
+    assert store.dir("BTCUSDT", "15m") == Path(data_cfg.data_dir) / "candles" / "BTCUSDT" / "15m"
+
+
+def test_spot_store_root(data_cfg, tmp_data_dir):
+    store = CandleStore(data_cfg, market="spot")
+    assert store.dir("BTCUSDT", "15m") == Path(data_cfg.data_dir) / "spot" / "candles" / "BTCUSDT" / "15m"
+    store.write("BTCUSDT", "15m", cframe(kline_rows(date_ms("2018-01-01"), 3, STEP)))
+    assert (tmp_data_dir / "spot" / "candles" / "BTCUSDT" / "15m" / "2018.parquet").exists()
+    assert not (tmp_data_dir / "candles").exists()
+
+
+def test_spot_load_refused_without_allow_holdout(data_cfg):
+    store = CandleStore(data_cfg, market="spot")
+    t = date_ms("2018-01-01")
+    store.write("BTCUSDT", "15m", cframe(kline_rows(t, 3, STEP)))
+    with pytest.raises(HoldoutAccessError, match="spot"):
+        store.load("BTCUSDT", "15m", t, t + 3 * STEP)
+    assert len(store.load("BTCUSDT", "15m", t, t + 3 * STEP, allow_holdout=True)) == 3
+
+
+def test_unknown_market_raises(data_cfg):
+    with pytest.raises(ValueError, match="market"):
+        CandleStore(data_cfg, market="coinm")

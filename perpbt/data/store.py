@@ -5,7 +5,9 @@ Layout (spec §1.2): ``<data_dir>/candles/<pair>/<tf>/<year>.parquet`` and
 ``manifest.json``. Rows from several sources merge by precedence
 (``SOURCE_RANK``). ``load`` returns read-only numpy arrays and refuses to reach
 past ``insample_end`` unless ``allow_holdout=True``, which only
-``experiments/holdout.py`` may pass. ``write`` and ``read_frame`` are the
+``experiments/holdout.py`` may pass. Spot candles (the trend strategy's
+holdout, ``market="spot"``) live under ``<data_dir>/spot/candles/`` and every
+spot ``load`` needs ``allow_holdout=True``, whatever the dates. ``write`` and ``read_frame`` are the
 storage layer used by ``data fetch`` and ``data validate``; they carry no
 guard and analysis code must not call them.
 """
@@ -26,6 +28,7 @@ import pandas as pd
 from perpbt.config import DataConfig
 
 _STEP_MS: dict[str, int] = {"1m": 60_000, "15m": 900_000}
+MARKET_DIRS: dict[str, str] = {"um": "", "spot": "spot"}  # sub-directory of data_dir per market; perps unchanged
 DAY_MS = 86_400_000
 
 SOURCE_RANK: dict[str, int] = {"bulk_monthly": 0, "bulk_daily": 1, "ccxt": 2}
@@ -451,9 +454,16 @@ class _ParquetStore:
 
 
 class CandleStore(_ParquetStore):
-    """Year-partitioned candles under ``<data_dir>/candles/<pair>/<tf>/``."""
+    """Year-partitioned candles under ``<data_dir>/candles/<pair>/<tf>/`` (spot: ``<data_dir>/spot/candles/...``)."""
 
     kind = "candles"
+
+    def __init__(self, data_cfg: DataConfig, market: str = "um") -> None:
+        if market not in MARKET_DIRS:
+            raise ValueError(f"unknown market {market!r}; expected one of {list(MARKET_DIRS)}")
+        super().__init__(data_cfg)
+        self.market = market
+        self.root = Path(data_cfg.data_dir) / MARKET_DIRS[market] / self.kind
 
     def dir(self, pair: str, tf: str) -> Path:
         if tf not in _STEP_MS:
@@ -492,6 +502,10 @@ class CandleStore(_ParquetStore):
         unless ``allow_holdout=True``; ``start_ms`` may precede ``insample_start``.
         """
         self._guard(end_ms, allow_holdout, f"CandleStore.load({pair}, {tf})")
+        if self.market == "spot" and not allow_holdout:
+            raise HoldoutAccessError(
+                f"CandleStore.load({pair}, {tf}): the spot store is holdout data; every load needs allow_holdout=True"
+            )
         if start_ms >= end_ms:
             raise ValueError(f"CandleStore.load: start_ms {start_ms} must be < end_ms {end_ms}")
         d = self.dir(pair, tf)

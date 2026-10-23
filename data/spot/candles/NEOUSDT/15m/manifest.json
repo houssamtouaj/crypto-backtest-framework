@@ -1,0 +1,248 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "NEOUSDT-15m-2017-11.zip",
+      "rows": 1042,
+      "sha256": "15b639ab74e7bcf6d7a66d4300692abb8d8b1413761879f9cb0be5514a8bedf9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2017-12.zip",
+      "rows": 2972,
+      "sha256": "280c0450c3aa5be44379da5fc39b4bc3bf78708da6eddc34c8f0b8e62b3276df",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-01.zip",
+      "rows": 2969,
+      "sha256": "9f1be4b57514b9aa0f6f136a77d0347ffd983aa8b8a1f7a6ba73a214d085a9c7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-02.zip",
+      "rows": 2552,
+      "sha256": "ea0d8df0568f238c2f4e83f86e2e440326d91eb156f0fdde28ed90fe2e7281fa",
+      "snapped": 81,
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-03.zip",
+      "rows": 2976,
+      "sha256": "fe3d812995f4e7edeb28556c9008bbcb41a92e84930815a7d521aeb5e29935b9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-04.zip",
+      "rows": 2880,
+      "sha256": "6751ac4fa000040d6020e6ea596ae04ffa1bcc54a0efe433ba6df63dea350d57",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-05.zip",
+      "rows": 2976,
+      "sha256": "38777aca3d87ae36e78c6f1823bd9b10e65c7cf2d3e79e4462c19b5ed715c8bc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-06.zip",
+      "rows": 2833,
+      "sha256": "36558233c00d8d80043d2fa706a50a2429c12870c18bf3ffd6ecb53be284bde4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-07.zip",
+      "rows": 2946,
+      "sha256": "728a70dfdbdc632c34f81d938956d728406f9ee1d7252d137797ac8db50254ee",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-08.zip",
+      "rows": 2976,
+      "sha256": "ac3b0d562bca682ed1ad514411d69d3e45aefbc637475bbf19012401c8cad62c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-09.zip",
+      "rows": 2880,
+      "sha256": "6c1e399a459ae19066313ecee1e7746dca5298558a32511b62e413a43315994c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-10.zip",
+      "rows": 2962,
+      "sha256": "dc8c2f153df2ef703834d71c2acb301148f772331a153bdb33a21f58cda5bf8e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-11.zip",
+      "rows": 2852,
+      "sha256": "6fd18b31d47896636db25e5b60df1f1d1bea113bf0cee03bc406b42dfd7a1a8b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2018-12.zip",
+      "rows": 2976,
+      "sha256": "f0ee6b6a50aad537a1ceec995ab70ed164079b590337bfe34d12bdcbfd4d44a0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-01.zip",
+      "rows": 2976,
+      "sha256": "d8b526827473e9037a13c2626b26cf08b5e26917adfbd33dcc4dc1595f56d216",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-02.zip",
+      "rows": 2688,
+      "sha256": "5a9be8b645b7ed990a54e2ffab0da2665985371594f01a51149a6a456d1e5e5e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-03.zip",
+      "rows": 2952,
+      "sha256": "543fce749e671134e92118c6a1e08fff8cb0acb6d82bc43b8a7d5a563e1c6fcf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-04.zip",
+      "rows": 2880,
+      "sha256": "852790a1e003c28e67a4bfdbd0eb3b21bf89864ca0fb8f12e0701dacdc8ef793",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-05.zip",
+      "rows": 2936,
+      "sha256": "4c708b9087d8d452b5e59c0d267a8d192befae0574fa2caf3d2e7b94a3300b91",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-06.zip",
+      "rows": 2876,
+      "sha256": "cb4b1ff6f3b0050614eb0a31441e2787eca078f5db6980cb04142682af23f171",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-07.zip",
+      "rows": 2976,
+      "sha256": "c0f0eff2839b03dd85199ef4f5ca4c3ec87a03472c4a499eea9196ce16e82b64",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-08.zip",
+      "rows": 2944,
+      "sha256": "3c0ddceab40b93b513f25923e9549daecf45832dddfe8148ebb780de856d92de",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-09.zip",
+      "rows": 2880,
+      "sha256": "fcde6399d4529acf167e84a48ee82c313612429cc636d44386991d1523183d9f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-10.zip",
+      "rows": 2976,
+      "sha256": "556c20c4fdf78f310a7f5cc14baf60247b5f0a99803facf48e460eed4c2e7b94",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-11.zip",
+      "rows": 2863,
+      "sha256": "bd5a3a825d3d943aa632b2d131dc6da66c6dc24b42e526794cda9bfb43f5beb6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "NEOUSDT-15m-2019-12.zip",
+      "rows": 2976,
+      "sha256": "2fec4e27a818ff42db99179e442b28d5ec67f28db765da1cc1acd75bd6c5bb13",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_open_ms": 1511148600000,
+  "gaps": [
+    {
+      "end_ms": 1513603800000,
+      "missing": 4,
+      "start_ms": 1513600200000
+    },
+    {
+      "end_ms": 1515042000000,
+      "missing": 7,
+      "start_ms": 1515035700000
+    },
+    {
+      "end_ms": 1518170400000,
+      "missing": 134,
+      "start_ms": 1518049800000
+    },
+    {
+      "end_ms": 1518323400000,
+      "missing": 2,
+      "start_ms": 1518321600000
+    },
+    {
+      "end_ms": 1530014400000,
+      "missing": 40,
+      "start_ms": 1529978400000
+    },
+    {
+      "end_ms": 1530110700000,
+      "missing": 7,
+      "start_ms": 1530104400000
+    },
+    {
+      "end_ms": 1530691200000,
+      "missing": 30,
+      "start_ms": 1530664200000
+    },
+    {
+      "end_ms": 1539941400000,
+      "missing": 14,
+      "start_ms": 1539928800000
+    },
+    {
+      "end_ms": 1542186000000,
+      "missing": 28,
+      "start_ms": 1542160800000
+    },
+    {
+      "end_ms": 1552377600000,
+      "missing": 24,
+      "start_ms": 1552356000000
+    },
+    {
+      "end_ms": 1557925200000,
+      "missing": 40,
+      "start_ms": 1557889200000
+    },
+    {
+      "end_ms": 1559945700000,
+      "missing": 4,
+      "start_ms": 1559942100000
+    },
+    {
+      "end_ms": 1565863200000,
+      "missing": 32,
+      "start_ms": 1565834400000
+    },
+    {
+      "end_ms": 1573618500000,
+      "missing": 9,
+      "start_ms": 1573610400000
+    },
+    {
+      "end_ms": 1574654400000,
+      "missing": 8,
+      "start_ms": 1574647200000
+    }
+  ],
+  "last_open_ms": 1577835900000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "NEOUSDT",
+  "rows": 73715,
+  "tf": "15m"
+}

@@ -1,0 +1,242 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "LTCUSDT-15m-2017-12.zip",
+      "rows": 1806,
+      "sha256": "699038a049489e835eec4b7b0d7e0776aefd4bfe3b037723f58de80bb340f357",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-01.zip",
+      "rows": 2969,
+      "sha256": "9731b0e04157ab22748b383ea6de4c149e84bf2817b38dec7153777d548801f9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-02.zip",
+      "rows": 2552,
+      "sha256": "f2e0a3a1cf7d4f2ad67e0dbe488218db3071d9cea973aa1f80535b04bb7634cf",
+      "snapped": 81,
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-03.zip",
+      "rows": 2976,
+      "sha256": "cc5a07b82c0ceabaafb84b95808b5ce8df0dfb348936c6c095ad8b6652707d9c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-04.zip",
+      "rows": 2880,
+      "sha256": "ecaa123f1da1bbfd2ab92a44656e8da971ab10db1528367ad083ac8968185164",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-05.zip",
+      "rows": 2976,
+      "sha256": "22bd336c389cb4e673da31e7d1e3ff48f3c037c99d2fc51de62980a93d4a31c2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-06.zip",
+      "rows": 2833,
+      "sha256": "a937854baaa42399f1936f6aa54af711a4c591f9d2d9747a7f6015b17e149802",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-07.zip",
+      "rows": 2946,
+      "sha256": "50975af558eee4b1ce02e5a857ece44e4ce1553b106ab8cb73941ace343e46d2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-08.zip",
+      "rows": 2976,
+      "sha256": "a0b40475da48a4fba740ddfb08684b35efb9fb080312d929a2e7186f9b7701da",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-09.zip",
+      "rows": 2880,
+      "sha256": "3343ec68619e028deadca45e5081806c24f6f5b5041d95d0e247e1ce3cde71bb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-10.zip",
+      "rows": 2962,
+      "sha256": "2263df79a8a17a50e20016349d67c0c28dbd65d55e2e1643dd213b0ca5f697ef",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-11.zip",
+      "rows": 2852,
+      "sha256": "703d2b3e6c33011379f44d45dbdfd3f9b5a3966e0d1ca9b8229cf03171333afe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2018-12.zip",
+      "rows": 2976,
+      "sha256": "21823af8cbf118cce1bee838461d44854926381b4516c49f789c1e1edde738da",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-01.zip",
+      "rows": 2976,
+      "sha256": "abe216678fb87ba2cc820724338200c99ecf63aeaed17a4c600feeff373c6c35",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-02.zip",
+      "rows": 2688,
+      "sha256": "3a4282b959590d9f308c218c1c41fddd2b649a0042017bc93ec19d14ee6dd387",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-03.zip",
+      "rows": 2952,
+      "sha256": "7f5acc77bcd324f5eeaf2d6ca25faa3fd14e95f641efda0bb966761562b12f9a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-04.zip",
+      "rows": 2880,
+      "sha256": "25145b93a9ed9fd518e72607fd9b437c767b1081e6432f57f2eee5a593a78ca6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-05.zip",
+      "rows": 2936,
+      "sha256": "45077b73715ff3735191f5c2cb28055d38d79ea1178e65fe53162fb29bae92b3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-06.zip",
+      "rows": 2876,
+      "sha256": "27f4e01193bd954a7da10f0137419adbf6ff2f5194db66ac1548d5e48e665b9a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-07.zip",
+      "rows": 2976,
+      "sha256": "5d1494cbae8dda41d0ee0d01e5b494d5e4ec5a0c09e409ae7c3c007f9be539e3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-08.zip",
+      "rows": 2944,
+      "sha256": "690cb7cf387ee07236143885bf6f65759c7b191b038d2827233236130458fa31",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-09.zip",
+      "rows": 2880,
+      "sha256": "cef41b9f707926c497d3a982739e58dc689b2c8381805605f2000de4a40a5d9e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-10.zip",
+      "rows": 2976,
+      "sha256": "6bcac6e444c536197abfa129248df3282745e6d7b63d99badc425d56cb51c90e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-11.zip",
+      "rows": 2863,
+      "sha256": "4d92ffa35da8b238e25a2f9b2ebe858cf48efe26f1ebf46b64ab052c5589bf57",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2019-12.zip",
+      "rows": 2976,
+      "sha256": "ab7ed6014ceabe49cdac08e29ded54a95d891eb9f72c2d2762645037576a0632",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_open_ms": 1513135800000,
+  "gaps": [
+    {
+      "end_ms": 1513603800000,
+      "missing": 4,
+      "start_ms": 1513600200000
+    },
+    {
+      "end_ms": 1515042000000,
+      "missing": 7,
+      "start_ms": 1515035700000
+    },
+    {
+      "end_ms": 1518170400000,
+      "missing": 134,
+      "start_ms": 1518049800000
+    },
+    {
+      "end_ms": 1518323400000,
+      "missing": 2,
+      "start_ms": 1518321600000
+    },
+    {
+      "end_ms": 1530014400000,
+      "missing": 40,
+      "start_ms": 1529978400000
+    },
+    {
+      "end_ms": 1530110700000,
+      "missing": 7,
+      "start_ms": 1530104400000
+    },
+    {
+      "end_ms": 1530691200000,
+      "missing": 30,
+      "start_ms": 1530664200000
+    },
+    {
+      "end_ms": 1539941400000,
+      "missing": 14,
+      "start_ms": 1539928800000
+    },
+    {
+      "end_ms": 1542186000000,
+      "missing": 28,
+      "start_ms": 1542160800000
+    },
+    {
+      "end_ms": 1552377600000,
+      "missing": 24,
+      "start_ms": 1552356000000
+    },
+    {
+      "end_ms": 1557925200000,
+      "missing": 40,
+      "start_ms": 1557889200000
+    },
+    {
+      "end_ms": 1559945700000,
+      "missing": 4,
+      "start_ms": 1559942100000
+    },
+    {
+      "end_ms": 1565863200000,
+      "missing": 32,
+      "start_ms": 1565834400000
+    },
+    {
+      "end_ms": 1573618500000,
+      "missing": 9,
+      "start_ms": 1573610400000
+    },
+    {
+      "end_ms": 1574654400000,
+      "missing": 8,
+      "start_ms": 1574647200000
+    }
+  ],
+  "last_open_ms": 1577835900000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "LTCUSDT",
+  "rows": 71507,
+  "tf": "15m"
+}
