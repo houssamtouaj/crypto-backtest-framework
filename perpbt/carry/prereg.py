@@ -225,7 +225,7 @@ def _exploratory(raw: Any, base: dict[str, _Config]) -> tuple[Exploratory, ...]:
             key: from_dict(cls, {**to_dict(base[key]), **_mapping(entry.get(key, {}), f"{where}.{key}")})
             for key, cls in OVERRIDABLE.items()
         }
-        out.append(Exploratory(name=entry["name"], **parts))
+        out.append(Exploratory(name=entry["name"], signal=parts["signal"], sleeve=parts["sleeve"]))
     names = [e.name for e in out]
     if len(set(names)) != len(names):
         raise ConfigError(f"exploratory: duplicate name in {names}")
