@@ -168,4 +168,44 @@ Also pinned: `trend universe --market spot` keeps the `um` block of an existing 
 
 ## Progress log
 
-(filled in during execution)
+Spec: docs/superpowers/specs/2026-10-23-trend-following/phase-0-data-universe.md
+Pre-flight:
+- T1 -> T3: kline_url(market=), ARCHIVE_STARTS consumed by sync_candles via store.market — consistent.
+- T2 -> T3: CandleStore(cfg, market=) — consistent.
+- T1 -> T4: FakeArchive.add_klines(market=), kline_url(market=) — consistent.
+- T4 -> T5: rank_universe default http_get — T4 says urllib_get, T5 says None. Ruling: default None resolved to module urllib_get at call time — lets the CLI test monkeypatch — cost if wrong: none.
+Task 1: complete (commits 5e16b74..3800634, tests: python -m pytest tests/test_bulk.py tests/test_fetch.py -q → 68 passed in 10.08s)
+Task 2: complete (commits 3800634..04a7caa, tests: python -m pytest tests/test_store.py -q → 46 passed in 2.62s)
+- Task 3: Ruling: existing CLI tests asserted the exact run_fetch kwargs and a 2-arg run_validate fake; updated them to include market='um' — the CLI now always passes market — cost if wrong: none (test doubles only).
+- Task 3: Ruling: added test_is_stale (boundary: exactly 7 days is not stale) beyond the brief — pins the delisting threshold — cost if wrong: none.
+Task 3: complete (commits 04a7caa..ec1c633, tests: python -m pytest tests/test_fetch.py tests/test_validate.py tests/test_cli.py -q -k 'not Phase' → 65 passed in 76.61s (0:01:16))
+- Task 4: Ruling: S3 listing parsed with stdlib xml.etree, not defusedxml (security hook suggestion) — the only XML source is Binance's archive bucket over HTTPS; stdlib expat (2.5+ in Python 3.11) does not fetch external entities and limits entity amplification; no new dependency — cost if wrong: a hostile bucket response could inflate memory in a one-off CLI run.
+- Task 4: Ruling: added test_first_day_before_window_spot and test_unknown_market_raises beyond the brief — pin first_day from a pre-window month and the market check — cost: none.
+Task 4: complete (commits ec1c633..f256d00, tests: python -m pytest tests/trend tests/test_bulk.py tests/test_fetch.py -q → 84 passed in 6.39s)
+- Task 5: Ruling: the CLI test monkeypatches perpbt.data.bulk.urllib_get (rank_universe resolves bulk.urllib_get at call time), not perpbt.trend.universe.urllib_get as the brief said — same effect, one lookup site — cost: none. Added test_cli_trend_universe_download_error_is_exit_1 and 'trend' in test_cli TOP_LEVEL.
+Task 5: complete (commits f256d00..2c12cfe, tests: python -m pytest tests/trend tests/test_cli.py -q -k 'trend or universe or help' → 17 passed, 16 deselected in 9.28s)
+- Task 6: USER DECISION (2026-10-23): the spec's perp rule (1d kline every day of 2020-H1) gave 3 members (BTC ETH BCH); user chose "warm by 07-01": unbroken daily data from first day through 2020-06-30, first day <= 2020-01-23 (Phase 1 §1.5 warm: d-160 >= first day). Spot: user chose to admit LTC — unbroken daily data from first day through 2017-12-31 (cutoff = window end). Spec §0.3/§0.4, overview TD4 amended in the same commit.
+- Task 6: first real ranking runs: um 24 min, spot 22 min (sequential S3 listings) vs "a few minutes" budget.
+- Task 6: rerun with 8 threads: um 6m51s, spot 3m25s. um members BTC ETH BCH LINK ETC LTC XRP EOS TRX XLM (EOSUSDT delisted, last day 2025-05-21); spot BTC ETH BCC NEO BNB LTC.
+- Task 6: Ruling: tests/trend/test_configs.py written before the configs existed and not run RED separately (they are consistency checks over committed files) — cost if wrong: a check that cannot fail; each asserts concrete values.
+Task 6: complete (commits 2c12cfe..5da2d15, tests: python -m pytest tests/trend -q → 19 passed in 1.23s)
+- Task 7: fetch KILLED by Claude Code (system low on memory, session idle) during XRPUSDT. Done: BTC ETH BCH LINK ETC LTC (rc=0, ~4 min each for new pairs). Not done: XRP (partial, resumable), EOS TRX XLM, all 6 spot. Not restarted: waiting for the user. Phase-0 spec implementation notes (§0.9) written, uncommitted.
+- Task 7: perps fetched in the foreground after the user's "go": XRP 191s, EOS 454s (delisted: ccxt skipped; 525 post-delisting daily 404s recorded), TRX 237s, XLM 239s. The 2022-02-26..28 and 2022-04-01..02 archive holes filled by ccxt for every new pair (480 rows each); EOS has none.
+- Task 7: finding: EOSUSDT funding files continue after its last candle (2025-05-21 09:00) at a flat 1e-4 per 8h through 2026-09 — archive artifacts of the dead contract. Pointer for Phases 1/3: a pair's funding must be cut at its last candle (Phase 3 §3.6 ends the DayFrame there).
+- Task 7: Ruling: the spot archive has 81 candles per pair on a shifted grid after the 2018-02-09 exchange restart (09:58:14.789 .. 2018-02-10 05:58:14.789, BTC and BCC seen; 1m45s before a slot), which made the spot fetch fail the grid check. Added bulk.snap_to_grid at ingest: rows within a quarter step of the grid move to the nearest slot, collisions raise, larger offsets still fail; count recorded per file ("snapped") and logged — keeps the real restart prices instead of a 20-hour hole — cost if wrong: candle times off by <= 3m45s on 81 holdout candles. Tests: test_snap_to_grid_* (RED: import error), test_off_grid_archive_rows_are_snapped_and_recorded (written before the code, not run RED separately). Partial spot store (uncommitted, off-grid rows inside) deleted and refetched.
+- Task 7: spot fetched (BTC 53s, ETH 55s, BCC 262s incl. 409 post-delisting daily 404s, NEO 39s, BNB 45s, LTC 47s); every pair had 81 candles snapped in 2018-02.
+- Task 7: validate: perps 0 gaps (all 10), funding all 8h, no bad intervals; BTC/ETH 1m->15m mismatching candles 18 each (as before). Spot gaps are exchange-wide outages (2018-02-08 00:30..02-09 10:00 halt = 134 slots, the longest; 2018-06-26, 2018-07-04, 2019-05-15, ...), all < 5 days: accepted. BCCUSDT: 2018-11-15 16:45..11-20 02:45 suspension (BCH ABC/SV fork) then one last candle, delisted — pointer for Phase 3 §3.6.
+Task 7: complete (commits 5da2d15..35989f7, tests: python -m pytest tests/trend tests/test_bulk.py tests/test_fetch.py -q → 98 passed in 5.18s)
+- Task 8: full suite 962 passed in 215.75s (slow included).
+Final review: fresh reviewer (opus) — "With fixes"; 0 Critical, 1 Important, 6 Minor.
+- Final: fixed is_stale measured against today instead of the fetch end (past --to wrongly skipped gap fill as "delisted") — test_staleness_is_measured_against_the_requested_end RED→GREEN; skip now logged at warning, suite 963/963
+- Final: fixed (re-graded Minor→Important: the rule text is hashed into the pre-registration) universe rule text said "from their first archived day" while the code checks from max(first day, window start) — test_listing_is_the_universe now pins block["rule"] == RULES[market].text RED→GREEN; universe.json rule strings and spec §0.4 updated, membership unchanged, suite 963/963
+- Final: Ruling: snap_to_grid also applies to perp ingest (reviewer #3) — the perp archive has no off-grid rows (all ten validated), and accepting a within-quarter-step row with a warning and a per-file manifest record beats the pre-existing behaviour (off-grid rows written, then the refresh raises, poisoning the store) — cost if wrong: a perp file with slightly off-grid rows is accepted with only a log line and manifest entry, not a summary line.
+- Final: Ruling: off-grid rows beyond a quarter step are still written before the grid check raises (reviewer declined) — pre-existing (Phase 1 deferred minor "store.write accepts off-grid timestamps") — cost if wrong: a manual store cleanup, as happened once here.
+- Final: Ruling: um has exactly 10 candidates, so the volume ranking selects nothing and the 2020-01-23 cutoff alone sets membership (reviewer note) — that is the rule the user chose; reported to the user — cost: none.
+- Final: minor (deferred): `last_day` cannot tell a live pair from a delisted one and drifts on rerun (with computed_on); universe.json should be treated as frozen once resolved (Phase 2 hashes it)
+- Final: minor (deferred): `data fetch --config data-spot.yaml` without `--market spot` fetches perp data for the spot names into the perp store (and the reverse); a `market` field in the trend data configs would catch it
+- Final: minor (deferred): write_universe writes in place (no tmp+replace); ET.ParseError from a non-XML 200 is not caught by `trend universe` (traceback instead of exit 1)
+- Final: minor (deferred): snapped counts appear only in the manifest and log, not in the run_fetch summary or validate output
+- Final: minor (deferred): DELISTED_AFTER_DAYS misfires if the daily archive lags > 7 days (now visible at warning level)
+- Pointer for Phase 1 (reviewer): the shared BTC/ETH 15m store starts 2019-11-01 (first strategy's ccxt head) while the trend listing says 2020-01-01; trend code must take a pair's first day from listing/warmup_start, not the first stored candle.
