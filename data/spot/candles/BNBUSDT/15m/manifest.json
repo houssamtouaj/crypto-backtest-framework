@@ -1,0 +1,248 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "BNBUSDT-15m-2017-11.zip",
+      "rows": 2385,
+      "sha256": "3b281974d2e0f3972ce74b73f11f6a8fd77ff0d229ec744a92719a6cbb2b035d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2017-12.zip",
+      "rows": 2972,
+      "sha256": "751b89e3ae829ab9edc904dbba3605ad771ab8c1f4ccaccfbfecb1b923647846",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-01.zip",
+      "rows": 2969,
+      "sha256": "7c71c62461a2eba2f120a6cd77978544b397afd038ae669b412cfd1d63c5a2cd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-02.zip",
+      "rows": 2553,
+      "sha256": "e035bb2fccc25d5e2a943edef77ce236259e4bbab71b25c3749517275ba70915",
+      "snapped": 81,
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-03.zip",
+      "rows": 2976,
+      "sha256": "a6b1baa5dbc80a4b2453540d5bb3fe1ea22d072952d33f10abd9421322e9be27",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-04.zip",
+      "rows": 2880,
+      "sha256": "5d8977c1527d65e4bc398fe22ad51c6af4baa1882dacc077f41afedc6732e233",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-05.zip",
+      "rows": 2976,
+      "sha256": "70a8b7e72dd43861b60d742c7f37088af17c972d0afb449e2eb6479fb4f9b3dc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-06.zip",
+      "rows": 2833,
+      "sha256": "76babdefa1bdbf02a1a9ec8f33f23d667f9adf6ace4dc60583231a5fe6194176",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-07.zip",
+      "rows": 2946,
+      "sha256": "deb871bd05ee9ac8f6b2c502a544ee887a0f01b011ac56c8fe3ec3f9a0c6d941",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-08.zip",
+      "rows": 2976,
+      "sha256": "7f17c55012d31a1f296481d318ea8d0ddafa85beb0af70db8ac22991b38d9dd7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-09.zip",
+      "rows": 2880,
+      "sha256": "3b66a6267fe1471881e36842e7a8d35c796651f24cdf4f28509f20008c9b63a0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-10.zip",
+      "rows": 2962,
+      "sha256": "98389fd7ceb9ff8c5659703fa3b2011ab73a06e7eec6df129582163fb3520ec0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-11.zip",
+      "rows": 2852,
+      "sha256": "454f5255fb957ce3c28d589c20aa5f6433982c7323787bf6b3d71dc68254de51",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2018-12.zip",
+      "rows": 2976,
+      "sha256": "ae874e07363c1f3d7b1a0e17ae3a3850cc40e6c8867c08a6dc78b6b603172d09",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-01.zip",
+      "rows": 2976,
+      "sha256": "4c0a717d44f433d1645751f6253cb1e6b281118e8c5e5906f87d757a93172d6a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-02.zip",
+      "rows": 2688,
+      "sha256": "122d58ed38688d2248e941a96ea41c751fdcd8e794457de776f76508d7ff8afc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-03.zip",
+      "rows": 2952,
+      "sha256": "b57f3f3c90dc6429a164379ca73fd1854bd825dce52d0436c2e7b66b18095662",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-04.zip",
+      "rows": 2880,
+      "sha256": "4dd231befc824f88a5a1ccbc9ca1c69db1804f603c9a2c88c299d7f74f09705f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-05.zip",
+      "rows": 2936,
+      "sha256": "265f847717713b3255ea2e99b2ef106de25ccd43624d7f7e0efafb29f132d267",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-06.zip",
+      "rows": 2876,
+      "sha256": "2aef36d863595959d3e7244f062fc50add6187630adeb778ab195c1016c0ecab",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-07.zip",
+      "rows": 2976,
+      "sha256": "a464bf52b2be43e240a5fd3e76dc65f7a860c8534072f92de18761226944f082",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-08.zip",
+      "rows": 2944,
+      "sha256": "8be1f4bf2a197133b7caeffd5c4555906e6db99c356c22cee0f227ecf18f52d9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-09.zip",
+      "rows": 2880,
+      "sha256": "d03b7c891222e7d05f688d3b3c59e3434c56d8717e6fa5179e7f07f609c0dad4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-10.zip",
+      "rows": 2976,
+      "sha256": "3bfe34517225d587ffdafd680e2d4beb3bbf17fc5691efbe406ef75de9c9a954",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-11.zip",
+      "rows": 2863,
+      "sha256": "3f38d6358296b44ddaf932b36821be90a65465f558c50751e61692695b71e403",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BNBUSDT-15m-2019-12.zip",
+      "rows": 2976,
+      "sha256": "60c6f36150e35b73dbabb0ae3bacfb0836a07cf45949fc071637dab718673926",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_open_ms": 1509939900000,
+  "gaps": [
+    {
+      "end_ms": 1513603800000,
+      "missing": 4,
+      "start_ms": 1513600200000
+    },
+    {
+      "end_ms": 1515042000000,
+      "missing": 7,
+      "start_ms": 1515035700000
+    },
+    {
+      "end_ms": 1518170400000,
+      "missing": 134,
+      "start_ms": 1518049800000
+    },
+    {
+      "end_ms": 1518323400000,
+      "missing": 1,
+      "start_ms": 1518322500000
+    },
+    {
+      "end_ms": 1530014400000,
+      "missing": 40,
+      "start_ms": 1529978400000
+    },
+    {
+      "end_ms": 1530110700000,
+      "missing": 7,
+      "start_ms": 1530104400000
+    },
+    {
+      "end_ms": 1530691200000,
+      "missing": 30,
+      "start_ms": 1530664200000
+    },
+    {
+      "end_ms": 1539941400000,
+      "missing": 14,
+      "start_ms": 1539928800000
+    },
+    {
+      "end_ms": 1542186000000,
+      "missing": 28,
+      "start_ms": 1542160800000
+    },
+    {
+      "end_ms": 1552377600000,
+      "missing": 24,
+      "start_ms": 1552356000000
+    },
+    {
+      "end_ms": 1557925200000,
+      "missing": 40,
+      "start_ms": 1557889200000
+    },
+    {
+      "end_ms": 1559945700000,
+      "missing": 4,
+      "start_ms": 1559942100000
+    },
+    {
+      "end_ms": 1565863200000,
+      "missing": 32,
+      "start_ms": 1565834400000
+    },
+    {
+      "end_ms": 1573618500000,
+      "missing": 9,
+      "start_ms": 1573610400000
+    },
+    {
+      "end_ms": 1574654400000,
+      "missing": 8,
+      "start_ms": 1574647200000
+    }
+  ],
+  "last_open_ms": 1577835900000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "BNBUSDT",
+  "rows": 75059,
+  "tf": "15m"
+}
