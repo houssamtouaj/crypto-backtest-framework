@@ -1,0 +1,104 @@
+{
+  "prereg_hash": "a44eee47990843ff13c81da0dd0db23d82a0811fdb4896366482818a6e14b242",
+  "data_config_hash": "d57bca3a5e23e6c754523cb4c41fd50a67e2b255cb2f760cf263c22d7f763bff",
+  "period": [
+    "2020-07-01",
+    "2023-12-31"
+  ],
+  "pairs": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "BCHUSDT",
+    "LINKUSDT",
+    "ETCUSDT",
+    "LTCUSDT",
+    "XRPUSDT",
+    "EOSUSDT",
+    "TRXUSDT",
+    "XLMUSDT"
+  ],
+  "pair_last_day": {
+    "BTCUSDT": "2023-12-31",
+    "ETHUSDT": "2023-12-31",
+    "BCHUSDT": "2023-12-31",
+    "LINKUSDT": "2023-12-31",
+    "ETCUSDT": "2023-12-31",
+    "LTCUSDT": "2023-12-31",
+    "XRPUSDT": "2023-12-31",
+    "EOSUSDT": "2023-12-31",
+    "TRXUSDT": "2023-12-31",
+    "XLMUSDT": "2023-12-31"
+  },
+  "n_days": 1279,
+  "n_pairs": 10,
+  "mean_live_pairs": 10.0,
+  "hurdle_annual": 0.05,
+  "alpha": 0.05,
+  "bootstrap_n": 10000,
+  "block_len_days": 30,
+  "p_screen": 0.0044995500449955,
+  "stop_if_p_at_least": 0.1,
+  "decision": "go",
+  "rows": {
+    "primary": {
+      "v2": {
+        "hurdle_annual": 0.05,
+        "ann_excess": 0.05811029683755341,
+        "ann_excess_ci": [
+          0.012541046713320575,
+          0.11195036747760538
+        ],
+        "p": 0.0044995500449955,
+        "passes": true,
+        "reading": "above_hurdle",
+        "ann_return": 0.10690372208397957,
+        "ann_return_ci": [
+          0.061334471959746735,
+          0.16074379272403155
+        ]
+      },
+      "v1": {
+        "sharpe": 8.61922791646642,
+        "sharpe_ci": [
+          6.837297428348952,
+          10.557332710317267
+        ],
+        "p": 9.999000099990002e-05,
+        "passes": true
+      },
+      "share_on": 0.6417513682564504,
+      "switches": 152
+    },
+    "always_on": {
+      "v2": {
+        "hurdle_annual": 0.05,
+        "ann_excess": 0.052403116754229144,
+        "ann_excess_ci": [
+          0.0053168797980998415,
+          0.10691658396317733
+        ],
+        "p": 0.013598640135986401,
+        "passes": true,
+        "reading": "above_hurdle",
+        "ann_return": 0.10119654200065531,
+        "ann_return_ci": [
+          0.054110305044526,
+          0.15571000920960348
+        ]
+      },
+      "v1": {
+        "sharpe": 7.605138352184137,
+        "sharpe_ci": [
+          5.398968537923746,
+          9.693068878114598
+        ],
+        "p": 9.999000099990002e-05,
+        "passes": true
+      },
+      "share_on": 1.0,
+      "switches": 10
+    }
+  },
+  "computed_on": "2026-10-23",
+  "git_commit": "5799eb5b2e23fe9a0f6aa654ded816131985943f"
+}
