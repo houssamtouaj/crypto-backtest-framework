@@ -89,3 +89,44 @@ dates.
 All members, exposure and weights computed for every universe pair on real
 data without warnings other than reported gaps; tests green. **No
 performance number of any kind is computed in this phase.**
+
+## 1.8 Implementation notes (Phase 1 build, 2026-10-23)
+
+Builder's calls taken while building this phase; none changes a trading
+rule.
+
+- **First day.** A DayFrame starts on `max(listing[pair], warmup_start)`
+  from the pair's `DataConfig` (`trend.daily.first_day`), never on the
+  first stored candle: the shared BTC/ETH 15m store starts 2019-11-01. A
+  first day without a candle raises. `ret[0]` is NaN (the day before is
+  not part of the pair's history), so `σ̂` is first finite at index
+  `vol_window` and the first valid index is
+  `max(max(lookbacks), vol_window)` (`signals.warmup_days`): 160.
+- **Last day and funding.** The frame ends on the day of the last 15m
+  candle; funding events after that candle's open are dropped (EOSUSDT's
+  archive keeps flat 0.01% rates after its 2025-05-21 09:00 delisting).
+- **Arrays.** `l` is the daily low (the spec's `low`); `fill_px[h]` is NaN
+  when the candle closing at `d + h` is missing or the day is filled. The
+  late-fill rule's "next available candle of day `d+1`" (Phase 3 §3.6) is
+  Phase 3's to add. Funding events are flat arrays with a per-day pointer
+  (`funding_ptr`); `funding_px` is NaN when the candle at the event is
+  missing. The arrays are read-only.
+- **Spot funding.** Spot DayFrames carry no funding events. The assumed
+  0.01% per 8 h (TD9) is a constant per day, which does not move `σ̂`; the
+  executor (Phase 3) charges it.
+- **Warnings.** A run of more than 5 filled days is logged at warning
+  level (`logging`, the codebase's convention) and every run is kept in
+  `DayFrame.filled_runs`.
+- **Config.** `trend/config.py` holds `SignalConfig` (`members`,
+  `lookbacks` even and unique, `donchian_exit: half`, `direction`) and
+  `SizingConfig` (`target_vol`, `vol_window`, `max_weight`, `max_gross`),
+  the Phase 2 pre-registration's `signal` and `sizing` blocks; no defaults.
+  `σ̂` is annualised with `√365` (calendar days).
+- **Real data (2026-10-23).** All ten perps: 0 filled days, valid from
+  2020-06-09 (BTC/ETH/BCH) to 2020-06-28 (XLM), so every member is warm on
+  2020-07-01; EOSUSDT ends 2025-05-21. Spot is holdout data, so its check
+  reads the manifests only (timestamps and gaps, no prices): every
+  member's listing day has its first candle and no run of filled days is
+  longer than 5 (BCCUSDT's 2018-11 suspension is 4 full days). Spot warm
+  dates (first day + 160): BTC/ETH 2018-01-24, BNB 2018-04-15, BCC
+  2018-04-20, NEO 2018-04-29, LTC 2018-05-22.
