@@ -141,3 +141,8 @@
 ## Progress log
 
 Spec: docs/superpowers/specs/2026-10-23-trend-following/phase-1-signals.md
+Pre-flight:
+- T1 -> T3: DayFrame fields (c, h, l, ret, day_ms) and build_dayframe — consistent.
+- T2 -> T3: SignalConfig/SizingConfig and the member functions — consistent.
+- Task 1: Ruling: DayFrame arrays are made read-only (as CandleStore.load's) — later phases share one frame across many paths — cost if wrong: none.
+- Task 1: Ruling: added test_fill_offset_validation beyond the brief — pins the offset check — cost: none.
