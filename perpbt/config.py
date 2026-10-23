@@ -41,6 +41,7 @@ __all__ = [
     "canonical_json",
     "config_hash",
     "load_yaml",
+    "read_yaml_unique",
     "dump_yaml",
 ]
 
@@ -412,6 +413,29 @@ def canonical_json(obj: Any) -> str:
 def config_hash(obj: Any) -> str:
     """SHA-256 of :func:`canonical_json`."""
     return _sha256(canonical_json(obj))
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    pass
+
+
+def _construct_mapping(loader: yaml.SafeLoader, node: yaml.MappingNode, deep: bool = False) -> dict:
+    seen = set()
+    for key_node, _ in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in seen:
+            raise ConfigError(f"duplicate key {key!r} at line {key_node.start_mark.line + 1}")
+        seen.add(key)
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping)
+
+
+def read_yaml_unique(path: str | Path) -> Any:
+    """Parse a YAML file with the safe loader, rejecting duplicate keys (pre-registration files)."""
+    with open(path, encoding="utf-8") as f:
+        return yaml.load(f, Loader=_UniqueKeyLoader)  # noqa: S506 - a SafeLoader subclass
 
 
 def load_yaml(path: str | Path, cls: type[T]) -> T:
