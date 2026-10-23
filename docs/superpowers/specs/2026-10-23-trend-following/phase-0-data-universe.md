@@ -147,3 +147,56 @@ pre-registration hash (Phase 2).
 
 Universe resolved and committed for both markets, data fetched and
 validated, gap counts reviewed, all tests green.
+
+## 0.9 Implementation notes (Phase 0 build, 2026-10-23)
+
+Builder's calls taken while building this phase; none changes a trading
+rule (the universe-rule amendments in §0.3 and §0.4 were the user's).
+
+- **Coverage is read from 1d klines in both markets.** §0.4 said "15m
+  archive data on every day"; a day has a 1d kline exactly when it has
+  trades, which is what §0.1 already prescribes for ranking.
+- **`universe.json`** also records each market's `window` and a `dropped`
+  list (`pair`, `reason`) for every symbol that had data in the window but
+  is not a candidate (missing month, missing days, first day too late,
+  stablecoin, leveraged token), so the choice can be audited. Non-USDT
+  pairs and dated futures are not listed. `first_day` is the first row of
+  the symbol's earliest monthly 1d file, `last_day` the last row of its
+  latest one (2026-09-30 for a live pair; the delisting day otherwise).
+- **Exclusions:** stablecoin and fiat bases `USDC TUSD PAX USDP BUSD USDS
+  USDSB DAI FDUSD UST USTC EUR GBP AUD`; a leveraged token is a base ending
+  in `UP`, `DOWN`, `BULL` or `BEAR` with at least three characters left
+  (`BTCUP` yes, `JUP` no). Neither occurs among the 2020 perps or the
+  December 2017 spot pairs.
+- **Delisted perps and ccxt:** `--ccxt-tail` and `--ccxt-gaps` skip a pair
+  whose stored series ends more than 7 days before the fetch day
+  (`fetch.DELISTED_AFTER_DAYS`); the summary shows `ccxt_skipped:
+  delisted`. EOSUSDT (archive ends 2025-05-21) is such a pair.
+- **Commands:** the CLI flag is `--tfs 15m` (§0.6 wrote `--tf`); the spot
+  fetch adds `--to 2019-12-31`, the holdout end, so no later spot data is
+  downloaded. `perpbt data validate --market spot` validates the spot store.
+- **Runtime:** the archive listing is one request per symbol; with 8
+  threads the perp ranking took about 7 minutes and the spot ranking about
+  3.5 (sequential: 24 and 22 minutes).
+- **Off-grid archive candles are snapped.** After the exchange restart of
+  2018-02-09 the spot archive's 15m candles run on a shifted grid for 81
+  candles (09:58:14.789 → 2018-02-10 05:58:14.789, 1m45s before a slot),
+  in every spot member. `bulk.snap_to_grid` moves a candle within a
+  quarter step of the grid to the nearest slot at ingest and records the
+  count per archive file (`"snapped"` in the manifest); a collision or a
+  larger offset still fails. This keeps the real restart prices instead of
+  a 20-hour hole. Perp files have no off-grid candles and are unchanged.
+
+**Data facts for later phases** (fetched 2026-10-23):
+
+- Perps: 0 gaps in all ten members after the ccxt gap fill (the
+  2022-02-26..28 and 2022-04-01..02 archive holes, 480 candles per pair;
+  EOSUSDT has none); every funding interval is 8 h.
+- EOSUSDT's last candle is 2025-05-21 09:00, but its archive funding files
+  continue at a flat 0.01% per 8 h through 2026-09: artifacts of the dead
+  contract. Funding must be cut at a pair's last candle (Phase 1 §1.1,
+  Phase 3 §3.6).
+- Spot gaps are exchange-wide outages, the same in every pair, all under
+  5 days; the longest is the 2018-02-08 00:30 → 2018-02-09 10:00 halt.
+  BCCUSDT is suspended 2018-11-15 16:45 → 2018-11-20 02:45 (the BCH fork),
+  has one more candle and is delisted.
