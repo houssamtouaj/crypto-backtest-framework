@@ -11,6 +11,7 @@ from perpbt.data.store import (
     Funding,
     FundingStore,
     HoldoutAccessError,
+    SPOT_TREND_HOLDOUT_END_EXCLUSIVE,
     MergeStats,
     date_ms,
     insample_end_exclusive_ms,
@@ -484,6 +485,39 @@ def test_spot_load_refused_without_allow_holdout(data_cfg):
     with pytest.raises(HoldoutAccessError, match="spot"):
         store.load("BTCUSDT", "15m", t, t + 3 * STEP)
     assert len(store.load("BTCUSDT", "15m", t, t + 3 * STEP, allow_holdout=True)) == 3
+
+
+# --- spot guard split (carry Phase 0 §0.1) ------------------------------------------------
+
+
+def test_spot_load_from_2020_follows_date_guard(data_cfg):
+    store = CandleStore(data_cfg, market="spot")
+    store.write("BTCUSDT", "15m", cframe(kline_rows(T0, 3, STEP)))
+    assert len(store.load("BTCUSDT", "15m", T0, T0 + 3 * STEP)) == 3
+    store.write("BTCUSDT", "15m", cframe(kline_rows(HOLDOUT, 1, STEP)))
+    with pytest.raises(HoldoutAccessError, match="insample_end"):
+        store.load("BTCUSDT", "15m", T0, HOLDOUT + STEP)
+    assert len(store.load("BTCUSDT", "15m", T0, HOLDOUT + STEP, allow_holdout=True)) == 4
+
+
+def test_spot_guard_boundary(data_cfg):
+    assert SPOT_TREND_HOLDOUT_END_EXCLUSIVE == date_ms("2020-01-01") == T0
+    store = CandleStore(data_cfg, market="spot")
+    store.write("BTCUSDT", "15m", cframe(kline_rows(T0 - STEP, 2, STEP)))
+    with pytest.raises(HoldoutAccessError, match="spot"):
+        store.load("BTCUSDT", "15m", T0 - STEP, T0 + STEP)  # starts 2019-12-31 23:45, straddles
+    assert len(store.load("BTCUSDT", "15m", T0, T0 + STEP)) == 1
+    assert len(store.load("BTCUSDT", "15m", T0 - STEP, T0 + STEP, allow_holdout=True)) == 2
+
+
+def test_spot_2020_refused_under_trend_spot_config(data_cfg):
+    from perpbt.config import DataConfig, to_dict
+    cfg = DataConfig(**{**to_dict(data_cfg), "insample_start": "2017-08-01", "insample_end": "2019-12-31",
+                                         "holdout_start": "2020-01-01", "warmup_start": "2017-08-01"})
+    store = CandleStore(cfg, market="spot")
+    store.write("BTCUSDT", "15m", cframe(kline_rows(T0, 3, STEP)))
+    with pytest.raises(HoldoutAccessError, match="insample_end"):
+        store.load("BTCUSDT", "15m", T0, T0 + 3 * STEP)
 
 
 def test_unknown_market_raises(data_cfg):
