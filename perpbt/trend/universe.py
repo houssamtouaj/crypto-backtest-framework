@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -34,6 +35,7 @@ STABLE_BASES = frozenset(
     {"USDC", "TUSD", "PAX", "USDP", "BUSD", "USDS", "USDSB", "DAI", "FDUSD", "UST", "USTC", "EUR", "GBP", "AUD"}
 )
 LEVERAGED_SUFFIXES = ("UP", "DOWN", "BULL", "BEAR")
+NOT_CANDIDATES = ("dated future", "not USDT")  # never listed per symbol, never reported as dropped
 
 
 @dataclass(frozen=True)
@@ -41,22 +43,25 @@ class UniverseRule:
     market: str
     window_start: str  # ISO date, first day of the ranking window
     window_end: str  # ISO date, inclusive
+    latest_first_day: str  # a candidate's first archived day may not be later than this
     top_n: int
     text: str
 
 
 RULES = {
     "um": UniverseRule(
-        "um", "2020-01-01", "2020-06-30", 10,
-        "USDT-M perpetuals (delisted included) with an archive 1d kline for every day of 2020-01-01..2020-06-30, "
-        "ranked by that period's quote volume (ties by symbol), stablecoin bases and leveraged tokens excluded; "
-        "top 10; trading from 2020-07-01",
+        "um", "2020-01-01", "2020-06-30", "2020-01-23", 10,
+        "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from their first archived "
+        "day through 2020-06-30, that first day no later than 2020-01-23 (warm for the 160-day members on "
+        "2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and "
+        "leveraged tokens excluded; top 10; trading from 2020-07-01",
     ),
     "spot": UniverseRule(
-        "spot", "2017-12-01", "2017-12-31", 10,
-        "spot *USDT pairs (delisted included) with an archive 1d kline for every day of 2017-12-01..2017-12-31, "
-        "ranked by that period's quote volume (ties by symbol), stablecoin bases and leveraged tokens excluded; "
-        "up to 10; each enters the holdout when warm, holdout ends 2019-12-31",
+        "spot", "2017-12-01", "2017-12-31", "2017-12-31", 10,
+        "spot *USDT pairs (delisted included) with an archive 1d kline for every day from their first archived "
+        "day (no later than 2017-12-31) through 2017-12-31, ranked by quote volume over 2017-12-01..2017-12-31 "
+        "(ties by symbol), stablecoin bases and leveraged tokens excluded; up to 10; each enters the holdout "
+        "when warm, holdout ends 2019-12-31",
     ),
 }
 
@@ -137,13 +142,16 @@ def _iso(day: int) -> str:
     return date.fromordinal(date(1970, 1, 1).toordinal() + int(day)).isoformat()
 
 
-def rank_universe(market: str, *, today: date, http_get: HttpGet | None = None) -> dict:
+def rank_universe(market: str, *, today: date, http_get: HttpGet | None = None, workers: int = 8) -> dict:
     """Rank ``market``'s candidates by window quote volume; the block written to ``universe.json``.
 
-    ``dropped`` lists the symbols that had at least one window month but are
-    not candidates (missing month, missing days, or an exclusion). Symbols
-    that are not USDT pairs, dated futures, or without any window month are
-    not listed.
+    A candidate has a 1d kline for every day from its first archived day in
+    the window through the window end, and that first day is no later than
+    the rule's ``latest_first_day``. ``dropped`` lists the symbols that had
+    at least one window month but are not candidates (a missing month,
+    missing days, a first day too late, or an exclusion). Symbols that are
+    not USDT pairs, dated futures, or without any window month are not
+    listed. The per-symbol archive listings run on ``workers`` threads.
     """
     rule = RULES.get(market)
     if rule is None:
@@ -151,7 +159,7 @@ def rank_universe(market: str, *, today: date, http_get: HttpGet | None = None) 
     w0, w1 = date.fromisoformat(rule.window_start), date.fromisoformat(rule.window_end)
     window_months = months_between(w0, w1)
     first_day, last_day = date_ms(rule.window_start) // DAY_MS, date_ms(rule.window_end) // DAY_MS
-    n_days = last_day - first_day + 1
+    latest_first = date_ms(rule.latest_first_day) // DAY_MS
 
     def read(pair: str, ym: str) -> pd.DataFrame:
         data = download_verified(kline_url(pair, "1d", ym, market=market), http_get=http_get or bulk.urllib_get)
@@ -161,25 +169,29 @@ def rank_universe(market: str, *, today: date, http_get: HttpGet | None = None) 
 
     ranked: list[dict] = []
     dropped: list[dict] = []
-    for pair in archive_symbols(market, http_get=http_get):
+    pairs = [p for p in archive_symbols(market, http_get=http_get) if exclusion(p, market) not in NOT_CANDIDATES]
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        listed = list(pool.map(lambda p: _kline_months(market, p, http_get=http_get), pairs))
+    for pair, months in zip(pairs, listed):
+        present = [ym for ym in window_months if ym in set(months)]
+        if not present:
+            continue
         reason = exclusion(pair, market)
-        if reason in ("dated future", "not USDT"):
-            continue
-        months = _kline_months(market, pair, http_get=http_get)
-        have = set(months)
-        if not have.intersection(window_months):
-            continue
         if reason is None:
-            gone = [ym for ym in window_months if ym not in have]
+            gone = [ym for ym in window_months if ym > present[0] and ym not in present]
             reason = f"missing month {gone[0]}" if gone else None
         if reason is not None:
             dropped.append({"pair": pair, "reason": reason})
             continue
-        frames = {ym: read(pair, ym) for ym in window_months}
+        frames = {ym: read(pair, ym) for ym in present}
         window = pd.concat(frames.values(), ignore_index=True)
         days = _days(window)
         inside = (days >= first_day) & (days <= last_day)
-        missing = n_days - len(np.unique(days[inside]))
+        start = int(days[inside].min()) if inside.any() else last_day + 1
+        if start > latest_first:
+            dropped.append({"pair": pair, "reason": f"first day {_iso(start)} is after {rule.latest_first_day}"})
+            continue
+        missing = (last_day - start + 1) - len(np.unique(days[inside]))
         if missing:
             dropped.append({"pair": pair, "reason": f"missing days: {missing}"})
             continue

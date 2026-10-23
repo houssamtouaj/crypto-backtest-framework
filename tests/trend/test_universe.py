@@ -67,19 +67,36 @@ def test_ranking_and_ties():
     assert "2020-07-01" in out["rule"]
 
 
-def test_incomplete_coverage_dropped():
+def test_coverage_rule_um():
     a = FakeArchive()
     add_symbol(a, "AAAUSDT", WINDOW_MONTHS)
-    a.add_klines("LATEUSDT", "1d", "2020-01", month_rows("2020-01", first_day=15))
+    a.add_klines("LATEUSDT", "1d", "2020-01", month_rows("2020-01", first_day=23))  # warm on 2020-07-01
     add_symbol(a, "LATEUSDT", WINDOW_MONTHS[1:])
+    a.add_klines("TOOLATEUSDT", "1d", "2020-01", month_rows("2020-01", first_day=24))
+    add_symbol(a, "TOOLATEUSDT", WINDOW_MONTHS[1:])
+    add_symbol(a, "FEBUSDT", WINDOW_MONTHS[1:])
     add_symbol(a, "HOLEUSDT", [m for m in WINDOW_MONTHS if m != "2020-03"])
+    add_symbol(a, "DAYHOLEUSDT", [m for m in WINDOW_MONTHS if m != "2020-04"])
+    a.add_klines("DAYHOLEUSDT", "1d", "2020-04", [r for r in month_rows("2020-04") if r[0] != date_ms("2020-04-10")])
     add_symbol(a, "NEWUSDT", ["2020-09"])  # no window month: not a candidate, not listed
     out = rank_universe("um", today=TODAY, http_get=a)
-    assert [r["pair"] for r in out["ranked"]] == ["AAAUSDT"]
+    assert [r["pair"] for r in out["ranked"]] == ["AAAUSDT", "LATEUSDT"]
+    assert out["ranked"][1]["first_day"] == "2020-01-23" and out["ranked"][1]["quote_volume"] == 160.0
     assert out["dropped"] == [
+        {"pair": "DAYHOLEUSDT", "reason": "missing days: 1"},
+        {"pair": "FEBUSDT", "reason": "first day 2020-02-01 is after 2020-01-23"},
         {"pair": "HOLEUSDT", "reason": "missing month 2020-03"},
-        {"pair": "LATEUSDT", "reason": "missing days: 14"},
+        {"pair": "TOOLATEUSDT", "reason": "first day 2020-01-24 is after 2020-01-23"},
     ]
+
+
+def test_coverage_rule_spot_admits_a_listing_inside_the_window():
+    a = FakeArchive()
+    add_symbol(a, "BTCUSDT", ["2017-11", "2017-12"], market="spot")
+    a.add_klines("LTCUSDT", "1d", "2017-12", month_rows("2017-12", 5.0, first_day=13), market="spot")
+    out = rank_universe("spot", today=TODAY, http_get=a)
+    assert out["members"] == ["LTCUSDT", "BTCUSDT"]
+    assert out["ranked"][0] == {"pair": "LTCUSDT", "quote_volume": 95.0, "first_day": "2017-12-13", "last_day": "2017-12-31"}
 
 
 def test_delisted_symbol_kept():

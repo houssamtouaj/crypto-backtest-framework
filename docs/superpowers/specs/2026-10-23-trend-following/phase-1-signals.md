@@ -65,7 +65,8 @@ A pair's signal is valid on day `d` only if `d − 160 ≥` its first day
 (the longest Donchian needs 160 prior days, the return sign needs
 `c_{d−160}`) and 60 returns exist. Before that, `e_d` is NaN and the pair
 is not active. For perps the universe guarantees every member is warm on
-2020-07-01 (2020-01-01 + 182 days); the spot members warm at different
+2020-07-01 (each member's first day is no later than 2020-01-23 =
+2020-07-01 − 160 days; Phase 0 §0.3); the spot members warm at different
 dates.
 
 ## 1.6 Tests

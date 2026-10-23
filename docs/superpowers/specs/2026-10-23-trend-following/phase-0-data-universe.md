@@ -61,15 +61,17 @@ The first strategy's `configs/data.yaml` is not edited.
 ## 0.3 Universe rule — perps (in-sample and forward)
 
 1. **Candidates.** Every USDT-M perpetual with an archive 1d kline for
-   every day of 2020-01-01 – 2020-06-30 (so it can be warmed up by the
-   first trading day). Holes in the 15m archive inside those days do not
+   every day from its first archived day through 2020-06-30, that first
+   day being no later than 2020-01-23, so the 160-day members are warm on
+   the first trading day (Phase 1 §1.5: `d − 160 ≥` first day). Holes in the 15m archive inside those days do not
    disqualify a pair; they are filled by `--ccxt-gaps` at fetch and
    reported. *(builder's call)* Delisted symbols count; the archive keeps most of
    them (verified 2026-10-23: LUNAUSDT and SRMUSDT present for 2021-06).
    Symbol list from the archive's S3 listing
    (`data.binance.vision/?prefix=data/futures/um/monthly/klines/`).
 2. **Rank** by total quote volume over 2020-01-01 – 2020-06-30, from the
-   archive's 1d klines (`quote_volume` column).
+   archive's 1d klines (`quote_volume` column). A pair listed in January
+   is ranked on the days it existed.
 3. **Keep the top 10.** Exclude stablecoin bases and leveraged tokens (none
    expected among 2020 perps; the rule is stated for symmetry with spot).
 4. **Trading starts 2020-07-01** for every member.
@@ -84,13 +86,26 @@ perps listed by 2020-12-31 on full-year 2020 volume; that uses information
 from the first six months of trading (volume tracks the 2020 rallies), so
 the stricter rule above was chosen, accepting that SOLUSDT is excluded.
 
+**Amended with the user (2026-10-23, Phase 0 build).** The first version
+required a kline on every day of 2020-01-01 – 2020-06-30. Run against the
+archive it left 3 members (BTCUSDT, ETHUSDT, BCHUSDT): most 2020 perps were
+listed during January 2020 (XRP 01-06 … XLM 01-20, ADA 01-31). The user
+chose the warm-by-2020-07-01 rule above, which keeps every input before
+the first trading day and the trading start unchanged.
+
 ## 0.4 Universe rule — spot (holdout)
 
-1. **Candidates.** Spot `*USDT` pairs with 15m archive data on every day of
-   2017-12-01 – 2017-12-31. Exclude stablecoin bases (USDC, TUSD, PAX,
+1. **Candidates.** Spot `*USDT` pairs with an archive 1d kline on every
+   day from their first archived day (no later than 2017-12-31) through
+   2017-12-31. Exclude stablecoin bases (USDC, TUSD, PAX,
    BUSD, USDS, …) and leveraged tokens.
 2. **Rank** by quote volume over 2017-12-01 – 2017-12-31.
 3. **Keep up to 10** (fewer exist; that is expected).
+
+   *Amended with the user (2026-10-23, Phase 0 build):* the first version
+   required every day of 2017-12, which dropped LTCUSDT (spot listing
+   2017-12-13). Spot members enter the holdout when warm anyway, so the
+   rule now matches the perp one without a warmup cutoff.
 4. Each member enters the holdout portfolio on the first day its signals
    and vol forecast are warm (Phase 1 §1.5), and the holdout ends
    2019-12-31. Members delisted before then exit by the delisting rule
