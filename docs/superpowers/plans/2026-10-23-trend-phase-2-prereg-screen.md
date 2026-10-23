@@ -176,3 +176,4 @@ Final review: fresh reviewer (opus) — "merge with fixes"; 0 Critical, 2 Import
 - Final: minor (deferred): hash-stability test does not assert its str.replace edits happened; the refusal CLI tests check exit codes, not stderr
 - Final: minor (deferred): a YAML syntax error, corrupt lock or missing data.yaml gives a traceback instead of exit 2 (nothing written)
 - Final: minor (deferred): listing dates in data.yaml are not checked against universe.json first_day (the data-config hash records them)
+Task 6: frozen 2026-10-23 (93984c8, tag trend-prereg-v1, pushed); screen run once (2.3 s): observed gross Sharpe 1.079, paths 5/50/95% 0.458/0.869/1.201, p_screen 0.1558 >= 0.10 → STOP; B&H gross Sharpe 0.986 (descriptive); runs/trend/screen.json + summary.md committed (9158913)
