@@ -1,0 +1,63 @@
+# Funding-carry pre-registration (carry spec Phase 2 §2.1; decisions in 00-overview.md §2).
+# Frozen by `perpbt carry prereg freeze` (configs/carry/prereg.lock, tag carry-prereg-v1) before the
+# screen runs. After the freeze only periods.forward.start may change (set by the code lock, Phase 5).
+# The hash covers the normalised content without periods.forward.start; comments and key order do not count.
+registered_on: 2026-10-23
+
+universe:  # copied from configs/trend/universe.json "um" (CD4); checked on load and freeze
+  um:
+    rule: "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from the later of their first archived day and 2020-01-01 through 2020-06-30, that day no later than 2020-01-23 (warm for the 160-day members on 2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and leveraged tokens excluded; top 10; trading from 2020-07-01"
+    members: [BTCUSDT, ETHUSDT, BCHUSDT, LINKUSDT, ETCUSDT, LTCUSDT, XRPUSDT, EOSUSDT, TRXUSDT, XLMUSDT]
+
+periods:  # CD5
+  warmup:   {start: 2020-01-01, end: 2020-06-30}
+  insample: {start: 2020-07-01, end: 2023-12-31}   # returns on these days; decisions on the day before each
+  holdout:  {start: 2024-01-01, end: 2026-10-20}   # one shot, own DONE marker (Phase 5)
+  forward:  {start: null, reviews: [12, 36]}        # start set at the code lock; excluded from the hash
+
+# CD2: f̄ = 7-day trailing funding, time-weighted (Σ rate × 24 / Σ interval_h × 365; Phase 2 §2.6);
+# on above entry, off below exit, else hold
+signal: {lookback_days: 7, entry_annual: 0.10, exit_annual: 0.0}
+
+sleeve: {perp_leverage: 2.0}   # CD3: spot notional L / (L + 1) = 2/3 of a sleeve
+
+margin:  # CD7
+  rebalance_below: 0.5   # perp wallet equity / margin at target leverage, at the day close
+  mmr: {default: 0.01, BTCUSDT: 0.004, ETHUSDT: 0.005}
+  liquidation_fee: 0.01
+
+rebalance: {fill_offset_min: 15}   # both legs at 00:15 UTC of d+1
+
+costs:  # CD6; slippage per leg
+  perp_taker: 0.0005
+  spot_taker: 0.0010
+  slippage: {default: 0.0005, BTCUSDT: 0.0002, ETHUSDT: 0.0002}
+
+exploratory:  # CD11: reported; no say in the verdict; DSR trials
+  - {name: always_on,    signal: {entry_annual: -1.0e+9, exit_annual: -1.0e+9}}
+  - {name: entry_5,      signal: {entry_annual: 0.05}}
+  - {name: entry_20,     signal: {entry_annual: 0.20}}
+  - {name: lookback_3d,  signal: {lookback_days: 3}}
+  - {name: lookback_14d, signal: {lookback_days: 14}}
+  - {name: lev_1,        sleeve: {perp_leverage: 1.0}}
+
+reprice: {slippage: [0.0, 0.0002, 0.0005, 0.001], spot_taker: [0.00075, 0.0010]}
+
+hurdle: {annual: 0.05, descriptive: [0.0, 0.03, 0.05, 0.08]}   # CD9
+
+stats:  # CD8
+  alpha: 0.05
+  bootstrap_n: 10000
+  block_len_days: 30
+  random_timing_runs: 1000   # descriptive only (Phase 4 §4.4)
+  shift_margin_days: 60
+  master_seed: 202610233     # the carry spec date and 3 (the third strategy); written before the freeze
+
+screen: {bootstrap_n: 10000, stop_if_p_at_least: 0.10}   # CD10, Phase 2 §2.3
+
+verdict_rule:
+  v1: "one-sided moving-block bootstrap p of the portfolio net Sharpe > 0 < alpha"
+  v2: "one-sided moving-block bootstrap p of the annualised net return minus the hurdle > 0 < alpha"
+  edge: "v1 and v2 (intersection-union; no multiplicity adjustment)"
+  reported_for: [insample, holdout, forward_36m]
+  forward_12m: descriptive only
