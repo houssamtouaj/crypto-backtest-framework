@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from perpbt.stats.bootstrap import (
+    block_bootstrap_mean,
     block_bootstrap_sharpe,
     block_indices,
     day_block_bootstrap,
@@ -141,3 +142,19 @@ def test_degenerate_inputs(rng):
     assert math.isnan(out["diff"]) and out["ci_lo"] is None and out["p"] is None
     reps = block_bootstrap_sharpe(np.array([0.0, 0.0, 0.0, 0.01]), 200, rng, block_len=10)  # T < block length
     assert reps.shape == (200,)
+
+
+# --- block_bootstrap_mean (carry spec Phase 4 §4.2) ------------------------------------------------
+
+
+def test_block_bootstrap_mean_matches_block_indices():
+    x = np.random.default_rng(3).normal(size=97)
+    got = block_bootstrap_mean(x, 500, rng_for(1, "v", "p"), block_len=30)
+    k = np.concatenate(list(block_indices(97, 500, rng_for(1, "v", "p"), 30)))
+    np.testing.assert_array_equal(got, x[k].mean(axis=1))
+    assert got.shape == (500,)
+
+
+def test_block_bootstrap_mean_constant_and_empty():
+    np.testing.assert_allclose(block_bootstrap_mean(np.full(40, 0.25), 50, np.random.default_rng(0), 30), 0.25)
+    assert np.isnan(block_bootstrap_mean(np.zeros(0), 7, np.random.default_rng(0), 30)).all()

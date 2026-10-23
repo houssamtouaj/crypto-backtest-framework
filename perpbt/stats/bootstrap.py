@@ -4,7 +4,8 @@
 - day-block bootstrap of the mean net R (resample entry days, keep each
   day's trades together), the secondary CI for dependent trades;
 - moving-block bootstrap of the daily Sharpe ratio, and the paired Sharpe
-  difference of two aligned daily series (the same blocks for both).
+  difference of two aligned daily series (the same blocks for both);
+- moving-block bootstrap of a daily mean (the carry V2 excess return).
 
 Every function takes an explicit generator and returns the replicates;
 ``percentile_ci`` turns them into a percentile interval. Index draws use
@@ -117,6 +118,14 @@ def block_indices(
     for rows in _chunks(B, nb * L, chunk):
         starts = _draw(rng, rows, nb, T - L + 1)
         yield (starts[:, :, None] + offsets).reshape(rows, nb * L)[:, :T]
+
+
+def block_bootstrap_mean(x: np.ndarray, B: int, rng: np.random.Generator, block_len: int = 10) -> np.ndarray:
+    """``B`` means of moving-block resamples of ``x`` (all NaN when ``x`` is empty)."""
+    x = np.asarray(x, dtype=np.float64)
+    if len(x) == 0:
+        return np.full(B, np.nan)
+    return np.concatenate([x[k].mean(axis=1) for k in block_indices(len(x), B, rng, block_len)])
 
 
 def block_bootstrap_sharpe(ret: np.ndarray, B: int, rng: np.random.Generator, block_len: int = 10) -> np.ndarray:
