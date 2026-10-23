@@ -152,3 +152,9 @@ Task 2: complete (commits 370585a..a6daac6, tests: python -m pytest tests/trend 
 - Task 3: Ruling: test_trending_beats_shifted uses aperiodic regimes (lengths 60-199 days) instead of the plan's fixed 120-day switch — a periodic series lets a shift by a multiple of the period copy the real timing (p was 0.195 on the periodic one; 0.005-0.015 over 5 aperiodic seeds) — cost if wrong: none (test data only).
 - Task 3: Ruling: added test_run_screen_chunking_does_not_change_result — pins that the memory chunking is output-neutral — cost: none.
 Task 3: complete (commits a6daac6..5c80788, tests: python -m pytest tests/trend -q -m 'not slow' → 130 passed)
+- Task 4: Ruling: `trend prereg validate|freeze` take --universe (default configs/trend/universe.json) and exit 2 on a config or universe error, 1 when the lock exists; `trend screen` exits 1 on a refusal (no lock, hash mismatch, screen.json exists) and 2 on a config error — the CLI's existing convention — cost: none.
+- Task 4: Ruling: screen_from_store/write_screen live in trend/screen.py (the plan named them there); write_screen opens screen.json with "x", so the one-shot holds even if the CLI's existence check is bypassed — cost: none.
+- Task 4: Ruling: added test_prereg_validate_universe_mismatch_is_exit_2 and test_screen_go_writes_no_summary beyond the brief — cost: none.
+Task 4: complete (commits 5c80788..0501197, tests: python -m pytest tests/test_cli.py tests/trend -q -m 'not slow' → 159 passed)
+- Task 5: Ruling: no separate test_prereg_file.py — test_round_trip and test_universe_must_match_universe_json already load the committed prereg and check it against universe.json — cost: none.
+Task 5: suite: python -m pytest -q (full, slow included) → 1103 passed in 152.46s; perpbt trend prereg validate → prereg_hash 9f2f2856cec49fdd38e29da000dd9de315f42f521f3b505763242dddf132c606 (not frozen)
