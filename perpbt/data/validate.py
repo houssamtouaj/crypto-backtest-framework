@@ -123,15 +123,18 @@ def check_funding(ts: np.ndarray, interval_h: np.ndarray) -> dict:
     }
 
 
-def run_validate(data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[str] = TIMEFRAMES) -> dict:
+def run_validate(
+    data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[str] = TIMEFRAMES, market: str = "um"
+) -> dict:
     """Validate every stored series of ``pairs`` and write the reports into the manifests.
 
     Grid violations and duplicate funding timestamps raise ValueError (hard
     failures). Gaps, 1m→15m mismatches and unusual intervals are reported,
     never fixed. Returns ``{pair: {tf: {...}, "funding": {...}}}``; a pair with
-    nothing stored maps to ``{}``.
+    nothing stored maps to ``{}``. ``market="spot"`` validates the spot candle
+    store and has no funding.
     """
-    cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
+    cstore, fstore = CandleStore(data_cfg, market=market), FundingStore(data_cfg)
     report: dict = {}
     for pair in pairs:
         entry: dict = {}
@@ -158,7 +161,7 @@ def run_validate(data_cfg: DataConfig, pairs: Sequence[str], *, tfs: Sequence[st
                 manifest["consistency_1m_15m"] = consistency
                 entry[tf]["consistency_1m_15m"] = consistency
             cstore.write_manifest(pair, tf, manifest)
-        if fstore.dir(pair).is_dir():
+        if market == "um" and fstore.dir(pair).is_dir():
             frame = fstore.read_frame(pair, columns=["funding_ms", "interval_h"])
             ts = frame["funding_ms"].to_numpy()
             funding = check_funding(ts, frame["interval_h"].to_numpy())

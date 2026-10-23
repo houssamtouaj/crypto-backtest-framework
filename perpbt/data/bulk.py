@@ -21,8 +21,17 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-BASE_URL = "https://data.binance.vision/data/futures/um"
-ARCHIVE_START = date(2020, 1, 1)  # first month with USDT-M futures files (2019-12 is 404; verified 2026-09-26)
+MARKETS = ("um", "spot")
+BASE_URLS = {
+    "um": "https://data.binance.vision/data/futures/um",
+    "spot": "https://data.binance.vision/data/spot",  # no funding files
+}
+ARCHIVE_STARTS = {
+    "um": date(2020, 1, 1),  # first month with USDT-M futures files (2019-12 is 404; verified 2026-09-26)
+    "spot": date(2017, 8, 1),  # BTCUSDT-15m-2017-08 is the earliest spot file; later symbols start later
+}
+BASE_URL = BASE_URLS["um"]
+ARCHIVE_START = ARCHIVE_STARTS["um"]
 MICROSECOND_THRESHOLD = 100_000_000_000_000  # 1e14: a timestamp above this is microseconds (spec §1.1)
 
 KLINE_CSV_COLUMNS = [
@@ -64,8 +73,16 @@ def kline_name(pair: str, tf: str, period: str) -> str:
     return f"{pair}-{tf}-{period}.zip"
 
 
-def kline_url(pair: str, tf: str, period: str) -> str:
-    return f"{BASE_URL}/{_scope(period)}/klines/{pair}/{tf}/{kline_name(pair, tf, period)}"
+def market_base(market: str) -> str:
+    """Archive base URL of ``market`` ("um" for USDT-M perpetuals, "spot")."""
+    try:
+        return BASE_URLS[market]
+    except KeyError:
+        raise ValueError(f"unknown market {market!r}; expected one of {list(MARKETS)}") from None
+
+
+def kline_url(pair: str, tf: str, period: str, market: str = "um") -> str:
+    return f"{market_base(market)}/{_scope(period)}/klines/{pair}/{tf}/{kline_name(pair, tf, period)}"
 
 
 def funding_name(pair: str, period: str) -> str:
@@ -237,6 +254,28 @@ def parse_klines_csv(csv: bytes) -> pd.DataFrame:
 
 def parse_klines_zip(data: bytes) -> pd.DataFrame:
     return parse_klines_csv(_single_csv(data))
+
+
+def snap_to_grid(frame: pd.DataFrame, step_ms: int) -> pd.DataFrame:
+    """Round ``open_ms`` values within a quarter step of the grid to the nearest grid slot.
+
+    The spot archive has candles on a shifted grid after an exchange restart
+    (BTCUSDT and BCCUSDT 2018-02-09 09:58:14.789 .. 2018-02-10 05:58:14.789,
+    81 candles each, 1m45s before a slot). Rows further off are left for the
+    grid check to reject; two rows landing on the same slot raise. The number
+    of rows moved is in ``frame.attrs["snapped"]``.
+    """
+    ts = frame["open_ms"].to_numpy(dtype=np.int64)
+    nearest = (ts + step_ms // 2) // step_ms * step_ms
+    move = (ts != nearest) & (np.abs(ts - nearest) <= step_ms // 4)
+    out = frame.copy()
+    if move.any():
+        snapped = np.where(move, nearest, ts)
+        if len(np.unique(snapped)) != len(snapped):
+            raise ValueError("snapping off-grid candles to the grid puts two candles in the same grid slot")
+        out["open_ms"] = snapped
+    out.attrs["snapped"] = int(move.sum())
+    return out
 
 
 def round_to_minute(ms: np.ndarray) -> np.ndarray:

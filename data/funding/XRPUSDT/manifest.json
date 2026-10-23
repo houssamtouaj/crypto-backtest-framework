@@ -1,0 +1,510 @@
+{
+  "bad_intervals": [],
+  "ccxt_ranges": [
+    {
+      "end_ms": 1792758611509,
+      "purpose": "tail",
+      "rows": 68,
+      "start_ms": 1790784060000
+    }
+  ],
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "XRPUSDT-fundingRate-2020-01.zip",
+      "rows": 77,
+      "sha256": "4b985e0842668657a0811c04102bb75c42d9cbfc6b9e4f3bd6d7703e4ba35cec",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-02.zip",
+      "rows": 87,
+      "sha256": "210345a99e6025f347927e9a91da41de76c006a17540a303c9d30e6f506bf628",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-03.zip",
+      "rows": 93,
+      "sha256": "85306a96aeec94dc7cd6bb3f010d4552d980c85c076bc7b6856be8da6c9a3a18",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-04.zip",
+      "rows": 90,
+      "sha256": "e3ba018810fb93e89f31baa67f5eaa4b11f7d8d876c1488df8deeb42d88cd170",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-05.zip",
+      "rows": 93,
+      "sha256": "c4d8a6487c998d05f8c50c70b6ccdebda9fd0382c61ccde988b085bbf1ce43f9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-06.zip",
+      "rows": 90,
+      "sha256": "cb9ee8ee7378d237dda9c1482e2ee4e785fb0adf3bda20ad642d8efae3b86718",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-07.zip",
+      "rows": 93,
+      "sha256": "b002e4dfa1caf1ade67cbea895e62aa9a609888053013a188c8a3da39fcc84e2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-08.zip",
+      "rows": 93,
+      "sha256": "0443afcd2e8c933f3c42df6fb22fdd329fd2ab122757ce90617515f864a80f8d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-09.zip",
+      "rows": 90,
+      "sha256": "54317593b240a23d9db9784ef2cf45fea38a85b366b400865742c472add57707",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-10.zip",
+      "rows": 93,
+      "sha256": "25f355a6ffa3fbe0df64b344cc07c520e13a86877fd6bd50a83b9af1b46bb24d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-11.zip",
+      "rows": 90,
+      "sha256": "a08c050ff37b1dbf652bc446c5415548aa508d16f9ccbd119d493441af7cf468",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2020-12.zip",
+      "rows": 93,
+      "sha256": "2f6b379dc8600f7eaca6d390f3636689c393bf0f9ae1f95dfa769f65fbe7c9b1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-01.zip",
+      "rows": 93,
+      "sha256": "3a7e1661aa17a99e509f7b6d2c32662a2fdcd03b69e67cce6ba80c9abdeba51e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-02.zip",
+      "rows": 84,
+      "sha256": "22798c509c19fee7573c9929e8762d292fcd85c8923f422c5a03e7e13e67b9ff",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-03.zip",
+      "rows": 93,
+      "sha256": "c60c1a5f87a81975551e639ea5f83918a637a13f6f69be64e218d79b329e339d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-04.zip",
+      "rows": 90,
+      "sha256": "b25fe33a86d5a43dd707f596e5a0f7a2beeef40d47286f7bfe2362b18529d26e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-05.zip",
+      "rows": 93,
+      "sha256": "f261889d8ae5b14dd67950f9433a54f39c328a8f83212e73b458ee41e06a1ea7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-06.zip",
+      "rows": 90,
+      "sha256": "6947cb3e3424beb7e6801554b2c0afb9f3f2eecd28f84ae62a37e6fe5a691fb6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-07.zip",
+      "rows": 93,
+      "sha256": "77b401845e3e90d89a12df6e374ed838273d0ea81d28b25295bd5bebf454eeb5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-08.zip",
+      "rows": 93,
+      "sha256": "0a2d36a5a95fbba7ebc55f82e4e59eac1061ba3fab83d06f7569b427f3d9cdc8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-09.zip",
+      "rows": 90,
+      "sha256": "514b2f1d7aba96408cd55677bea4b2c2cf0a027cb819bc1aecfa9e47eb6e644c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-10.zip",
+      "rows": 93,
+      "sha256": "804050e1e57a061b9e8b4d0a033aba44196f511a99be61765fff81e04964bd13",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-11.zip",
+      "rows": 90,
+      "sha256": "2ee66bfc6920510ac62b6abe09a0569c64f4999fd64b655691ab12732904eb1e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2021-12.zip",
+      "rows": 93,
+      "sha256": "a96ac211f0316219b9d7faec92b830dec5c4ee808b0cfca5bb966dd8b68ff987",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-01.zip",
+      "rows": 93,
+      "sha256": "9ddff6efb16709debed38c0a6a0a2278c01659d18aedc2192b9fc02dc93d03ce",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-02.zip",
+      "rows": 84,
+      "sha256": "033b260f54c03c4f32b3503e87f9a3d3bcf735a48f13b4057344bb05192006b4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-03.zip",
+      "rows": 93,
+      "sha256": "4eeea8c79c35ff9363baa9dc70091a155c8f9e276dd319d05e0ba8ef5ab00b6e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-04.zip",
+      "rows": 90,
+      "sha256": "65dc012890af68b8e77736be03a71bde04c7a54b5ff6cb1957c94c4b2560da78",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-05.zip",
+      "rows": 93,
+      "sha256": "9ec85394189f8f61a420bc6266cfd6e782870eb14ab43fe53ad981f274ea2829",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-06.zip",
+      "rows": 90,
+      "sha256": "ed33e50c7a15b4605478840bc9ceb93af17afe81728dd9c80a8673732da5b979",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-07.zip",
+      "rows": 93,
+      "sha256": "d0c0be21ff0fd3476d88cd2ac576f4b8e5697001bedf8ab43c746f2e5ae4699b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-08.zip",
+      "rows": 93,
+      "sha256": "ebe01bede02640bb9425dc31f6a1bb4e46488989715d7083b6d1569adb8736ba",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-09.zip",
+      "rows": 90,
+      "sha256": "5f4cef57cc0b839b9efd1a0ad2a09457e8a4f7745f5de045d85ad86159255587",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-10.zip",
+      "rows": 93,
+      "sha256": "d19321c736b80fa52b447325092f6f21128f435a28e377941bccb65e6dae1370",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-11.zip",
+      "rows": 90,
+      "sha256": "44f32f9c6d3f66d7d0af48a56b5cd6f431c19070c9e4438784ee95df25d7dcb2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2022-12.zip",
+      "rows": 93,
+      "sha256": "4c17c8aa8c7b64d2acf1ecfdbdc5ff0c2a69d918f44a1040f530be3fbec74e6b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-01.zip",
+      "rows": 93,
+      "sha256": "d5a60c79d144e9157ccd211c4230fb64fdd210dd34cb22e7660e41531f66a5e9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-02.zip",
+      "rows": 84,
+      "sha256": "a8e7674eb3bd141d27787af892832896d609881764582f86c724b2a8d88fec50",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-03.zip",
+      "rows": 93,
+      "sha256": "198eed85733a3e9e6baa935b853aac7dcfa27c550a4ec43f6b862d02cea79d0b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-04.zip",
+      "rows": 90,
+      "sha256": "a312648378931c50243bbba31b6b4595f6d8c9d8f6e16c5ffb779fb3a8817ea4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-05.zip",
+      "rows": 93,
+      "sha256": "d3e2b728cb6e493672b359004946f0737506ed4b153f61354478dedd20a50da7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-06.zip",
+      "rows": 90,
+      "sha256": "a83e74907e437eac3f8db466fda62cdb7c487a096bdaa69a9b797e1507431502",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-07.zip",
+      "rows": 93,
+      "sha256": "5348dd7a724fdb991788703b14b5c134711ec173b2bc821e13da18a46042c1f3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-08.zip",
+      "rows": 93,
+      "sha256": "491f029d456a47cc58f5888c4e9a91deac419c5242c27fde744a971716391fa6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-09.zip",
+      "rows": 90,
+      "sha256": "5a06068aef716c54685ac57fde85ca9fc3b718659fcf90e83af9350f7de05553",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-10.zip",
+      "rows": 93,
+      "sha256": "ca0b78ee32f1b2a301e39cdeae50a466ad9bd1d153d0f7d070bbdb90d9203c30",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-11.zip",
+      "rows": 90,
+      "sha256": "17b4f9e2a7800265378e3e293295d58ccc8875e037d4286873250541b0a196b0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2023-12.zip",
+      "rows": 93,
+      "sha256": "49fd3c811e1388693e7dd482972f8b525ba10a90c01d77b04ec9b0631d43feb8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-01.zip",
+      "rows": 93,
+      "sha256": "fac75e242671739980886a0f39159562dde076d49244e6f2803c407dc0112570",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-02.zip",
+      "rows": 87,
+      "sha256": "e38e130c6361e5e9d5c67109f22f72812457f2461332a9304d715215576d2d0e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-03.zip",
+      "rows": 93,
+      "sha256": "31a841c4eaebbb192448838f37819fcc6263ac149df469463c11126b70717e59",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-04.zip",
+      "rows": 90,
+      "sha256": "d7586ec30b20ca06772ac7fb52dd027e913ce0a26a93669e3a4276522bff9ab5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-05.zip",
+      "rows": 93,
+      "sha256": "4ca09712c976062effee663d005c27420089003ed5a1c95d8c2b4937fe05fa01",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-06.zip",
+      "rows": 90,
+      "sha256": "fd9055cb8a05ce268c24b91800682091232f0dc285b1240f57e2d66396eb6a5f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-07.zip",
+      "rows": 93,
+      "sha256": "68c8ac31b16c4b1f81a3b70860175e5163e76652ddea9ef1bb6e6f01a369a33e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-08.zip",
+      "rows": 93,
+      "sha256": "fa1318b6213cae7ff5ead4110c4d7c97c3103203b56b2607678e4527dd8ad906",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-09.zip",
+      "rows": 90,
+      "sha256": "69faf312921ce5c88092d8c328b04dc006ea42dabfe68ad5fee542d28c0ae2ca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-10.zip",
+      "rows": 93,
+      "sha256": "f9d62565da4bf7d1caddc9cb09b1a73a4a312a7419c5c0439c662fc3f58dd993",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-11.zip",
+      "rows": 90,
+      "sha256": "95c733e5ad58f4c26c75b71a2081de8f692a4ce271006b7f5b3c87854a848c70",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2024-12.zip",
+      "rows": 93,
+      "sha256": "be526ba15c6c4c3ae8cddda1411a13f665f635be444c992efd2f66e6bbfa37d8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-01.zip",
+      "rows": 93,
+      "sha256": "b14759b7a99d6111f819790de938b2b0f3eeeaac57402c2e1ef71fd38302d26d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-02.zip",
+      "rows": 84,
+      "sha256": "927da57e3d0a92fa6e024c00397abac93ab5722ca7a353e92e493cfd28de2f3c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-03.zip",
+      "rows": 93,
+      "sha256": "690fb0f227c2b8b1467428b2e3340ea9928d8ef81ac461bd6f641f100dd21d66",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-04.zip",
+      "rows": 90,
+      "sha256": "d47ea402f11ad727be1c1b4adfa8483698151509d90e9cb53b84b0a43ca67de8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-05.zip",
+      "rows": 93,
+      "sha256": "7c664b87b0ae630b033f67ab334a46d433374927e74445c56f4b3be7b9b23092",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-06.zip",
+      "rows": 90,
+      "sha256": "5bfb1683c2b8c738a0059ee02078706585b62c1e430685af76e3796a0ee58613",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-07.zip",
+      "rows": 93,
+      "sha256": "039ff5c8dab9d9f2633f1bd4d191e6a727d6d169d897b6cbcd7fc162ff374723",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-08.zip",
+      "rows": 93,
+      "sha256": "07a8182394836928094bb6b476fef9e8858e234d0ff05ef41114ff25bab923ba",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-09.zip",
+      "rows": 90,
+      "sha256": "1f09cb45eadb64731acaaae997167c54b76c3a08b367cd5acbd89f8562593ee3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-10.zip",
+      "rows": 93,
+      "sha256": "3fc5b1bcac5579e6cc49e17457282c6bfb970932d2aefcbc0c896d660b81a939",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-11.zip",
+      "rows": 90,
+      "sha256": "22040d49b1cdce5337571f5641008a81f1374680226b7c7a5ae63d37dcc449fd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2025-12.zip",
+      "rows": 93,
+      "sha256": "21c4a5933de28ec693fbe3a43d9ae4504b762e70e7cc0e0de4afd46104abe7f0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-01.zip",
+      "rows": 93,
+      "sha256": "618977f8e0c4d048292fae038094ea9624c96debfbb1d2bd6463ffcdce2fcd2a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-02.zip",
+      "rows": 84,
+      "sha256": "8d8be995b48b2085a8384d9e417bfeef2d213b35478baa88cbe5001d0497535d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-03.zip",
+      "rows": 93,
+      "sha256": "e3399c2e5fd5c18a2716b26530bcedc7fb9ce8adb2641c0882c8ba6e0a336567",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-04.zip",
+      "rows": 90,
+      "sha256": "0e586915d578a977ad69482ddc52c11d9c2c1a767d3865078553b3e91fb7716a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-05.zip",
+      "rows": 93,
+      "sha256": "f8c0c09953b112a7f5ac203a826811ead1ac43db8c075b17b2ca69e837828255",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-06.zip",
+      "rows": 90,
+      "sha256": "f5d1b51767ddc812c4608080adf54cfca0db7cba592d3e62d7416cd358a3ebde",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-07.zip",
+      "rows": 93,
+      "sha256": "c705d06f311e974474a74dc2c5f572c9180630930cf2d5dbaf08cfb7f3d1948c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-08.zip",
+      "rows": 93,
+      "sha256": "7796d84350af4b2b162dd362c9d27cc79643578115f1cde3e333075085596d1c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-fundingRate-2026-09.zip",
+      "rows": 90,
+      "sha256": "f668315d6cd6da13cfcd5f83e4658dd4c1e9042e06f2277e804feb9d857da5b2",
+      "source": "bulk_monthly"
+    }
+  ],
+  "first_funding_ms": 1578297600000,
+  "intervals": {
+    "8": 7447
+  },
+  "last_funding_ms": 1792742400000,
+  "last_interval_h": 8,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "XRPUSDT",
+  "rows": 7447
+}

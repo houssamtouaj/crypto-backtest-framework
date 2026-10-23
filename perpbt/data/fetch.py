@@ -8,6 +8,12 @@ zips up to yesterday. 404s are recorded in ``missing`` and retried only while
 the file's period ended recently. The manifest is rewritten after every
 ingested file, so an interrupted run resumes without re-downloading. Delete a
 manifest to force a series to be re-ingested.
+
+``market="spot"`` (the trend strategy's holdout) syncs spot klines into the
+spot candle store and nothing else: spot has no funding files and no ccxt
+backfill. A perp whose stored series stops more than ``DELISTED_AFTER_DAYS``
+before the end of the fetch (``--to``, at most today) is treated as delisted and skipped by the ccxt tail and gap fill (ccxt
+may not know the symbol; the archive is complete up to the delisting).
 """
 from __future__ import annotations
 
@@ -19,7 +25,7 @@ import pandas as pd
 
 from perpbt.config import DataConfig
 from perpbt.data.bulk import (
-    ARCHIVE_START,
+    ARCHIVE_STARTS,
     HttpGet,
     days_of_month,
     download_verified,
@@ -30,13 +36,14 @@ from perpbt.data.bulk import (
     months_between,
     parse_funding_zip,
     parse_klines_zip,
+    snap_to_grid,
     period_end,
     period_of,
     sha256_bytes,
     urllib_get,
 )
 from perpbt.data.ccxt_fetch import Exchange, fetch_funding_range, fetch_ohlcv_range, head_range, make_exchange
-from perpbt.data.store import _STEP_MS, CandleStore, FundingStore
+from perpbt.data.store import _STEP_MS, DAY_MS, CandleStore, FundingStore, date_ms
 from perpbt.data.validate import STEP_1M_MS, check_funding, gap_report
 
 log = logging.getLogger(__name__)
@@ -44,6 +51,13 @@ log = logging.getLogger(__name__)
 RETRY_DAYS_MONTHLY = 35  # a monthly zip appears a few days after month end
 RETRY_DAYS_DAILY = 3  # a daily zip appears the next morning (UTC)
 TIMEFRAMES = ("1m", "15m")
+DELISTED_AFTER_DAYS = 7  # an active pair has daily archive files up to yesterday
+
+
+def is_stale(manifest: dict, today: date) -> bool:
+    """True when the stored series ends more than ``DELISTED_AFTER_DAYS`` before ``today`` (a delisted pair)."""
+    last = manifest["last_open_ms"]
+    return last is not None and last < date_ms(today.isoformat()) - DELISTED_AFTER_DAYS * DAY_MS
 
 
 def _retryable(name: str, today: date) -> bool:
@@ -74,7 +88,11 @@ def _ingest(
     frame["source"] = source
     stats = write(frame)
     manifest["files"] = [f for f in manifest["files"] if f["name"] != name]
-    manifest["files"].append({"name": name, "sha256": sha256_bytes(data), "rows": int(len(frame)), "source": source})
+    entry = {"name": name, "sha256": sha256_bytes(data), "rows": int(len(frame)), "source": source}
+    if frame.attrs.get("snapped"):
+        entry["snapped"] = frame.attrs["snapped"]  # off-grid rows moved to the grid (bulk.snap_to_grid)
+        log.warning("%s: %d off-grid candles snapped to the grid", name, frame.attrs["snapped"])
+    manifest["files"].append(entry)
     manifest["overlap_mismatches"] += stats.mismatches
     log.info(
         "%s: %d rows (%d new, %d replaced, %d overlap mismatches)",
@@ -125,11 +143,14 @@ def sync_candles(
     """Bring ``pair``/``tf`` up to date from the bulk archive; returns the manifest."""
     manifest = store.manifest(pair, tf)
     listing = date.fromisoformat(data_cfg.listing[pair])
-    start = max(from_date, listing, ARCHIVE_START)
+    start = max(from_date, listing, ARCHIVE_STARTS[store.market])
     this_month = today.strftime("%Y-%m")
 
     def write(frame: pd.DataFrame):
         return store.write(pair, tf, frame)
+
+    def parse(data: bytes) -> pd.DataFrame:
+        return snap_to_grid(parse_klines_zip(data), _STEP_MS[tf])
 
     for ym in months_between(start, to_date):
         have = {f["name"] for f in manifest["files"]}
@@ -139,8 +160,8 @@ def sync_candles(
             continue
         if ym < this_month and (name not in missing or _retryable(name, today)):
             ok = _ingest(
-                manifest, url=kline_url(pair, tf, ym), name=name, source="bulk_monthly",
-                parse=parse_klines_zip, write=write, http_get=http_get, today=today,
+                manifest, url=kline_url(pair, tf, ym, market=store.market), name=name, source="bulk_monthly",
+                parse=parse, write=write, http_get=http_get, today=today,
             )
             store.write_manifest(pair, tf, manifest)
             if ok:
@@ -150,8 +171,8 @@ def sync_candles(
             if dname in have or (dname in missing and not _retryable(dname, today)):
                 continue
             _ingest(
-                manifest, url=kline_url(pair, tf, day), name=dname, source="bulk_daily",
-                parse=parse_klines_zip, write=write, http_get=http_get, today=today,
+                manifest, url=kline_url(pair, tf, day, market=store.market), name=dname, source="bulk_daily",
+                parse=parse, write=write, http_get=http_get, today=today,
             )
             store.write_manifest(pair, tf, manifest)
     _refresh_candles(store, pair, tf, manifest)
@@ -173,7 +194,7 @@ def sync_funding(
     """Bring ``pair``'s funding up to date from the monthly archive files; returns the manifest."""
     manifest = store.manifest(pair)
     listing = date.fromisoformat(data_cfg.listing[pair])
-    start = max(from_date, listing, ARCHIVE_START)
+    start = max(from_date, listing, ARCHIVE_STARTS["um"])
     this_month = today.strftime("%Y-%m")
     for ym in months_between(start, to_date):
         if ym >= this_month:
@@ -314,8 +335,12 @@ def run_fetch(
     exchange_factory: Callable[[], Exchange] = make_exchange,
     today: date | None = None,
     now_ms: int | None = None,
+    market: str = "um",
 ) -> dict:
-    """The ``perpbt data fetch`` pipeline. Returns ``{pair: {tf: {...}, "funding": {...}, ...}}``."""
+    """The ``perpbt data fetch`` pipeline. Returns ``{pair: {tf: {...}, "funding": {...}, ...}}``.
+
+    With ``market="spot"`` there is no ``"funding"`` entry and the ccxt flags are refused.
+    """
     today = today or datetime.now(timezone.utc).date()
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000) if now_ms is None else now_ms
     from_date = from_date or date.fromisoformat(data_cfg.warmup_start)
@@ -326,7 +351,9 @@ def run_fetch(
     bad = [tf for tf in tfs if tf not in _STEP_MS]
     if bad:
         raise ValueError(f"unknown timeframe {bad}; expected one of {sorted(_STEP_MS)}")
-    cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
+    if market == "spot" and (ccxt_head or ccxt_tail or ccxt_gaps):
+        raise ValueError("the spot market has no ccxt head, tail or gap fill; drop the --ccxt-* flags")
+    cstore, fstore = CandleStore(data_cfg, market=market), FundingStore(data_cfg)
     exchange = exchange_factory() if (ccxt_head or ccxt_tail or ccxt_gaps) else None
     summary: dict = {}
     for pair in pairs:
@@ -337,6 +364,9 @@ def run_fetch(
                 "rows": m["rows"], "files": len(m["files"]), "missing": len(m["missing"]),
                 "gaps": len(m["gaps"]), "overlap_mismatches": m["overlap_mismatches"],
             }
+        if market == "spot":
+            summary[pair] = entry
+            continue
         m = sync_funding(fstore, data_cfg, pair, from_date=from_date, to_date=to_date, today=today, http_get=http_get)
         entry["funding"] = {
             "rows": m["rows"], "files": len(m["files"]), "missing": len(m["missing"]),
@@ -344,6 +374,13 @@ def run_fetch(
         }
         if ccxt_head and "15m" in tfs:
             entry["ccxt_head_rows"] = fetch_head(cstore, data_cfg, pair, from_date=from_date, exchange=exchange)
+        end = min(today, to_date)  # a fetch over a past window measures staleness from its own end
+        if (ccxt_gaps or ccxt_tail) and all(is_stale(cstore.manifest(pair, tf), end) for tf in tfs):
+            entry["ccxt_skipped"] = "delisted"
+            log.warning("%s: stored data ends over %d days before %s; treated as delisted, no ccxt tail or gap fill",
+                        pair, DELISTED_AFTER_DAYS, end.isoformat())
+            summary[pair] = entry
+            continue
         if ccxt_gaps:
             entry["ccxt_gaps"] = fetch_gaps(cstore, pair, tfs, exchange=exchange)
         if ccxt_tail:

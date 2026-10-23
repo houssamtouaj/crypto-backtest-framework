@@ -1,0 +1,652 @@
+{
+  "ccxt_ranges": [
+    {
+      "end_ms": 1646092800000,
+      "purpose": "gap",
+      "rows": 288,
+      "start_ms": 1645833600000
+    },
+    {
+      "end_ms": 1648944000000,
+      "purpose": "gap",
+      "rows": 192,
+      "start_ms": 1648771200000
+    },
+    {
+      "end_ms": 1792757700000,
+      "purpose": "tail",
+      "rows": 49,
+      "start_ms": 1792713600000
+    }
+  ],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "LTCUSDT-15m-2020-01.zip",
+      "rows": 2176,
+      "sha256": "85d41a43db8d9b86d4025989993c67fcc237ff4838b79ac27771a4bdff799fd0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-02.zip",
+      "rows": 2784,
+      "sha256": "2f5c831e20a573c2a4eca9db8244071913a48e87f7d9c169bfb88add67ccba9c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-03.zip",
+      "rows": 2976,
+      "sha256": "83fd83bafb9382bf451a78c5becc20ceaca7e58f74c70da1cad22b8ecc40f410",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-04.zip",
+      "rows": 2880,
+      "sha256": "d471eb83c9554c1261cbb729ac7868c3234023607a98318f0d37ac2e7d91a63a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "77fffcdf443276bb6fc0662fe4c68e75ba2aaae4169e9387f7de93c5b045ea11",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-06.zip",
+      "rows": 2880,
+      "sha256": "7cead010921ab4c1838c1fb260b342a368bbdffdca580b7e871bc09982a8820e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "caa646951972b9dc13e8b3c71d0ee0cb6f81f5cf17b9ddc4914dfefbc51ce68e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "3de6e72278f851bd627f65e04923dc3ee87a184676550f43f38e380148f66315",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "97a0c596339c1a073a4f5979f2de9cb350cb25db00a850ce454fbd894167a864",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "e68a2a9afb12a641d6cfd05e8a05141beb33bd9390d9a62784c9f2594fb333dc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-11.zip",
+      "rows": 2880,
+      "sha256": "2669012d69010608c4f471689d48bd5ae9da40bfcac5a2dfa885f36bb439873b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2020-12.zip",
+      "rows": 2976,
+      "sha256": "f1c32ccd98c07e5773250bdb657d50014d6e91a7fcd536c3583eb6d66d1faf06",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "c381e2af659ce7fcb91331f467b96eb50b154a28878fb78ba592ae2c3ef0f27c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-02.zip",
+      "rows": 2688,
+      "sha256": "3788840fd483810fee1c2eb5c30736b4910d3e433f447b7f6ab569f368165580",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-03.zip",
+      "rows": 2976,
+      "sha256": "d20c0f7d65fb54393c373ccdd21d41e07ab444791f162247e48f05890f2cce57",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-04.zip",
+      "rows": 2880,
+      "sha256": "3a1e78ebefa608658fd7b17287379f82cf6fe0373c52b7034409b4a2b4b82227",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "fa02df9425133c50151499d411ab652332e9a3662a79f0ca6962df6165748faf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "fad70452d0789e153f08f320ab1532b89c1b5c3e26496ebc152773e099fb2216",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "f6170694721ce1eee42addc19506a24616a72301e72a951fd10e2e485ccf22df",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-08.zip",
+      "rows": 2976,
+      "sha256": "aead95e5047f0211a7ead992763ae0a66d25ef24b46895fc8bafb9a9fe6dd72c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-09.zip",
+      "rows": 2880,
+      "sha256": "e7612bf6589f3175c898b6b249835ddbaf67269c3111c6ca94296f96821348e0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "cf0934ef5dbe8270a1e23eb57f9979dd64e828f8f72dfabf588fcd139a1231d2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "d0eedf71974904e19f7bdf8aa7168efd9286242e1986513d98baaeace379aca3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "d2daf7e9badbfe86ae1b919d4f241761eae35132479bd83afb607e6c53676625",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "494f8c0e6f4a0a4951403726f2e32a82aeaaa6036230f21d1a08709cf4b54052",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-02.zip",
+      "rows": 2400,
+      "sha256": "c957a1bba92640f61376c6bddc58115fb9c7046efba9f0633dbbcd466e4e8dbb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "1ee1de252e1b76d3d7ec6ce49706d2bcf94e192b2ac52d3e99efcc9008a5fec2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-04.zip",
+      "rows": 2688,
+      "sha256": "cddd7ca171347d184f4427eccdb51d273a7957d1f55d93269653d91e4861780f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "fbf51171ae52cd0e52a14c19632e9999571335f23ea00aa7045b0b2e210de936",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "14d961192a3ad8a70bdbcb308a94daa965ac0953f11015aa7e641853fe8c9020",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "c11ecb923c7f2fe7d4ceacdd95067220cc76d8d988010207acf48be4b8fd7328",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "5a27d84715c7dbe55fa54f786b29993bde66aeacbb750a5f686c30a626babe45",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "02c7774970bbef480b5e787d8b1dbb959915cc21120015887c4b28bb7485669a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "8ad6aa9132967da6115a8f2490dc61fa853a8a7c304ca046621af61b6ba5417b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "20d7c5b58e8c3cde6e30905ae3845ffdf085b3f6d7f4e74777ee4d4ce1cc50ab",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "05cbd81e54d95856bddbefe1d3aecba4c72510b4c607d4ef10ec1fdb88eb6855",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "f9d9d26078b4df8d4a9bbbdbf99dff259b8e7f8eabff180ffe0098ee688a81a5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "48d66619ef8d036f8934c6eb1348bcf739a2c7758244cf4d2fea94b84b92decd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-03.zip",
+      "rows": 2976,
+      "sha256": "084046161ca31fc30089d54e46bc42b72dfc8e589c1f5edb7a91ed944e7969ed",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "6e8a4f74a67572cbbb32bafdc4c6fc55d3769c5dfc4c857ce2f02f83d3e8a38e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "1ea3b78a8e91d4f6675f9902bfe6757ee2af77df9905b73118dee720164226f7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "f63661edd8f9b010ca78cb6c57e79486b6779e8e59e512e2ddb0d294e4ca4b5f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "2da975064497357031bb766ed64b2005c5125e9e6e268bd68defba92c98f68a9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "2bef06d56baaadbe7aecc67addf64bc737734885c5dc1dea564334270caf2cc9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "a9c1b7466d3abbe0e0e3444a4a3969780b07d332dd732018d4318a55d047743a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "e0434c65067294e4be9b1a233e7c33339671ea733717c0c4fc1dfe2c9b0dbecc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "5c124c44a7619222d3cd3ffefdc9205fb2fa2d975b9c778517075d4b9fbb0966",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "f58601c4ab0fb94dcd258fa34654846067bc1e13b82588e09e9b5850a1e9512c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "b7103909504b8c0140820dd33a5dc1b64be672ca995cb2252c4d559ebc7d981f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "57e9537cbe82b3f10b8861fb123f7e98edf85f050bead648ce846dc584334488",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "c2d1e283b9fea33fa95b38b139ada4b30fb3cf068f93bcbf81abbb29778f1087",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "3ecfdc484e4b30248734704ff559c69d46af8a146da9ec687eeaaebb51df581b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "971cd1a202c540a74f61e3a0dadfc999b5681519a8b7ecb07171b70eeb2510f4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "1f325033c3c7264be63056d081a80d66a4abe42e8968c1803e0c14d6b3eafd25",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "58e4959b10f0979d951f9eb478869b81620c9b346eab69898e9bb05894a06943",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "889413ec1202e7bbe28b805e263efb5d129f387a1567479bf7461e65d285dc82",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "ef3ff0d37c9847285466b7d5503d0dc366485668b7de0ab693574694ec96e74b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "803e0777cecb75fd30016c3549a607a19934a2a33d901679ff55fe1fa875c3d1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "02af53d2c1529a65897408f58b7cd3e2b76b8a4bbe1acf82eb7094130948bee0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "9aadf38e1fe40a4df9fd1c2fd42887760387aac38728797588426fe0e477728f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "f3fef19ca810350df677a254a7c3870bd9e08ee164d3f616896c98c55bf5a6ca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "169895ed2e693554103fba0b3a53e80021563303c24a55d1840f241cc16f1ea2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "96cd99b4f7eda626628711d67bae04b211840447f945537dcca30893df8537c3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "3fad47ff9f381258e36d4ed8a8455779351b220351544fe329a0da2fd0e4f0cc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-05.zip",
+      "rows": 2976,
+      "sha256": "9bd5512e70d89b9067f62e66bf25e39a2e1677cdac2572a3f05f0f781122d9eb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-06.zip",
+      "rows": 2880,
+      "sha256": "8459208c4f71d6ffcfceea3a0eb6e5188fe077e3406918823c546a4d5684ed32",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-07.zip",
+      "rows": 2976,
+      "sha256": "ad7c4e6cb81f448147d46b0fb3900417916661cb25f5822e655e3171496f33ab",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-08.zip",
+      "rows": 2976,
+      "sha256": "9513d0b668b07cd30121a6c669e59c50e57c46f1ab5eb909aa6f218bb9e01a27",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-09.zip",
+      "rows": 2880,
+      "sha256": "32c720c0bbd121c9cf4aa1d7bd0a04c57767b7a6ef97e5be8ccb10f32dd3353f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-10.zip",
+      "rows": 2976,
+      "sha256": "a03e4568603580d201e080836372cb8209e1eb6a5774be302f830a425d08c5f6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-11.zip",
+      "rows": 2880,
+      "sha256": "cbce493af94cb5fda7144d3ed819aa19069e4845244b6313f2754236bb4710e1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2025-12.zip",
+      "rows": 2976,
+      "sha256": "7c83ea6816ea18d91694bd72d9237784faabeb75da7b29741910d16e645bb0da",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-01.zip",
+      "rows": 2976,
+      "sha256": "3ec7ee62cb5858680e3fb9639532901f3e681234848347cb5fffc8f8813a66c1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-02.zip",
+      "rows": 2688,
+      "sha256": "0aa734a58058f81d0733e80b69324906a9175c94f0c7e48f264804d93fc4d77a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-03.zip",
+      "rows": 2976,
+      "sha256": "075f6d6bb8bfc05cb7d608b061622e5035aa9099540e22e21d13d6f6bf92a236",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-04.zip",
+      "rows": 2880,
+      "sha256": "632fcd5c0090db4453c6b38a5b81eefa966c8fa2057bc2fa12e919a04864675b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-05.zip",
+      "rows": 2976,
+      "sha256": "a16058449eb49eedb2a044f97cdd806c1b14aa68c5e4a00a33010ab4ece799f4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-06.zip",
+      "rows": 2880,
+      "sha256": "52c0a9ef1b0c58ff6b589f7a6eadd23f642f06b73feabfd0f09e646867a4c4df",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-07.zip",
+      "rows": 2976,
+      "sha256": "14fe4281245b2be30fadf38078718950962e18b38d2a4b943bc932974aaa18f7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-08.zip",
+      "rows": 2976,
+      "sha256": "d28013156a6e290c9d06ba856b3c58e4dac8f0d4ca5bfe75a7c29feddfbea2d3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "e7e5d8981c43b77a07290d476e2f6b168ae75ce25b18d157572a1b878d04fa43",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "a8dc26845ccb6895d0a2f2a2519ea8b3a42d0f84a8697b9db83ab28f27c9b84a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "e7d4bcee34b9525fbffdf67cea95454acd79ec26db8b6c62fd5dc0d8fa8a3066",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "ae5165dbf7f32dca2f8d07d8ff033573574f354b53705c946cc4c4c04cbedd36",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "30cca17acf73b2827fb3607e96b1c2bb315431c2cb2eff78e79c7218a7682c63",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "f81e4510cfb034c24c7e58d0ad38963bbfb1f206b3c84e52a62604031ba01545",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "9b77af177c20dca53cd5f73d295e389f89732172d35b817a6013f0fe07ef7754",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "118b55f3872d886a863c5dd82a177a26b29e53e87109864ff135b7ab15e42a94",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "3ce85af3b55804f758602356dbb3ff6ab6dd894113cc52495623652226218604",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "647f1b74184ed2469aeeefac52b94fe657c07f72339bb79780932eb638250f2e",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "b5eaa7dfbcb29664af67a190f1a2f7a6d699bab0d437b0e67e6cb4b795587902",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "1e46cd9a7d491f93669d21933437253da823ac5e5cf51e23c2f58813cd992ed6",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "61af82a48a68556cf292794e6568ba4806bb990d639039cd3a468ff9e61a8e52",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "da602bb416a1c812102d6155883a36c3dff6bef4ae7fdfe1ad84d1a8a6f4a36b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "dd57358e4c01c9927be228278db28c42f14da2e00f7a1b26fdb544a76ed1730f",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "35ca82888751ca0cf1e615762af41ef2e3fadab077a79a5d32785633da528f3d",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "bdf94889d8f76f60279acf4bcb653ce1cbc3492e1acb131e0c3a973268c8b6f4",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "78a5be785ae10de3e40a6a81e1394011ab6f83130b5933022d46c33d1b922e0d",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "1fc1581474f1fe4f0bc027eb2905b58b26c65e83e4efef35c363405a1cdf8797",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "38f1eb80707961d87e4bcdda9de180f1ce0046dccb2496c24613f6f5bbf0c7c8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "06d1ddd9692beab1d079d99ba55dbf7c0031dcb24979cb61684195ff3e404aae",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "02383962695a85897bf2c83172fa85813cbe9c5101c883a175dc0b624cb51100",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "3bdb09a86933afb41fb7d076feb0ec87c6daf864024d5257f6ff01290777781e",
+      "source": "bulk_daily"
+    }
+  ],
+  "first_open_ms": 1578556800000,
+  "gaps": [],
+  "last_open_ms": 1792756800000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "LTCUSDT",
+  "rows": 238001,
+  "tf": "15m"
+}

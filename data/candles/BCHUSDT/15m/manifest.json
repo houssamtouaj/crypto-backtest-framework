@@ -1,0 +1,640 @@
+{
+  "ccxt_ranges": [
+    {
+      "end_ms": 1792756800000,
+      "purpose": "tail",
+      "rows": 48,
+      "start_ms": 1792713600000
+    }
+  ],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-23",
+  "files": [
+    {
+      "name": "BCHUSDT-15m-2020-01.zip",
+      "rows": 2976,
+      "sha256": "9d5806d8e6654adc615410a79a64cad358fa730ab8172f33dff37e4f368b5656",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-02.zip",
+      "rows": 2784,
+      "sha256": "2aa26c09cbf5fed98442f5117ef2e4e0ea044119815495a7a682032d20dbf754",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-03.zip",
+      "rows": 2976,
+      "sha256": "c6be0e521db2eafb03aaf5022eb7a9028e3b0f6f093dd2691eebb3a596235e6c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-04.zip",
+      "rows": 2880,
+      "sha256": "c2487389609e22690160fabd568f8e19098a6f860bb91485b8eaed1d83a81c16",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "1c6acb78187b805221f7cfcce8d5c45506a2984a6c4ac6528e3ed9421b20fb5e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-06.zip",
+      "rows": 2880,
+      "sha256": "8fe272bb12f2180a505e047c6b14a9b4ce3e1d3444f4051422228b7ec52be019",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "816a405396cd85dc100fa45557a8123109c7739215fa9c1aa72240b92fe4daf4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "a214307738e26560a194950c105db34edb70a6cd6020f6438160ac1a3897edbd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "e5b9eb6d3a3d0f9dfaad285a4c8693d1e622da522c6f39883dd206e133271321",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "1326d95fe4be294b5d186fe0cd0f63600ac44d55b278c8adb9c07cb182a33e35",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-11.zip",
+      "rows": 2880,
+      "sha256": "1b701c4895ff557845240d440ab0e5fd06fad982636b21ca74878f121bdc947b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2020-12.zip",
+      "rows": 2976,
+      "sha256": "93f272bc6d34db70eee871ea8c1ec201308afb2195641e73749def71a61887c6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "d9f7ec28c753650af606ad3eb685b798f50081e4acd2cf420f3d1fe9812405a9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-02.zip",
+      "rows": 2688,
+      "sha256": "81ee5404d4e7e19c6d4c886bbec5af073d09583de504f22e16c2c9e24433b03f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-03.zip",
+      "rows": 2976,
+      "sha256": "9083722eb0db458699a20b4b51d65ebb8854f34d537f84a314557ac93ce3815f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-04.zip",
+      "rows": 2880,
+      "sha256": "f297749da9e1fec264c2a6b534e086e22fb7fcd76fa6d1bcdb91dcadb5699d02",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "9e8a3baccb3561dd679a2fe480cbe0298965b18edcd3acfc5f5ac8473f6f93bf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "359c3c1bffe94307387cd5a38866168a291af30ec874461bbb313de798da4a04",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "ffc6ab4cc70ac5d3f56ebdc47c0c58a787d06566767d309aa31f867b39b25c65",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-08.zip",
+      "rows": 2976,
+      "sha256": "74d4d0f8b403378f2f2cd919597e0929937bf6ca6dcc4c47287fbcce15e0b0b8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-09.zip",
+      "rows": 2880,
+      "sha256": "3c070f33b62dd94b85e1de9250d3f64ff66b3ed324fbec5ab094ab81cda2cf3c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "da5f787708b1e26fcd0cc429fb422bb032e68a1ca29172305df2421a8f7ffeac",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "5aad92f7636ac1628d613a66aa45e196713197a290b0a3fac6233268dcee4477",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "55e7c2dc29af179d4c7b74ce6900f25adf78884618eed23d8ba63fb76c869194",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "a81928da6fcc7b67508e68ea5d77fc377e3edb6ad136e5c4635dd84199fc7b8f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-02.zip",
+      "rows": 2688,
+      "sha256": "abb1a68c28a93b7016613e4a56f09e78012ff2e1cd2d59c45ba87f0614777375",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "927feaf7c435a4f37dc0b23c965e9155d284ed17290c64451874774b223a9c5f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-04.zip",
+      "rows": 2880,
+      "sha256": "bf3b2a49fd3d6d394b2feb8ebc075c181d5bcda5b6f7a068ff40a2ec66d3b5e0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "c81cc20887eb4bf01e4c4389fae60abb146e7eb6befc26bbf1daed410261e897",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "104813a418649c9945cad23dc62b0f8c271b57efa47a39cb38893e5e9dbed770",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "023fe20d49a775e42a63912d72dd3211a3674f4af415cbacb794c24536cf2193",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "440cbe27319d6e2f63e408f1d5f2137126d91bf09f8d3045a6cc59cddb545c05",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "6e6cf503a641a1b7576871b704eac06825104592e8a2ce800d93af679df3f9c9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "a1d9d7c44d1e904ba1f0b70a340eca99e8bc182afba556695cec0cf179dd950b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "d610bcf280c26878018ecd634b28e2050b39919c4056abe0bdb7af08f5d81b3d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "66f6d5a5324f6ce3e709e960523be9b0f26bb4a56874aefa36ae80357ec7246d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "7679ee1050549f3fb8ef1495c86976feea496f72b8d1d56f6dfe84998af7af42",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "a649699836c30c5c05c5a27999f9e077ed6746f43db87b898842eb947b495331",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-03.zip",
+      "rows": 2976,
+      "sha256": "17cebd209a8b26430cdd116ad18c84e37f8f296464c465fced93c86a5aa7d72d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "86fd618025c3ab892329a8c4ed788b1bf2b6d997bdcac59a7ecb5e2b1363ec26",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "8f19457da8299b41718940dae5689e389fb5ff83c7274bab7c14044d44b49545",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "c79cb059e76e7ceb6709654041f3c70b3d7711b05311829f445d206db0b1e374",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "ec8c04683fbc6f5b68cc42a64ee3b3f9eab12803c7d1e69f90bcd39eacef2f18",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "71e103d15b6bb63ff0dc6f97f307901ce62ffc8a998bf9c0d6dc152ad4a63316",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "56addc74973daeff1f5611c24d83d7499de437809db96028ce704d7c70ef1f45",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "8fe53af672ada23a7cb8698b1d72910338b24df5136fd5a16423c3fb9d0f609c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "2efbaf7f1f80570ed4334d6bd32abb20b87d17a423eab1fe1044b7d0a1f902c6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "470fa3287fbd81b6d8896a5b2ff928585b8aaf6dadbd2a309b3289eac0c0c7cd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "867748221a52d39b50c714ef860d4a6290e31e64664af5876206335bf35ac915",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "393bac951b6afb0b8ee64fc0176535813bd75f90f0101db55cd3c40ae82bbdbf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "a384088def6e5887c80ca0d8a3b0f79c74a88855e79c8c27eafe89715e8370fe",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "57531fe4f78a33806c83501f7d75611184e829d659a82998992341b300ebfdcc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "e6c015d133f5d0a5689cca6148e39e9a0a590ec95f0b31ffbd93988c02248a64",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "5378411f5b0fb6666fa9a74ab73fff7da77e9c9f9eb87f625c205928fd50cf39",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "b04156c9d03d98190a47f9f98696f8ac9d59214cbdb4b9548164ee2c645eef66",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "b250d6f0f43cc66a04d7f80332d7a9682d9599a875792bc7a678803d6814f125",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "ca09c0fae02fbf6136c016a6929d95dae6ac427ef647d308f9106f2f80f124c2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "448b7a2d2dcfffe3e423ee9f2b6deb1c5fa100a5fa09462cbfbf4cfbeec7eff2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "fc9bff1b30cf3f30280a8d36f5e1d06d667a08ec8acf009b0b64800030148da0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "5433ed05802c9b6f8301550499e83f1786506e3ca01b0be3bdd9690ef1eef3f8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "73f87036db129301b6b17c795a3b02f0c9f40a928420b36bb8c6ba6b4e8effb1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "e9f2f3bacc5babfe2688da4ea182a8b4769d8517e82c80e4ebd31c15d313d077",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "b30efd22dc07973d5a9cae756bdcff0ecf1e4853900356ac1962b7b883acacc4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "3c84b2518c666148fab6f79eef77e8d2d49acd1e61d7034a7d84d8c4b8dc1bc0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-05.zip",
+      "rows": 2976,
+      "sha256": "36435fa539670ae1cde6b44b8db0fbd161bf3fe5ee06b36013602d138e876356",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-06.zip",
+      "rows": 2880,
+      "sha256": "c9ad8cfad4bbb87bc540e6218e50de95498d7fd7e4e33de6256727833ea753f4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-07.zip",
+      "rows": 2976,
+      "sha256": "05973a019078504d87be9cc758bc13e2fd5446d1aa55edbad41ca858e107a918",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-08.zip",
+      "rows": 2976,
+      "sha256": "a2b95bf057eea026fea0403859bf4db71c5ba52fd3891f666674ee6fcf2ec99b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-09.zip",
+      "rows": 2880,
+      "sha256": "336d3fccdcb957badf5f037650d2f07a59d1d24c09eb4d72022d64c710b97970",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-10.zip",
+      "rows": 2976,
+      "sha256": "7181fc8c91ea2115343b4335633ef3b8cc2eab27375be92c03cb3fcacfa8335b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-11.zip",
+      "rows": 2880,
+      "sha256": "7eb27d915054e788a4824fd283c64ef3fa713e89da45ac1cf641d7374575f4d2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2025-12.zip",
+      "rows": 2976,
+      "sha256": "cad5a6097e94bfcfa867644b952b554294078156d95df79775f1e8adfa235166",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-01.zip",
+      "rows": 2976,
+      "sha256": "eaff8cdea40f1489a9e78207f84f93afdf45514967d9cfc59f09fb18e30d7e6d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-02.zip",
+      "rows": 2688,
+      "sha256": "2c0b0ea5459a45a5a7935e2a72e2df10941725248c01dcaa22f839fd0820ee2e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-03.zip",
+      "rows": 2976,
+      "sha256": "e0efd8906dcaa74f034c1f8e87ed87b34486669d876010e96c56fc71899fd7ba",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-04.zip",
+      "rows": 2880,
+      "sha256": "0bd3be6baca33fcee57ac96f005e3247e2471e29ed8e6df85f3293e702b91b70",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-05.zip",
+      "rows": 2976,
+      "sha256": "78e05a2594d99e3473c9bbce5500f62d37ce60d38ac3738e9b9022863b07d544",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-06.zip",
+      "rows": 2880,
+      "sha256": "21bb1e0bce4cd33f8ecbfa3d429d53a4f75dad6221fdd7b1b3d9e4cda750c4d6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-07.zip",
+      "rows": 2976,
+      "sha256": "73b1a9ca66a8e444088527f38af8e90bc7519b87180af97eed8e5826901c3de2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-08.zip",
+      "rows": 2976,
+      "sha256": "f69e8dcfa184d8983e8b3dd3295e992001649bc4fc247f8574ae0aece283ff80",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "49582e810b01a7d77a65ef8c2a50895b5a7010ef5911e1a1469596ef32268fda",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "f8067b373b982b1e9cfd000c2d87285edc72422f5ca18d12c2692eb361b96207",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "cbcb5799460762588a9a0401bb416750ca1c5a46c2b4a65d3acba9a67ab56aa8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "261ce074a1d80a4d396350b072d5e54e5731afc15d7d03c8a72f9c92d5e5bbf7",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "94bcee5a663e54836a0c152e4f97fd961c5887abd08f1912c02a586f4f20f505",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "e2412fd6ea822f6e528b7605ef111c0d90036060193a50b7c5f3bdb1584f9fcd",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "05932bc5e37fdf4ca5e5ffc138f6dd286f39b58def30313518ea707d87e4ddbc",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "39fe8cb1a66cd80b6b7dab6a376b80c01f9c7f8b87587d2d38ddf84ab1aab19d",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "28e1c2d64cc21faae3d5ed7b0a93400005ccf859cf5a85df0a976b71b3572f08",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "33da1ce2f1b362438fb944d7e5bd73e42f131a4851a9b9254165e94b5830c6a8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "72a05b99d58cb37a3b379c64832690362258215b59651fb39c000a39956e9606",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "93af896007fea00b17a84c02492673d28145c41ecd7e45e84cbf07ab672662de",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "c62c24608a0602bce2e66925b385878c3f6ccbbaa313f940299ee2a77affdeb5",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "ed67eca192a992f2968123c070fde2e01c29df811cf251317706b42b69d18cc3",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "4059a9173454b56d595f5f96a452eb4c4d0f7926631166a74ffac44f338e8e88",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "5c23a341b64884f95847cf5f937080ec22d479fc726ce5f4707013bd0da1ddb3",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "63c642459ac77085925bc9ab9e444524c4192629002e3f10d49abd86a609b81d",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "5017a9519cde7a210e43f8d3673d8fe9947f9e980a1bd0a4f107042e76aeda42",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "7ad797a5452e4ac0cf86ea65de1d194a46a50224d978725791b1da40428e9d46",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "94874d3ce1bce91e5c7a5cbac99e0879cc5be9e3262fac77cf4d5d299d4d55da",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "c899805e10773ae9dc7cb94c17640f352bb37e6fe366126ce0d7c9d3c8c620fc",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "974fc9db22b7727c84390be43a24a2fa95316bb262630175c9a685354f07139c",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "2633322043088a47387c40fbf8c6f72d3868a717a3026a80d2e461562950677d",
+      "source": "bulk_daily"
+    }
+  ],
+  "first_open_ms": 1577836800000,
+  "gaps": [],
+  "last_open_ms": 1792755900000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "BCHUSDT",
+  "rows": 238800,
+  "tf": "15m"
+}

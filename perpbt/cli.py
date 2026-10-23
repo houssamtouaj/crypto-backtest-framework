@@ -2,7 +2,7 @@
 
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
-Phase 7 ``report``. Exit codes: 0 success, 1 a download, checksum,
+Phase 7 ``report``; the trend strategy ``trend universe``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -12,11 +12,11 @@ import argparse
 import logging
 import sys
 from collections.abc import Callable, Sequence
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
-from perpbt.data.bulk import ChecksumError, DownloadError
+from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
 from perpbt.data.validate import run_validate
 from perpbt.experiments import holdout as holdout_mod
@@ -30,6 +30,7 @@ DEFAULT_DATA_CONFIG = "configs/data.yaml"
 DEFAULT_PREREG = "configs/prereg.yaml"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_RUNS_DIR = "runs"
+DEFAULT_UNIVERSE = "configs/trend/universe.json"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -61,6 +62,7 @@ def _data_fetch(args: argparse.Namespace) -> int:
             ccxt_head=args.ccxt_head,
             ccxt_tail=args.ccxt_tail,
             ccxt_gaps=args.ccxt_gaps,
+            market=args.market,
         )
     except (DownloadError, ChecksumError, ValueError) as e:
         print(f"perpbt data fetch: {e}", file=sys.stderr)
@@ -77,7 +79,7 @@ def _data_validate(args: argparse.Namespace) -> int:
         return 2
     pairs = args.pairs or sorted(cfg.listing)
     try:
-        report = run_validate(cfg, pairs)
+        report = run_validate(cfg, pairs, market=args.market)
     except ValueError as e:
         print(f"perpbt data validate: {e}", file=sys.stderr)
         return 1
@@ -259,6 +261,25 @@ def _report(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- trend strategy ------------------------------------------------------------------------------
+
+
+def _trend_universe(args: argparse.Namespace) -> int:
+    from perpbt.trend.universe import rank_universe, write_universe
+
+    _log_to_stderr()
+    try:
+        block = rank_universe(args.market, today=datetime.now(timezone.utc).date())
+    except (DownloadError, ChecksumError) as e:
+        print(f"perpbt trend universe: {e}", file=sys.stderr)
+        return 1
+    write_universe(args.out, args.market, block)
+    print(f"{args.market}: {len(block['ranked'])} candidates, {len(block['dropped'])} dropped; "
+          f"members: {' '.join(block['members'])}")
+    print(f"wrote {Path(args.out).as_posix()}")
+    return 0
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -273,6 +294,10 @@ def _add_data_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--config", default=DEFAULT_DATA_CONFIG, help="DataConfig YAML (default: %(default)s)")
     p.add_argument(
         "--pairs", nargs="+", metavar="PAIR", help="pairs to process (default: every pair listed in the config)"
+    )
+    p.add_argument(
+        "--market", choices=MARKETS, default="um",
+        help="um (USDT-M perpetuals) or spot (the trend holdout; no funding, no ccxt) (default: %(default)s)",
     )
 
 
@@ -352,6 +377,13 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--grid", action="store_true", help="also write a report for every in-sample grid variant")
     _add_exp_args(report)
     report.set_defaults(handler=_report)
+
+    trend = sub.add_parser("trend", help="the daily trend-following strategy")
+    trend_sub = trend.add_subparsers(dest="trend_command", metavar="SUBCOMMAND", required=True)
+    universe = trend_sub.add_parser("universe", help="rank the point-in-time universe from the archive")
+    universe.add_argument("--market", choices=MARKETS, required=True, help="um (perpetuals) or spot (the holdout)")
+    universe.add_argument("--out", default=DEFAULT_UNIVERSE, help="universe file (default: %(default)s)")
+    universe.set_defaults(handler=_trend_universe)
 
     return parser
 

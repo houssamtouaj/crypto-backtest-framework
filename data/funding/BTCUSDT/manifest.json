@@ -18,9 +18,15 @@
       "purpose": "tail",
       "rows": 63,
       "start_ms": 1790784060000
+    },
+    {
+      "end_ms": 1792756968283,
+      "purpose": "tail",
+      "rows": 5,
+      "start_ms": 1792598460000
     }
   ],
-  "download_date": "2026-10-21",
+  "download_date": "2026-10-23",
   "files": [
     {
       "name": "BTCUSDT-fundingRate-2020-01.zip",
@@ -511,12 +517,12 @@
   ],
   "first_funding_ms": 1577836800000,
   "intervals": {
-    "8": 7458
+    "8": 7463
   },
-  "last_funding_ms": 1792598400000,
+  "last_funding_ms": 1792742400000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BTCUSDT",
-  "rows": 7458
+  "rows": 7463
 }

@@ -24,6 +24,7 @@ from perpbt.data.bulk import (
     period_end,
     period_of,
     round_to_minute,
+    snap_to_grid,
 )
 from tests.fake_archive import FakeArchive, funding_csv, kline_csv, kline_rows, zip_bytes
 
@@ -41,6 +42,30 @@ def test_kline_names_and_urls():
     assert kline_url("ETHUSDT", "1m", "2026-09-24") == (
         "https://data.binance.vision/data/futures/um/daily/klines/ETHUSDT/1m/ETHUSDT-1m-2026-09-24.zip"
     )
+
+
+def test_spot_kline_url():
+    assert kline_url("BTCUSDT", "15m", "2017-08", market="spot") == (
+        "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2017-08.zip"
+    )
+    assert kline_url("BTCUSDT", "1d", "2017-12-05", market="spot") == (
+        "https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1d/BTCUSDT-1d-2017-12-05.zip"
+    )
+
+
+def test_default_market_url_unchanged():
+    assert kline_url("BTCUSDT", "15m", "2020-01") == kline_url("BTCUSDT", "15m", "2020-01", market="um")
+    assert kline_url("BTCUSDT", "15m", "2020-01").startswith(bulk.BASE_URL + "/")
+
+
+def test_archive_start_per_market():
+    assert bulk.ARCHIVE_STARTS["spot"] == date(2017, 8, 1)
+    assert bulk.ARCHIVE_START == bulk.ARCHIVE_STARTS["um"] == date(2020, 1, 1)
+
+
+def test_unknown_market_raises():
+    with pytest.raises(ValueError, match="market"):
+        kline_url("BTCUSDT", "15m", "2020-01", market="coinm")
 
 
 def test_funding_names_and_urls():
@@ -296,3 +321,34 @@ def test_urllib_get_retries_transient_failures_but_not_404(monkeypatch):
     with pytest.raises(DownloadError, match="still down"):
         bulk.urllib_get("https://x/y.zip", attempts=4)
     assert len(attempts) == 4
+
+
+# --- off-grid archive rows (spot 2018-02-09 restart; trend Phase 0) ------------------------
+
+
+def _frame(open_ms):
+    return pd.DataFrame({"open_ms": np.asarray(open_ms, dtype=np.int64), "close": np.arange(len(open_ms), dtype=float)})
+
+
+def test_snap_to_grid_rounds_small_offsets():
+    step = 900_000
+    shifted = [T0 + 13 * 60_000 + 14_789 + k * step for k in range(3)]  # 13:14.789 past the quarter hour
+    frame = snap_to_grid(_frame([T0] + shifted + [T0 + 5 * step]), step)
+    assert frame["open_ms"].tolist() == [T0, T0 + step, T0 + 2 * step, T0 + 3 * step, T0 + 5 * step]
+    assert frame.attrs["snapped"] == 3
+    assert frame["close"].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
+
+
+def test_snap_to_grid_on_grid_is_unchanged():
+    frame = snap_to_grid(_frame([T0, T0 + 900_000]), 900_000)
+    assert frame["open_ms"].tolist() == [T0, T0 + 900_000] and frame.attrs["snapped"] == 0
+
+
+def test_snap_to_grid_leaves_far_offsets_for_the_grid_check():
+    far = T0 + 5 * 60_000  # 5 minutes off: more than a quarter step
+    assert snap_to_grid(_frame([T0, far]), 900_000)["open_ms"].tolist() == [T0, far]
+
+
+def test_snap_to_grid_collision_raises():
+    with pytest.raises(ValueError, match="same grid slot"):
+        snap_to_grid(_frame([T0, T0 + 60_000]), 900_000)
