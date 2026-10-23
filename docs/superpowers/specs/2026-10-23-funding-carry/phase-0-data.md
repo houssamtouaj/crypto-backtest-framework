@@ -81,3 +81,60 @@ before Phase 1.
 
 Spot data fetched and validated for all ten pairs, the basis check
 reviewed, tests green.
+
+## 0.7 Implementation notes (Phase 0 build, 2026-10-23)
+
+Builder's calls taken while building this phase; none changes a trading
+rule.
+
+- **Guard.** `store.SPOT_TREND_HOLDOUT_END_EXCLUSIVE` (2020-01-01 00:00 UTC)
+  is compared with a spot load's `start_ms`: a load that starts in 2019 and
+  ends in 2020 still needs `allow_holdout=True`. Spot loads under
+  `configs/trend/data-spot.yaml` (`insample_end` 2019-12-31) stay refused
+  from 2020 on by the ordinary date guard.
+- **Trend test moved.** `tests/trend/test_daily.py::test_load_dayframe_spot_needs_allow_holdout`
+  loaded spot from 2020-01-01, which §0.1 makes legal; its data now starts
+  2019-12-30 (same intent), and a new test pins that a 2020 spot DayFrame
+  loads without the flag. `trend/daily.load_dayframe`'s docstring is
+  updated; no trend behaviour changes for pre-2020 spot.
+- **Basis check as code.** `perpbt/carry/basis.py` with `perpbt carry basis`
+  (default `--config configs/carry/data.yaml`) writes the committed
+  `runs/carry/basis_check.json`. The window 2020-07-01..2023-12-31 is a
+  module constant, not a parameter, so no config can move it into the
+  holdout; both legs load through the guarded stores without
+  `allow_holdout`. Coverage is common slots over the window's 15m grid
+  slots (122,784).
+- **Fetch.** The spot fetch starts at `max(--from, listing)`, rounded to the
+  month: every pair has spot from 2020-01-01 00:00 (LINK and the other
+  January perps included).
+
+**Data facts for later phases** (fetched 2026-10-23):
+
+- Spot, all ten pairs, 2020-01-01 → 2026-10-20 23:45 (EOSUSDT → 2025-05-26
+  02:45; its 523 later daily files are not published). 0 overlap
+  mismatches, 0 snapped candles from 2020 (the 81 snapped in BTC, ETH, LTC
+  are the 2018-02-09 restart).
+- The same 15 spot gaps from 2020 in every pair, exchange-wide, 152 slots,
+  the longest 23 slots (2020-02-19 11:45 → 17:30); 10 of them (93 slots)
+  fall in 2020-07-01..2023-12-31, none after 2023-03-24. None covers
+  00:00–01:00 UTC, so no in-sample 00:15 fill lands in a spot gap. Perps
+  have no gaps.
+- EOSUSDT: the perp's last candle is 2025-05-21 09:00, the spot's
+  2025-05-26 02:45; the pair's common last day is the perp's.
+
+**Basis check (2020-07-01..2023-12-31).** Coverage 0.9992 in every pair
+(perp 122,784 rows, spot 122,691, all spot slots also perp slots). Medians
+−0.05% … 0.00%, 1st/99th percentiles within ±0.4%: no symbol mapping
+error. Three pairs exceed the 20% max limit, all in the 2021-05-19 crash
+(13:30 UTC; XLM 12:45): BCH −45.5%, XLM −27.2%, TRX −21.8% (ETC 18.4%, LTC
+14.9%, EOS 14.6%, LINK 12.9%, XRP 10.8%, ETH 9.6%, BTC 4.0% at the same
+slot). Both legs trade heavy volume there; the perp falls far below spot
+during the liquidation cascade and the basis is back to 1–2% within 45
+minutes. These are real prices, kept as they are; they bear on the margin
+rule (CD7: liquidation at the day high of the short) only on the up side,
+and on basis P&L if a sleeve is entered or exited on that day.
+Other days with any |basis| > 5%: BCH 2020-11-15 (−4% … −7% for the 12
+hours before the BCH/BCHA fork snapshot at 12:00 UTC: spot carried the
+airdrop entitlement, the perp did not; a long-spot sleeve held across the
+fork would lose that step without the airdrop credit, which the backtest
+does not model; conservative) and XLM 2023-08-17 21:30 (one slot, −5.7%).

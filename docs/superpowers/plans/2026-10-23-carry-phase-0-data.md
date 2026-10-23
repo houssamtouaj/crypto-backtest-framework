@@ -110,3 +110,10 @@
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-0-data.md
 - Ruling: `tests/trend/test_daily.py::test_load_dayframe_spot_needs_allow_holdout` loads spot from 2020-01-01, which the spec's split makes legal; its dates move to 2019-12-30 (same intent: the trend spot holdout needs the flag) and a new test pins the 2020 case — cost if wrong: none (test data only).
 - Ruling: the basis check lives in `perpbt/carry/basis.py` with a CLI `perpbt carry basis` and a committed `runs/carry/basis_check.json`, so the check is reproducible; its window is a module constant, so no config can move it into the holdout — cost if wrong: one small module Phase 1 does not need.
+Task 1: complete (c139b53; python -m pytest tests/test_store.py tests/trend -q -m 'not slow' → 194 passed)
+- Task 1: Ruling: the guard test for the trend spot config sets insample_start/warmup 2017-08-01 (a DataConfig refuses insample_start after insample_end) — cost: none.
+Task 2: complete (b164e17; tests/carry → 4 passed)
+Task 3: complete (963aadf; tests/carry tests/test_cli.py tests/trend/test_imports.py → 34 passed)
+- Task 3: Ruling: `carry basis` exits 2 on missing data (FileNotFoundError) and 1 on a refused load (HoldoutAccessError), the CLI's convention — cost: none.
+Task 4: complete (7e561af): ten foreground fetches, about 2.5 min each; validate exit 0; 0 overlap mismatches; same 15 exchange-wide gaps from 2020 in every pair (152 slots, longest 23); EOSUSDT spot ends 2025-05-26 02:45 (523 unpublished daily files after it).
+Task 5: basis check run (1.7 s): coverage 0.9992 all pairs; medians −0.05%..0.00%; flagged max_abs: BCH −45.5%, XLM −27.2%, TRX −21.8%, all 2021-05-19 crash (real, reverted within 45 min); BCH 2020-11-15 fork-day premium −4..−7% (airdrop not modelled) → reported to the user, spec §0.7.
