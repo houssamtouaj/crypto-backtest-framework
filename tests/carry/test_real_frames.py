@@ -12,7 +12,7 @@ import pytest
 
 from perpbt.carry.config import CarrySignalConfig
 from perpbt.carry.frames import CARRY_INSAMPLE_END, load_pairframe
-from perpbt.carry.signals import compute_signals
+from perpbt.carry.signals import compute_signals, on_off
 from perpbt.config import DataConfig, from_dict, load_yaml, to_dict
 from perpbt.data.store import DAY_MS, CandleStore, HoldoutAccessError, date_ms
 from perpbt.trend.daily import MAX_FILLED_RUN, filled_runs
@@ -39,6 +39,17 @@ def cfg():
 PAIRS = sorted(load_yaml(ROOT / "configs" / "carry" / "data.yaml", DataConfig).listing)
 
 
+def _per_event_fbar(ptr, rate, interval_h, w):
+    """Phase 1's formula: the per-event mean of per-day rates over the window, × 365."""
+    per_day = rate * 24.0 / interval_h.astype(np.float64)
+    out = np.full(len(ptr) - 1, np.nan)
+    for d in range(w - 1, len(ptr) - 1):
+        e = per_day[ptr[d - w + 1]:ptr[d + 1]]
+        if len(e):
+            out[d] = e.mean() * 365
+    return out
+
+
 @pytest.mark.parametrize("pair", PAIRS)
 def test_pairframe_in_sample(cfg, pair):
     pf = load_pairframe(cfg, pair, end=CARRY_INSAMPLE_END)
@@ -59,6 +70,11 @@ def test_pairframe_in_sample(cfg, pair):
                                                               "exit_annual": 0.0}))
         assert np.isnan(s.fbar[: w - 1]).all() and np.isfinite(s.fbar[w - 1:]).all()
         assert s.on.dtype == bool and len(s.on) == len(pf)
+        # Phase 2 made f̄ time-weighted; with every in-sample event at 8 h the state equals the Phase 1
+        # per-event mean's (spec Phase 2 §2.6)
+        ref = _per_event_fbar(pf.perp.funding_ptr, pf.perp.funding_rate, pf.funding_interval_h, w)
+        np.testing.assert_allclose(s.fbar, ref, rtol=1e-12, equal_nan=True)
+        assert np.array_equal(s.on, on_off(ref, 0.10, 0.0))
 
 
 @pytest.mark.parametrize("config", ["carry/data.yaml", "trend/data.yaml"])

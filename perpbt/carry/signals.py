@@ -1,10 +1,11 @@
 """Trailing funding and the on/off state (carry spec Phase 1 §1.2-§1.3).
 
-``f̄_d`` is the mean of the pair's realised funding rates on days
-``d-W+1 .. d``, each event first normalised to a per-day rate
-(``rate × 24 / interval_h``, so a pair that moved to 4 h funding is
-annualised correctly), times 365. It is NaN until the window lies inside the
-frame and wherever the window holds no event. The state turns on above
+``f̄_d`` is the funding the pair's realised rates on days ``d-W+1 .. d``
+pay per hour covered, annualised: ``Σ rate_e × 24 / Σ interval_h_e × 365``
+(time-weighted, carry spec Phase 2 §2.6: a pair that moved to 4 h funding is
+annualised correctly and a 4 h event weighs half an 8 h one; in steady state
+this is the mean rate × events per day × 365). It is NaN until the window
+lies inside the frame and wherever the window holds no event. The state turns on above
 ``entry``, off below ``exit``, otherwise keeps the previous day's (initially
 off); NaN is off. ``on[d]`` is the decision at day ``d``'s close for the fill
 on ``d + 1``.
@@ -45,18 +46,17 @@ def trailing_funding(ptr: np.ndarray, rate: np.ndarray, interval_h: np.ndarray, 
     if not (len(rate) == len(interval_h) == ptr[-1]) or ptr[0] != 0 or np.any(np.diff(ptr) < 0):
         raise ValueError("ptr must run from 0 to the number of events, non-decreasing, with rate and interval_h aligned")
     n = len(ptr) - 1
-    per_day = rate * (24.0 / interval_h.astype(np.float64))
     day = np.repeat(np.arange(n), np.diff(ptr))
-    sums = np.zeros(n)
-    np.add.at(sums, day, per_day)
-    counts = np.diff(ptr).astype(np.float64)
+    sums, hours = np.zeros(n), np.zeros(n)
+    np.add.at(sums, day, rate)
+    np.add.at(hours, day, interval_h.astype(np.float64))
     out = np.full(n, np.nan)
     if n >= lookback_days:
         s = sliding_window_view(sums, lookback_days).sum(axis=1)
-        c = sliding_window_view(counts, lookback_days).sum(axis=1)
-        has = c > 0
+        h = sliding_window_view(hours, lookback_days).sum(axis=1)
+        has = h > 0
         tail = np.full(len(s), np.nan)
-        tail[has] = s[has] / c[has] * DAYS_PER_YEAR
+        tail[has] = s[has] * 24.0 / h[has] * DAYS_PER_YEAR
         out[lookback_days - 1:] = tail
     return out
 
