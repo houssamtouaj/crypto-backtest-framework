@@ -71,10 +71,10 @@ class FakeArchive:
             digest = ("0" * 64 + f"  {name}\n").encode()
         self.files[url + ".CHECKSUM"] = digest
 
-    def add_klines(self, pair, tf, period, rows, *, header=True, unit="ms", corrupt_checksum=False) -> str:
+    def add_klines(self, pair, tf, period, rows, *, header=True, unit="ms", corrupt_checksum=False, market="um") -> str:
         name = kline_name(pair, tf, period)
         data = zip_bytes(name[:-4] + ".csv", kline_csv(rows, header=header, unit=unit))
-        self.put(kline_url(pair, tf, period), data, corrupt_checksum=corrupt_checksum)
+        self.put(kline_url(pair, tf, period, market=market), data, corrupt_checksum=corrupt_checksum)
         return name
 
     def add_funding(self, pair, period, rows, *, header=True, unit="ms", corrupt_checksum=False) -> str:

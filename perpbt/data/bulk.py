@@ -21,8 +21,17 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-BASE_URL = "https://data.binance.vision/data/futures/um"
-ARCHIVE_START = date(2020, 1, 1)  # first month with USDT-M futures files (2019-12 is 404; verified 2026-09-26)
+MARKETS = ("um", "spot")
+BASE_URLS = {
+    "um": "https://data.binance.vision/data/futures/um",
+    "spot": "https://data.binance.vision/data/spot",  # no funding files
+}
+ARCHIVE_STARTS = {
+    "um": date(2020, 1, 1),  # first month with USDT-M futures files (2019-12 is 404; verified 2026-09-26)
+    "spot": date(2017, 8, 1),  # BTCUSDT-15m-2017-08 is the earliest spot file; later symbols start later
+}
+BASE_URL = BASE_URLS["um"]
+ARCHIVE_START = ARCHIVE_STARTS["um"]
 MICROSECOND_THRESHOLD = 100_000_000_000_000  # 1e14: a timestamp above this is microseconds (spec §1.1)
 
 KLINE_CSV_COLUMNS = [
@@ -64,8 +73,16 @@ def kline_name(pair: str, tf: str, period: str) -> str:
     return f"{pair}-{tf}-{period}.zip"
 
 
-def kline_url(pair: str, tf: str, period: str) -> str:
-    return f"{BASE_URL}/{_scope(period)}/klines/{pair}/{tf}/{kline_name(pair, tf, period)}"
+def market_base(market: str) -> str:
+    """Archive base URL of ``market`` ("um" for USDT-M perpetuals, "spot")."""
+    try:
+        return BASE_URLS[market]
+    except KeyError:
+        raise ValueError(f"unknown market {market!r}; expected one of {list(MARKETS)}") from None
+
+
+def kline_url(pair: str, tf: str, period: str, market: str = "um") -> str:
+    return f"{market_base(market)}/{_scope(period)}/klines/{pair}/{tf}/{kline_name(pair, tf, period)}"
 
 
 def funding_name(pair: str, period: str) -> str:

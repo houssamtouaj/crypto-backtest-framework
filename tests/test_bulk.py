@@ -43,6 +43,30 @@ def test_kline_names_and_urls():
     )
 
 
+def test_spot_kline_url():
+    assert kline_url("BTCUSDT", "15m", "2017-08", market="spot") == (
+        "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/15m/BTCUSDT-15m-2017-08.zip"
+    )
+    assert kline_url("BTCUSDT", "1d", "2017-12-05", market="spot") == (
+        "https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1d/BTCUSDT-1d-2017-12-05.zip"
+    )
+
+
+def test_default_market_url_unchanged():
+    assert kline_url("BTCUSDT", "15m", "2020-01") == kline_url("BTCUSDT", "15m", "2020-01", market="um")
+    assert kline_url("BTCUSDT", "15m", "2020-01").startswith(bulk.BASE_URL + "/")
+
+
+def test_archive_start_per_market():
+    assert bulk.ARCHIVE_STARTS["spot"] == date(2017, 8, 1)
+    assert bulk.ARCHIVE_START == bulk.ARCHIVE_STARTS["um"] == date(2020, 1, 1)
+
+
+def test_unknown_market_raises():
+    with pytest.raises(ValueError, match="market"):
+        kline_url("BTCUSDT", "15m", "2020-01", market="coinm")
+
+
 def test_funding_names_and_urls():
     assert funding_name("BTCUSDT", "2020-01") == "BTCUSDT-fundingRate-2020-01.zip"
     assert funding_url("BTCUSDT", "2020-01") == (
