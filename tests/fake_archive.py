@@ -2,15 +2,22 @@
 
 ``FakeArchive`` maps URLs to bytes; any URL it does not know is a 404 (``None``),
 exactly like ``bulk.urllib_get``. It records every GET so tests can assert
-what was (not) downloaded.
+what was (not) downloaded. A GET on the S3 listing endpoint
+(``perpbt.trend.universe.LISTING_URL``) answers a ``ListBucketResult`` built
+from the stored files, ``page_size`` entries per page, as S3 does.
 """
 from __future__ import annotations
 
 import hashlib
 import io
 import zipfile
+from urllib.parse import parse_qs, urlsplit
+from xml.sax.saxutils import escape
 
 from perpbt.data.bulk import funding_name, funding_url, kline_name, kline_url
+from perpbt.trend.universe import LISTING_URL
+
+ARCHIVE_HOST = "https://data.binance.vision/"
 
 KLINE_HEADER = (
     "open_time,open,high,low,close,volume,close_time,quote_volume,count,"
@@ -59,9 +66,10 @@ def checksum_bytes(data: bytes, name: str) -> bytes:
 
 
 class FakeArchive:
-    def __init__(self) -> None:
+    def __init__(self, *, page_size: int = 1000) -> None:
         self.files: dict[str, bytes] = {}
         self.calls: list[str] = []
+        self.page_size = page_size
 
     def put(self, url: str, data: bytes, *, corrupt_checksum: bool = False) -> None:
         name = url.rsplit("/", 1)[1]
@@ -85,7 +93,41 @@ class FakeArchive:
 
     def __call__(self, url: str) -> bytes | None:
         self.calls.append(url)
+        if url.startswith(LISTING_URL + "?"):
+            return self._listing(url)
         return self.files.get(url)
+
+    def listing_gets(self) -> list[str]:
+        return [u for u in self.calls if u.startswith(LISTING_URL + "?")]
+
+    def _listing(self, url: str) -> bytes:
+        q = {k: v[0] for k, v in parse_qs(urlsplit(url).query, keep_blank_values=True).items()}
+        prefix, delimiter, marker = q.get("prefix", ""), q.get("delimiter") or None, q.get("marker", "")
+        keys = sorted(u[len(ARCHIVE_HOST):] for u in self.files if u.startswith(ARCHIVE_HOST))
+        entries: dict[str, bool] = {}  # name -> is a common prefix
+        for key in keys:
+            if not key.startswith(prefix):
+                continue
+            rest = key[len(prefix):]
+            if delimiter and delimiter in rest:
+                entries[prefix + rest[: rest.index(delimiter) + 1]] = True
+            else:
+                entries[key] = False
+        names = [n for n in sorted(entries) if n > marker]
+        page, truncated = names[: self.page_size], len(names) > self.page_size
+        parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+                 f"<Name>data.binance.vision</Name><Prefix>{escape(prefix)}</Prefix><Marker>{escape(marker)}</Marker>"]
+        if truncated and delimiter:  # S3 sends NextMarker only with a delimiter
+            parts.append(f"<NextMarker>{escape(page[-1])}</NextMarker>")
+        parts.append(f"<IsTruncated>{'true' if truncated else 'false'}</IsTruncated>")
+        for n in page:
+            if entries[n]:
+                parts.append(f"<CommonPrefixes><Prefix>{escape(n)}</Prefix></CommonPrefixes>")
+            else:
+                parts.append(f"<Contents><Key>{escape(n)}</Key><Size>1</Size></Contents>")
+        parts.append("</ListBucketResult>")
+        return "".join(parts).encode()
 
     def zip_gets(self) -> list[str]:
         """Names of the zips requested so far (checksum requests excluded)."""
