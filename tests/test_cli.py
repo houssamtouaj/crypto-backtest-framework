@@ -102,7 +102,7 @@ def test_data_fetch_passes_arguments_to_the_pipeline(monkeypatch, config_path, c
     assert isinstance(cfg, DataConfig) and cfg.listing["BTCUSDT"] == "2019-09-08"
     assert kw == {
         "pairs": ["BTCUSDT"], "tfs": ("15m",), "from_date": date(2026, 9, 20), "to_date": date(2026, 9, 26),
-        "ccxt_head": False, "ccxt_tail": True, "ccxt_gaps": True,
+        "ccxt_head": False, "ccxt_tail": True, "ccxt_gaps": True, "market": "um",
     }
     out = capsys.readouterr().out
     assert "BTCUSDT 15m: rows=5 files=1" in out and "BTCUSDT funding: rows=0" in out
@@ -114,8 +114,21 @@ def test_data_fetch_defaults(monkeypatch, config_path):
     assert main(["data", "fetch", "--config", str(config_path)]) == 0
     assert calls == [{
         "pairs": ["BTCUSDT", "ETHUSDT"], "tfs": ("1m", "15m"), "from_date": None, "to_date": None,
-        "ccxt_head": False, "ccxt_tail": False, "ccxt_gaps": False,
+        "ccxt_head": False, "ccxt_tail": False, "ccxt_gaps": False, "market": "um",
     }]
+
+
+def test_data_fetch_and_validate_market_flag(monkeypatch, config_path):
+    fetched, validated = [], []
+    monkeypatch.setattr(cli, "run_fetch", lambda cfg, **kw: fetched.append(kw["market"]) or {})
+    monkeypatch.setattr(cli, "run_validate", lambda cfg, pairs, market: validated.append(market) or {})
+    assert main(["data", "fetch", "--config", str(config_path), "--market", "spot", "--tfs", "15m"]) == 0
+    assert main(["data", "validate", "--config", str(config_path), "--market", "spot"]) == 0
+    assert main(["data", "validate", "--config", str(config_path)]) == 0
+    assert fetched == ["spot"] and validated == ["spot", "um"]
+    with pytest.raises(SystemExit) as exc:
+        main(["data", "fetch", "--config", str(config_path), "--market", "coinm"])
+    assert exc.value.code == 2
 
 
 def test_data_fetch_rejects_unknown_timeframe_and_bad_date(config_path):
@@ -148,7 +161,7 @@ def test_data_fetch_download_error_is_exit_1(monkeypatch, config_path, capsys):
 def test_data_validate_prints_the_report(monkeypatch, config_path, capsys):
     calls = []
 
-    def fake_run_validate(cfg, pairs):
+    def fake_run_validate(cfg, pairs, market):
         calls.append(pairs)
         return {"BTCUSDT": {"15m": {"rows": 3, "gaps": 1, "missing_slots": 3}}, "ETHUSDT": {}}
 
@@ -161,7 +174,7 @@ def test_data_validate_prints_the_report(monkeypatch, config_path, capsys):
 
 
 def test_data_validate_hard_failure_is_exit_1(monkeypatch, config_path, capsys):
-    def boom(cfg, pairs):
+    def boom(cfg, pairs, market):
         raise ValueError("timestamps are off the grid")
 
     monkeypatch.setattr(cli, "run_validate", boom)

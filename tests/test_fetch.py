@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from perpbt.data.bulk import ChecksumError, kline_name
-from perpbt.data.fetch import fetch_gaps, fetch_head, fetch_tail, run_fetch, sync_candles, sync_funding
+from perpbt.config import DataConfig, to_dict
+from perpbt.data.bulk import ChecksumError, kline_name, period_of
+from perpbt.data.fetch import fetch_gaps, fetch_head, fetch_tail, is_stale, run_fetch, sync_candles, sync_funding
 from perpbt.data.store import CandleStore, FundingStore, date_ms
 from perpbt.data.validate import run_validate
 from tests.fake_archive import FakeArchive, kline_rows
@@ -411,6 +412,86 @@ def test_run_fetch_without_ccxt_flags_never_builds_an_exchange(data_cfg, archive
         exchange_factory=factory, today=TODAY, now_ms=NOW_MS,
     )
     assert summary["BTCUSDT"]["15m"]["rows"] == 24 and "ccxt_tail" not in summary["BTCUSDT"]
+
+
+# --- markets and delisted pairs (trend Phase 0 §0.1) ----------------------------------------
+
+
+@pytest.fixture
+def spot_cfg(data_cfg):
+    return DataConfig(**{**to_dict(data_cfg), "insample_start": "2017-08-01", "insample_end": "2019-12-31",
+                         "holdout_start": "2020-01-01", "warmup_start": "2017-08-01",
+                         "listing": {"BTCUSDT": "2017-08-17"}})
+
+
+def spot_archive():
+    a = FakeArchive()
+    a.add_klines("BTCUSDT", "15m", "2017-12", day_rows("2017-12-01"), market="spot")
+    a.add_klines("BTCUSDT", "15m", "2018-01", day_rows("2018-01-01"), market="spot")
+    return a
+
+
+def spot_fetch(cfg, archive, **kw):
+    kw = {"from_date": date(2017, 12, 1), "to_date": date(2018, 1, 31), **kw}
+    return run_fetch(cfg, pairs=["BTCUSDT"], tfs=("15m",), market="spot", today=TODAY, now_ms=NOW_MS,
+                     http_get=archive, **kw)
+
+
+def test_spot_fetch_writes_spot_store_and_no_funding(spot_cfg, tmp_data_dir):
+    archive = spot_archive()
+    summary = spot_fetch(spot_cfg, archive)
+    assert summary["BTCUSDT"]["15m"]["rows"] == 8 and summary["BTCUSDT"]["15m"]["files"] == 2
+    assert "funding" not in summary["BTCUSDT"]
+    assert sorted(p.name for p in (tmp_data_dir / "spot" / "candles" / "BTCUSDT" / "15m").glob("*.parquet")) == [
+        "2017.parquet", "2018.parquet",
+    ]
+    assert not (tmp_data_dir / "candles").exists() and not (tmp_data_dir / "funding").exists()
+    assert not any("fundingRate" in u for u in archive.calls)
+    assert all("/data/spot/" in u for u in archive.calls)
+    assert CandleStore(spot_cfg, market="spot").manifest("BTCUSDT", "15m")["rows"] == 8
+
+
+def test_spot_months_before_archive_start_not_requested(spot_cfg):
+    cfg = DataConfig(**{**to_dict(spot_cfg), "listing": {"BTCUSDT": "2017-01-01"}})
+    archive = spot_archive()
+    spot_fetch(cfg, archive, from_date=date(2017, 1, 1))
+    assert min(period_of(n) for n in archive.zip_gets()) == "2017-08"  # the spot archive start, not 2017-01
+
+
+def test_spot_refuses_ccxt_flags(spot_cfg):
+    for flag in ("ccxt_head", "ccxt_tail", "ccxt_gaps"):
+        with pytest.raises(ValueError, match="spot"):
+            spot_fetch(spot_cfg, spot_archive(), **{flag: True})
+
+
+def test_stale_pair_skips_ccxt_tail_and_gaps(data_cfg):
+    old = day_rows("2026-08-20", 96)
+    a = FakeArchive()
+    a.add_klines("ETHUSDT", "15m", "2026-08-20", old[:10] + old[20:])  # ends 38 days before TODAY, one gap
+    a.add_klines("BTCUSDT", "15m", "2026-09-25", day_rows("2026-09-25", 96))
+    exchange = FakeExchange(ccxt_candles(date_ms("2026-08-20"), 40 * 96))
+    summary = run_fetch(
+        data_cfg, pairs=["ETHUSDT", "BTCUSDT"], tfs=("15m",), from_date=date(2026, 8, 20), ccxt_tail=True,
+        ccxt_gaps=True, http_get=a, exchange_factory=lambda: exchange, today=TODAY, now_ms=NOW_MS,
+    )
+    assert summary["ETHUSDT"]["ccxt_skipped"] == "delisted"
+    assert "ccxt_tail" not in summary["ETHUSDT"] and "ccxt_gaps" not in summary["ETHUSDT"]
+    assert all(call[1] != "ETH/USDT:USDT" for call in exchange.calls)
+    assert summary["BTCUSDT"]["ccxt_tail"]["15m"] > 0 and "ccxt_skipped" not in summary["BTCUSDT"]
+
+
+def test_is_stale():
+    assert not is_stale({"last_open_ms": None}, TODAY)
+    assert not is_stale({"last_open_ms": date_ms("2026-09-20")}, TODAY)  # exactly 7 days
+    assert is_stale({"last_open_ms": date_ms("2026-09-20") - STEP}, TODAY)
+
+
+def test_validate_spot(spot_cfg):
+    spot_fetch(spot_cfg, spot_archive())
+    report = run_validate(spot_cfg, ["BTCUSDT"], market="spot")
+    assert report["BTCUSDT"]["15m"]["rows"] == 8 and "funding" not in report["BTCUSDT"]
+    assert report["BTCUSDT"]["15m"]["gaps"] == 1
+    assert len(CandleStore(spot_cfg, market="spot").manifest("BTCUSDT", "15m")["gaps"]) == 1
 
 
 # --- run_validate ------------------------------------------------------------------------

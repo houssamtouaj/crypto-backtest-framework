@@ -16,7 +16,7 @@ from datetime import date
 from pathlib import Path
 
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
-from perpbt.data.bulk import ChecksumError, DownloadError
+from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
 from perpbt.data.validate import run_validate
 from perpbt.experiments import holdout as holdout_mod
@@ -61,6 +61,7 @@ def _data_fetch(args: argparse.Namespace) -> int:
             ccxt_head=args.ccxt_head,
             ccxt_tail=args.ccxt_tail,
             ccxt_gaps=args.ccxt_gaps,
+            market=args.market,
         )
     except (DownloadError, ChecksumError, ValueError) as e:
         print(f"perpbt data fetch: {e}", file=sys.stderr)
@@ -77,7 +78,7 @@ def _data_validate(args: argparse.Namespace) -> int:
         return 2
     pairs = args.pairs or sorted(cfg.listing)
     try:
-        report = run_validate(cfg, pairs)
+        report = run_validate(cfg, pairs, market=args.market)
     except ValueError as e:
         print(f"perpbt data validate: {e}", file=sys.stderr)
         return 1
@@ -273,6 +274,10 @@ def _add_data_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--config", default=DEFAULT_DATA_CONFIG, help="DataConfig YAML (default: %(default)s)")
     p.add_argument(
         "--pairs", nargs="+", metavar="PAIR", help="pairs to process (default: every pair listed in the config)"
+    )
+    p.add_argument(
+        "--market", choices=MARKETS, default="um",
+        help="um (USDT-M perpetuals) or spot (the trend holdout; no funding, no ccxt) (default: %(default)s)",
     )
 
 
