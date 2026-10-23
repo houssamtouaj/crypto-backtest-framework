@@ -5,6 +5,7 @@
   },
   "pairs": {
     "BCHUSDT": {
+      "basis_at_max_abs": -0.4546842621878068,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": true,
@@ -21,6 +22,7 @@
       "spot_rows": 122691
     },
     "BTCUSDT": {
+      "basis_at_max_abs": -0.04027323608102129,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -35,6 +37,7 @@
       "spot_rows": 122691
     },
     "EOSUSDT": {
+      "basis_at_max_abs": -0.14604323584075118,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -49,6 +52,7 @@
       "spot_rows": 122691
     },
     "ETCUSDT": {
+      "basis_at_max_abs": -0.18411330049261077,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -63,6 +67,7 @@
       "spot_rows": 122691
     },
     "ETHUSDT": {
+      "basis_at_max_abs": -0.09618771305736584,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -77,6 +82,7 @@
       "spot_rows": 122691
     },
     "LINKUSDT": {
+      "basis_at_max_abs": -0.12853023934414842,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -91,6 +97,7 @@
       "spot_rows": 122691
     },
     "LTCUSDT": {
+      "basis_at_max_abs": -0.14925660395515572,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,
@@ -105,6 +112,7 @@
       "spot_rows": 122691
     },
     "TRXUSDT": {
+      "basis_at_max_abs": -0.21764705882352953,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": true,
@@ -121,6 +129,7 @@
       "spot_rows": 122691
     },
     "XLMUSDT": {
+      "basis_at_max_abs": -0.27209609874366325,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": true,
@@ -137,6 +146,7 @@
       "spot_rows": 122691
     },
     "XRPUSDT": {
+      "basis_at_max_abs": -0.10838562464346835,
       "common": 122691,
       "coverage": 0.9992425723221267,
       "flagged": false,

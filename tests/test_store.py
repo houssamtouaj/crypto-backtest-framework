@@ -11,6 +11,7 @@ from perpbt.data.store import (
     Funding,
     FundingStore,
     HoldoutAccessError,
+    SPOT_CARRY_HOLDOUT_START,
     SPOT_TREND_HOLDOUT_END_EXCLUSIVE,
     MergeStats,
     date_ms,
@@ -518,6 +519,21 @@ def test_spot_2020_refused_under_trend_spot_config(data_cfg):
     store.write("BTCUSDT", "15m", cframe(kline_rows(T0, 3, STEP)))
     with pytest.raises(HoldoutAccessError, match="insample_end"):
         store.load("BTCUSDT", "15m", T0, T0 + 3 * STEP)
+
+
+def test_spot_carry_holdout_ceiling_whatever_the_config(data_cfg):
+    # data_cfg's insample_end is 2025-12-31, past the carry holdout start: the ceiling still refuses
+    assert SPOT_CARRY_HOLDOUT_START == date_ms("2024-01-01")
+    store = CandleStore(data_cfg, market="spot")
+    h = SPOT_CARRY_HOLDOUT_START
+    store.write("BTCUSDT", "15m", cframe(kline_rows(h - STEP, 2, STEP)))
+    assert len(store.load("BTCUSDT", "15m", h - STEP, h)) == 1
+    with pytest.raises(HoldoutAccessError, match="2024-01-01"):
+        store.load("BTCUSDT", "15m", h - STEP, h + STEP)
+    assert len(store.load("BTCUSDT", "15m", h - STEP, h + STEP, allow_holdout=True)) == 2
+    um = CandleStore(data_cfg)  # perps keep the config's date guard only
+    um.write("BTCUSDT", "15m", cframe(kline_rows(h - STEP, 2, STEP)))
+    assert len(um.load("BTCUSDT", "15m", h - STEP, h + STEP)) == 2
 
 
 def test_unknown_market_raises(data_cfg):

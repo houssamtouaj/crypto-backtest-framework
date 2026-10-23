@@ -92,6 +92,15 @@ rule.
   ends in 2020 still needs `allow_holdout=True`. Spot loads under
   `configs/trend/data-spot.yaml` (`insample_end` 2019-12-31) stay refused
   from 2020 on by the ordinary date guard.
+- **Spot ceiling at the carry holdout** *(my call, after the whole-branch
+  review)*. A spot load ending after `store.SPOT_CARRY_HOLDOUT_START`
+  (2024-01-01) also needs `allow_holdout=True`, whatever the config. §0.1
+  alone let `configs/trend/data.yaml` (and `configs/data.yaml` to
+  2025-12-31) read the spot leg of the carry holdout without the flag, and
+  the carry loader's own check only comes in Phase 1. Under
+  `configs/carry/data.yaml` the ceiling coincides with the date guard; trend
+  reads spot only before 2020; perps are unchanged. Phase 5's
+  `carry/holdout.py` and `carry/forward.py` pass the flag anyway.
 - **Trend test moved.** `tests/trend/test_daily.py::test_load_dayframe_spot_needs_allow_holdout`
   loaded spot from 2020-01-01, which §0.1 makes legal; its data now starts
   2019-12-30 (same intent), and a new test pins that a 2020 spot DayFrame
@@ -110,8 +119,10 @@ rule.
 
 **Data facts for later phases** (fetched 2026-10-23):
 
-- Spot, all ten pairs, 2020-01-01 → 2026-10-20 23:45 (EOSUSDT → 2025-05-26
-  02:45; its 523 later daily files are not published). 0 overlap
+- Spot, all ten pairs, first candle 2020-01-01 00:00 (BTC, ETH, LTC: the
+  store continues from 2017), last 2026-10-20 23:45, 238,408 rows from 2020
+  per pair (EOSUSDT: last 2025-05-26 02:45, 189,172 rows; its 523 later
+  daily files are not published). 0 overlap
   mismatches, 0 snapped candles from 2020 (the 81 snapped in BTC, ETH, LTC
   are the 2018-02-09 restart).
 - The same 15 spot gaps from 2020 in every pair, exchange-wide, 152 slots,
@@ -128,13 +139,25 @@ rule.
 error. Three pairs exceed the 20% max limit, all in the 2021-05-19 crash
 (13:30 UTC; XLM 12:45): BCH −45.5%, XLM −27.2%, TRX −21.8% (ETC 18.4%, LTC
 14.9%, EOS 14.6%, LINK 12.9%, XRP 10.8%, ETH 9.6%, BTC 4.0% at the same
-slot). Both legs trade heavy volume there; the perp falls far below spot
-during the liquidation cascade and the basis is back to 1–2% within 45
-minutes. These are real prices, kept as they are; they bear on the margin
+slot; in every pair the maximum is the perp *below* spot, see
+`basis_at_max_abs`). The perp falls far below spot during the liquidation
+cascade; the basis is back to about 1–3% within 15–45 minutes in most pairs
+and about 75 minutes in XLM (−16% at 13:30, about −1% at 14:00). These are real prices, kept as they are; they bear on the margin
 rule (CD7: liquidation at the day high of the short) only on the up side,
 and on basis P&L if a sleeve is entered or exited on that day.
-Other days with any |basis| > 5%: BCH 2020-11-15 (−4% … −7% for the 12
-hours before the BCH/BCHA fork snapshot at 12:00 UTC: spot carried the
-airdrop entitlement, the perp did not; a long-spot sleeve held across the
-fork would lose that step without the airdrop credit, which the backtest
-does not model; conservative) and XLM 2023-08-17 21:30 (one slot, −5.7%).
+Other days with any |basis| > 5% (all pairs checked):
+
+- **BCH, 2020-11-13 … 11-15 (the BCH/BCHA fork).** The perp's discount to
+  spot builds over about two days: −0.7% on 11-13 12:00, −1.4% on 11-14
+  00:00, −3.7% by 11-14 18:00, then −4% … −6.9% until the snapshot at
+  11-15 12:00, when it snaps back to about 0.
+- **XRP, 2020-12-11 (the Spark/FLR airdrop snapshot).** The discount runs
+  from −0.5% at 00:00 to −1.8% at 18:00 and −6.7% at 23:45, then is +0.15%
+  at 2020-12-12 00:00.
+- **XLM, 2023-08-17 21:30.** One slot, −5.7%, in a market-wide drop.
+
+The first two are the same effect: spot carried an airdrop entitlement and
+the perp did not. A long-spot sleeve held across the snapshot loses that
+step without the airdrop credit, which the backtest does not model
+(conservative for the carry). Phase 3 counts such days; it does not credit
+airdrops.

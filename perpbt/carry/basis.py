@@ -37,7 +37,7 @@ def basis_stats(perp: Candles, spot: Candles, start_ms: int, end_ms: int) -> dic
     out: dict = {
         "slots": int(slots), "perp_rows": len(p), "spot_rows": len(s), "common": len(common),
         "coverage": len(common) / slots,
-        "median": None, "p01": None, "p99": None, "max_abs": None, "max_abs_at": None,
+        "median": None, "p01": None, "p99": None, "max_abs": None, "max_abs_at": None, "basis_at_max_abs": None,
     }
     reasons: list[str] = []
     if len(common) == 0:
@@ -47,7 +47,7 @@ def basis_stats(perp: Candles, spot: Candles, start_ms: int, end_ms: int) -> dic
         k = int(np.argmax(np.abs(basis)))
         out.update(
             median=float(np.median(basis)), p01=float(np.quantile(basis, 0.01)), p99=float(np.quantile(basis, 0.99)),
-            max_abs=float(abs(basis[k])), max_abs_at=_iso_minute(int(common[k])),
+            max_abs=float(abs(basis[k])), max_abs_at=_iso_minute(int(common[k])), basis_at_max_abs=float(basis[k]),
         )
         if abs(out["median"]) > MEDIAN_LIMIT:
             reasons.append("median")

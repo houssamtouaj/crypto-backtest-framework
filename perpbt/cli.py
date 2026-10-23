@@ -17,8 +17,8 @@ from collections.abc import Callable, Sequence
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
 from perpbt.carry.basis import basis_check
+from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
 from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
 from perpbt.data.store import HoldoutAccessError
@@ -357,6 +357,11 @@ def _carry_basis(args: argparse.Namespace) -> int:
     except HoldoutAccessError as e:
         print(f"perpbt carry basis: {e}", file=sys.stderr)
         return 1
+    try:
+        text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    except ValueError as e:  # a zero or non-finite close
+        print(f"perpbt carry basis: non-finite basis statistic: {e}", file=sys.stderr)
+        return 1
     print(f"window {result['window'][0]}..{result['window'][1]}; flag |median| > {result['limits']['median_abs']}"
           f" or max |basis| > {result['limits']['max_abs']}")
     for pair, st in result["pairs"].items():
@@ -366,10 +371,10 @@ def _carry_basis(args: argparse.Namespace) -> int:
         flag = f"  FLAGGED ({', '.join(st['reasons'])})" if st["flagged"] else ""
         print(f"{pair}: coverage {st['coverage']:.4f} (perp {st['perp_rows']}, spot {st['spot_rows']}, "
               f"common {st['common']} of {st['slots']}); median {st['median']:+.5f}, p01 {st['p01']:+.5f}, "
-              f"p99 {st['p99']:+.5f}, max |basis| {st['max_abs']:.4f} at {st['max_abs_at']}{flag}")
+              f"p99 {st['p99']:+.5f}, max |basis| {st['max_abs']:.4f} ({st['basis_at_max_abs']:+.4f}) "
+              f"at {st['max_abs_at']}{flag}")
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
     out.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {out.as_posix()}")
     return 0
