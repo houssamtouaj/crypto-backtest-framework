@@ -35,9 +35,16 @@ and spot) of the carry strategy:
 - `listing`: the ten perps with their trend `listing` dates (the perp is
   always the later of the two legs; every spot pair predates 2020).
 
-The trend and first-strategy configs are not edited. Loads past
-2023-12-31 are refused except through `carry/holdout.py` and
-`carry/forward.py` (Phase 5).
+The trend and first-strategy configs are not edited. Neither config
+alone guards the carry holdout: `configs/trend/data.yaml` lets perps, and
+after §0.1 spot from 2020, load through 2026-10-20. The carry loader
+(`carry/frames.load_pairframe`, Phase 1) therefore checks the requested
+end itself, whatever config it is given. An end after `CARRY_INSAMPLE_END
+= 2023-12-31` (a constant in `carry/frames.py`, equal to the
+pre-registered in-sample end) raises unless `allow_holdout=True`, and only
+`carry/holdout.py` and `carry/forward.py` (Phase 5) pass it. A test pins
+the refusal under both the carry and the trend data configs. *(my call,
+after the builder check)*
 
 ## 0.3 Fetch
 

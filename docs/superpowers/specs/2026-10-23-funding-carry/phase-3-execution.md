@@ -24,7 +24,11 @@ pair, state, spot_qty, perp_qty, perp_wallet, sleeve_value, funding),
 ## 3.2 The account
 
 Starting equity 10,000 (scale only). On each decision day the sleeve
-target is `E / N_live` with `E` the equity at day `d`'s close. Each "on"
+target is `E / N_live` with `E` the equity at day `d`'s close. An entry
+takes `min(E / N_live, free cash)`, where free cash is the equity not held
+in on-sleeves. Cash never goes negative (that would be free borrowing),
+and an entry cut short is counted as `capped_entry`. On-sleeves are not
+resized to make room. *(my call, after the builder check)* Each "on"
 sleeve holds spot quantity `q` and perp quantity `−q`, with spot notional
 `q × spot_px = x × S` and perp wallet `x × S / L` at entry. The spot
 wallet and perp wallet of a sleeve are tracked separately (no

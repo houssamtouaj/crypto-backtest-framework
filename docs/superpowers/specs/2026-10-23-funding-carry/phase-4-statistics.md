@@ -16,9 +16,9 @@ percentile CI.
 
 ## 4.2 V2 — net return above the hurdle
 
-Daily excess return `e_t = ret_t − h / 365` with `h = hurdle.annual`.
+Daily excess return `e_t = ret_t − h_d` with `h_d = (1 + h)^(1/365) − 1` and `h = hurdle.annual` (the daily rate that compounds to `h` over a year; the equity figure's hurdle line uses the same rate).
 Moving-block resamples of `e` (same `block_indices`, block 30, B =
-10,000); replicate statistic = `365 × mean(e*)`. `p2 = (1 + #{replicates
+10,000); replicate statistic = `365 × mean(e*)` (an annualised excess over the hurdle; its sign is the test). `p2 = (1 + #{replicates
 ≤ 0}) / (B + 1)`. Pass iff `p2 < α`. Report the annualised excess, its 95%
 CI, and the three-way reading: proven below the hurdle (CI upper < 0), not
 proven (CI contains 0), proven above (passes). The same statistic at each

@@ -73,7 +73,7 @@ phase is recorded in that phase file.
 | CD4 | Universe | The trend strategy's point-in-time perp basket, unchanged (`configs/trend/universe.json` `um`: BTC ETH BCH LINK ETC LTC XRP EOS TRX XLM), with the spot pair of the same symbol. All ten have Binance spot klines in the archive from before 2020 (checked 2026-10-23; EOSUSDT spot ends 2025-05, as its perp). Trading from 2020-07-01. Reusing it adds no selection freedom. |
 | CD5 | Periods | In-sample **2020-07-01 – 2023-12-31** (3.5 years). Holdout **2024-01-01 – 2026-10-20**, one shot, with its own `DONE` marker (2.8 years). Forward after the code lock: descriptive review at 12 months, confirmatory V1/V2 at 36 months. |
 | CD6 | Costs | Perp taker 0.05%, spot taker 0.10% (Binance VIP 0, no BNB discount), on every fill. Slippage per leg 0.02% BTC/ETH, 0.05% the others, on traded notional. Funding from the data on the perp leg (shorts receive positive rates). Re-pricing grid: slippage {0, 0.02, 0.05, 0.10}% × spot fee {0.075, 0.10}%. |
-| CD7 | Margin | The perp leg is marked against the day **high** (adverse for a short). If the perp wallet's equity falls below 50% of the margin it would need at L = 2, the sleeve is rebalanced back to target at the next fill (sell spot, reduce the short equally, move cash), with costs. If the day high reaches the liquidation price (equity ≤ maintenance margin, `mmr` 0.4% BTC, 0.5% ETH, 1% others), the short is liquidated at that price with a 1% liquidation fee on notional, and the spot leg is sold at the next fill; the event is counted. |
+| CD7 | Margin | **Liquidation** is checked against the day **high** (adverse for a short); **rebalancing** is checked at the day **close** *(my call, after the builder check: a high-based trigger would rebalance on intraday spikes that reverse)*. If at the close the perp wallet's equity is below 50% of the margin it would need at L = 2, the sleeve is rebalanced back to target at the next fill (sell spot, reduce the short equally, move cash), with costs. If the day high reaches the liquidation price (equity ≤ maintenance margin, `mmr` 0.4% BTC, 0.5% ETH, 1% others), the short is liquidated at that price with a 1% liquidation fee on notional, and the spot leg is sold at the next fill; the event is counted. |
 | CD8 | Verdict | Edge iff **V1 and V2 both pass**, each one-sided at α = 0.05, unadjusted (intersection–union). V1: portfolio net Sharpe > 0 (moving-block bootstrap). V2: annualised net return minus a **5%/yr hurdle** > 0 (block bootstrap of the daily excess return). Block length 30 days. |
 | CD9 | Hurdle | **5% a year**: the opportunity cost of holding the same USDT in a savings or lending product. Stablecoin yields on Binance and in DeFi ranged from about 2% to well over 10% over 2020–2026; 5% is a round middle, not fitted to anything. |
 | CD10 | Screen | After the freeze and before any executor code: the simplified net model of Phase 2 on the in-sample basket. **Stop if V2's p ≥ 0.10**; otherwise continue with nothing changed. It can stop the project, never tune it. |
@@ -114,13 +114,23 @@ proven (CI contains 0), proven above (passes).
 |---|---|---|---|
 | 2020-01-01 – 2020-06-30 | perps, spot | warmup and the universe ranking (trend Phase 0); no trading | done |
 | 2020-07-01 – 2023-12-31 | perps, spot | in-sample: screen, primary, exploratory | Phases 2, 7 |
-| 2024-01-01 – 2026-10-20 | perps, spot | holdout, once, primary rule (plus its robustness rows) | Phase 7, once |
+| 2024-01-01 – 2026-10-20 | perps, spot | holdout, once: the primary (verdict) and the six exploratory rows (descriptive), fixed now | Phase 7, once |
 | code-lock day + 1 onward | perps, spot | forward: review at 12 months, confirm at 36 | Phase 7 |
 
-The holdout's perp **prices** were loaded by the trend screen (as signals
-on price direction); no **carry** return, basis series or funding
-statistic has been computed on it. That is the sense in which it is clean,
-and the report says so.
+**How clean the holdout is** *(my call, after the builder check)*. No
+carry return, basis series or per-pair funding statistic has been computed
+on 2024-01-01 – 2026-10-20 in this repo. It is not unseen, though:
+
+- The trend screen loaded these perp prices, as price-direction signals.
+- The first strategy charged BTCUSDT and ETHUSDT funding over the whole
+  window (its in-sample through 2025-12-31, its holdout 2026). Its
+  committed reports show mean funding per trade.
+- General market knowledge covers 2024 too (§3 quotes funding levels from
+  it, such as the high funding early that year).
+
+The holdout keeps its one-shot verdict role. Every report states this
+caveat next to its verdict and treats the 36-month forward test as the
+only fully unseen one.
 
 ## 5. What can go wrong in a carry trade (and how it is modelled)
 

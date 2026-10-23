@@ -9,7 +9,12 @@ functions of the past; no execution.
 ## 1.1 PairFrame (`carry/frames.py`)
 
 Built from two trend `DayFrame`s (`trend.daily.load_dayframe`, perp with
-funding, spot without):
+funding, spot without) by `load_pairframe(data_cfg, pair, *, end,
+allow_holdout=False)`, which refuses `end > CARRY_INSAMPLE_END` without
+`allow_holdout` (Phase 0 §0.2). The perp leg's return is always its
+**price** return `c_{d+1}/c_d − 1`, never `DayFrame.ret` (which already
+subtracts funding for a long): carry code adds funding explicitly, and
+using `ret` would count it twice.
 
 | Array (per calendar day `d`) | Definition |
 |---|---|
