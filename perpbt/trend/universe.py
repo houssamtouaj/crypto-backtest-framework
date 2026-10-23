@@ -51,15 +51,15 @@ class UniverseRule:
 RULES = {
     "um": UniverseRule(
         "um", "2020-01-01", "2020-06-30", "2020-01-23", 10,
-        "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from their first archived "
-        "day through 2020-06-30, that first day no later than 2020-01-23 (warm for the 160-day members on "
-        "2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and "
+        "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from the later of their "
+        "first archived day and 2020-01-01 through 2020-06-30, that day no later than 2020-01-23 (warm for the "
+        "160-day members on 2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and "
         "leveraged tokens excluded; top 10; trading from 2020-07-01",
     ),
     "spot": UniverseRule(
         "spot", "2017-12-01", "2017-12-31", "2017-12-31", 10,
-        "spot *USDT pairs (delisted included) with an archive 1d kline for every day from their first archived "
-        "day (no later than 2017-12-31) through 2017-12-31, ranked by quote volume over 2017-12-01..2017-12-31 "
+        "spot *USDT pairs (delisted included) with an archive 1d kline for every day from the later of their "
+        "first archived day and 2017-12-01 through 2017-12-31, ranked by quote volume over 2017-12-01..2017-12-31 "
         "(ties by symbol), stablecoin bases and leveraged tokens excluded; up to 10; each enters the holdout "
         "when warm, holdout ends 2019-12-31",
     ),

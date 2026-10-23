@@ -493,6 +493,18 @@ def test_off_grid_archive_rows_are_snapped_and_recorded(spot_cfg):
     assert entry["name"] == "BTCUSDT-15m-2018-02.zip" and entry["snapped"] == 3
 
 
+def test_staleness_is_measured_against_the_requested_end(data_cfg):
+    old = day_rows("2026-08-20", 96)
+    a = FakeArchive()
+    a.add_klines("BTCUSDT", "15m", "2026-08-20", old[:10] + old[20:])  # an active pair fetched over a past window
+    exchange = FakeExchange(ccxt_candles(date_ms("2026-08-20"), 96))
+    summary = run_fetch(
+        data_cfg, pairs=["BTCUSDT"], tfs=("15m",), from_date=date(2026, 8, 20), to_date=date(2026, 8, 20),
+        ccxt_gaps=True, http_get=a, exchange_factory=lambda: exchange, today=TODAY, now_ms=NOW_MS,
+    )
+    assert "ccxt_skipped" not in summary["BTCUSDT"] and summary["BTCUSDT"]["ccxt_gaps"] == {"15m": 10}
+
+
 def test_is_stale():
     assert not is_stale({"last_open_ms": None}, TODAY)
     assert not is_stale({"last_open_ms": date_ms("2026-09-20")}, TODAY)  # exactly 7 days

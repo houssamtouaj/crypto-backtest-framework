@@ -96,7 +96,7 @@ the first trading day and the trading start unchanged.
 ## 0.4 Universe rule — spot (holdout)
 
 1. **Candidates.** Spot `*USDT` pairs with an archive 1d kline on every
-   day from their first archived day (no later than 2017-12-31) through
+   day from the later of their first archived day and 2017-12-01 through
    2017-12-31. Exclude stablecoin bases (USDC, TUSD, PAX,
    BUSD, USDS, …) and leveraged tokens.
 2. **Rank** by quote volume over 2017-12-01 – 2017-12-31.

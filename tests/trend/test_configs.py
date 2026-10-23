@@ -27,6 +27,7 @@ def test_listing_is_the_universe(universe, market, name):
     assert block["members"] == [r["pair"] for r in block["ranked"][: RULES[market].top_n]]
     assert block["window"] == [RULES[market].window_start, RULES[market].window_end]
     assert all(cfg.listing[p] <= RULES[market].latest_first_day for p in block["members"])
+    assert block["rule"] == RULES[market].text  # the text is hashed into the pre-registration; it must be the code's
 
 
 def test_perp_config_periods(universe):

@@ -11,8 +11,8 @@ manifest to force a series to be re-ingested.
 
 ``market="spot"`` (the trend strategy's holdout) syncs spot klines into the
 spot candle store and nothing else: spot has no funding files and no ccxt
-backfill. A perp whose stored series stopped more than ``DELISTED_AFTER_DAYS``
-ago is treated as delisted and skipped by the ccxt tail and gap fill (ccxt
+backfill. A perp whose stored series stops more than ``DELISTED_AFTER_DAYS``
+before the end of the fetch (``--to``, at most today) is treated as delisted and skipped by the ccxt tail and gap fill (ccxt
 may not know the symbol; the archive is complete up to the delisting).
 """
 from __future__ import annotations
@@ -374,10 +374,11 @@ def run_fetch(
         }
         if ccxt_head and "15m" in tfs:
             entry["ccxt_head_rows"] = fetch_head(cstore, data_cfg, pair, from_date=from_date, exchange=exchange)
-        if (ccxt_gaps or ccxt_tail) and all(is_stale(cstore.manifest(pair, tf), today) for tf in tfs):
+        end = min(today, to_date)  # a fetch over a past window measures staleness from its own end
+        if (ccxt_gaps or ccxt_tail) and all(is_stale(cstore.manifest(pair, tf), end) for tf in tfs):
             entry["ccxt_skipped"] = "delisted"
-            log.info("%s: stored data ends over %d days ago; treated as delisted, no ccxt tail or gap fill",
-                     pair, DELISTED_AFTER_DAYS)
+            log.warning("%s: stored data ends over %d days before %s; treated as delisted, no ccxt tail or gap fill",
+                        pair, DELISTED_AFTER_DAYS, end.isoformat())
             summary[pair] = entry
             continue
         if ccxt_gaps:
