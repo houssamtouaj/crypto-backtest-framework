@@ -1,10 +1,13 @@
 """Point-in-time universe ranking from the archive's 1d klines (perpbt.trend.universe; trend Phase 0 §0.3-§0.5)."""
+import json
 from datetime import date, timedelta
 
 import pytest
 
+from perpbt.cli import main
+from perpbt.data import bulk
 from perpbt.data.store import date_ms
-from perpbt.trend.universe import archive_symbols, exclusion, rank_universe
+from perpbt.trend.universe import archive_symbols, exclusion, rank_universe, write_universe
 from tests.fake_archive import FakeArchive
 
 TODAY = date(2026, 10, 23)
@@ -128,3 +131,35 @@ def test_no_prices_returned():
 def test_unknown_market_raises():
     with pytest.raises(ValueError, match="market"):
         rank_universe("coinm", today=TODAY, http_get=FakeArchive())
+
+
+# --- universe.json and the CLI (§0.5) -------------------------------------------------------
+
+
+def test_write_universe_keeps_other_market(tmp_path):
+    path = tmp_path / "trend" / "universe.json"
+    write_universe(path, "um", {"members": ["BTCUSDT"]})
+    write_universe(path, "spot", {"members": ["ETHUSDT"]})
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data == {"um": {"members": ["BTCUSDT"]}, "spot": {"members": ["ETHUSDT"]}}
+    assert path.read_bytes().endswith(b"}\n") and b"\r\n" not in path.read_bytes()
+    write_universe(path, "um", {"members": ["XRPUSDT"]})
+    assert json.loads(path.read_text(encoding="utf-8"))["spot"] == {"members": ["ETHUSDT"]}
+
+
+def test_cli_trend_universe(monkeypatch, tmp_path, capsys):
+    a = FakeArchive()
+    add_symbol(a, "BBBUSDT", WINDOW_MONTHS, 2.0)
+    add_symbol(a, "AAAUSDT", WINDOW_MONTHS, 1.0)
+    monkeypatch.setattr(bulk, "urllib_get", a)
+    out = tmp_path / "universe.json"
+    assert main(["trend", "universe", "--market", "um", "--out", str(out)]) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["um"]["members"] == ["BBBUSDT", "AAAUSDT"]
+    assert "BBBUSDT AAAUSDT" in capsys.readouterr().out
+
+
+def test_cli_trend_universe_download_error_is_exit_1(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(bulk, "urllib_get", lambda url: None)  # the listing itself is a 404
+    assert main(["trend", "universe", "--market", "spot", "--out", str(tmp_path / "u.json")]) == 1
+    assert "404" in capsys.readouterr().err
+    assert not (tmp_path / "u.json").exists()

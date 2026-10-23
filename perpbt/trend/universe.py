@@ -9,10 +9,12 @@ trading day.
 """
 from __future__ import annotations
 
+import json
 import logging
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from urllib.parse import urlencode
 
 import numpy as np
@@ -202,3 +204,13 @@ def rank_universe(market: str, *, today: date, http_get: HttpGet | None = None) 
         "computed_on": today.isoformat(),
     }
 
+
+def write_universe(path: Path | str, market: str, block: dict) -> None:
+    """Store ``block`` as ``market``'s entry of the universe file, keeping the other markets."""
+    path = Path(path)
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    data[market] = block
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, indent=2, sort_keys=True)
+        f.write("\n")

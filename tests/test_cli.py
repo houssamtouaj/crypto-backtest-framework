@@ -13,7 +13,7 @@ from perpbt.config import DataConfig, load_yaml
 from perpbt.data.bulk import DownloadError
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP_LEVEL = ["data", "prereg", "run", "grid", "baselines", "stats", "report", "holdout"]
+TOP_LEVEL = ["data", "prereg", "run", "grid", "baselines", "stats", "report", "holdout", "trend"]
 
 
 def test_help_lists_every_subcommand(capsys):
