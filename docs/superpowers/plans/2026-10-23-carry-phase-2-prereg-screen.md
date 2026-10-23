@@ -130,3 +130,5 @@ Task 2: complete (b11b7e5; carry config + bootstrap tests 37 passed).
 Task 3: complete (1707ad3, 0d876ba; tests/carry/test_prereg.py 36 passed). The allow_holdout AST scan flagged an `Exploratory(**parts)` call; rewritten with explicit keywords (the test was not widened). `-1.0e9` is a string in PyYAML; written `-1.0e+9`.
 Task 4: complete (21d695d; tests/carry/test_screen.py 12 passed). Mutation: funding sign flipped → 3 failures; costs dropped → 2 failures.
 Task 5: complete (bffcdee; tests/carry/test_screen_cli.py 13 passed; full suite 1258 passed in 5 min 22 s). `perpbt carry prereg validate` → prereg_hash a44eee47….
+Task 6: complete (7d6f956; stopped before the freeze; user said go).
+Task 7: freeze 5799eb5 (prereg_hash a44eee47…, lock git 7d6f956), tag carry-prereg-v1; screen run once (0a9a888): 1279 days, 10 pairs; primary ann. net return +10.69% [+6.13, +16.07], excess +5.81% [+1.25, +11.20], p(V2) 0.0045 (above_hurdle), Sharpe 8.62, p(V1) 0.0001, share on 0.642, 152 switches; always_on +10.12% [+5.41, +15.57], excess +5.24%, p(V2) 0.0136, Sharpe 7.61; p_screen 0.0045 → GO.
