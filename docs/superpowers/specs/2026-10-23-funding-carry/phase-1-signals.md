@@ -105,6 +105,8 @@ rule.
     state is exact. No in-sample event is anything but 8 h, so this touches
     only transition windows in the holdout and forward periods. It is
     fixed now, before the Phase 2 freeze, and not tuned.
+    *Superseded in Phase 2 (§2.6): `f̄` is time-weighted, `Σ rate × 24 /
+    Σ interval_h × 365`; the in-sample states are unchanged.*
 - **Causality wording.** §1.4's "days ≤ the cut's day" is tested as "days
   whose end is at or before the cut": a mid-day cut legitimately moves that
   day's close, basis and `f̄`.

@@ -122,3 +122,11 @@
 ## Progress log
 
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-2-prereg-screen.md
+- Ruling (my call): f̄ time-weighted (Σ rate × 24 / Σ interval_h × 365) instead of the Phase 1 per-event mean — cost if wrong: holdout/forward transition-window f̄ weights 4 h events half per event; in-sample identical.
+- Ruling (my call): master_seed 202610233; seeds "screen" (gating), "screen/v1", "screen/always_on/v2", "screen/always_on/v1".
+- Ruling (my call): pairs start off (entry cost on 2020-07-01 if on); no exit cost at the period end; live = frame has d and d+1; refuse when a frame does not end on 2023-12-31.
+Task 1: complete (3671dee; tests/carry 68 passed incl. slow; in-sample on equals the per-event formula for all pairs, W 3/7/14).
+Task 2: complete (b11b7e5; carry config + bootstrap tests 37 passed).
+Task 3: complete (1707ad3, 0d876ba; tests/carry/test_prereg.py 36 passed). The allow_holdout AST scan flagged an `Exploratory(**parts)` call; rewritten with explicit keywords (the test was not widened). `-1.0e9` is a string in PyYAML; written `-1.0e+9`.
+Task 4: complete (21d695d; tests/carry/test_screen.py 12 passed). Mutation: funding sign flipped → 3 failures; costs dropped → 2 failures.
+Task 5: complete (bffcdee; tests/carry/test_screen_cli.py 13 passed; full suite 1258 passed in 5 min 22 s). `perpbt carry prereg validate` → prereg_hash a44eee47….
