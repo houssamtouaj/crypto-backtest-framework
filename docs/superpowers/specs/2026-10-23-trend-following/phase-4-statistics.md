@@ -13,8 +13,7 @@ included. Sharpe is `stats.bootstrap.sharpe` (√365 × mean / std).
 
 ## 4.1 Random-days baseline (`trend/baselines.py`)
 
-**Open with the user: one shared offset or one offset per pair.** The
-draft uses a shared offset (recommended): for path `m`, draw one integer
+**One shared offset (decided with the user, 2026-10-23).** For path `m`, draw one integer
 `k` uniformly from `[60, n − 60]`, `n` the number of days in the period,
 and shift every pair by it: `e'_{i,t} = e_{i, (t + k) mod n_i}` (indices
 within pair `i`'s `n_i` valid days). Pairs that span the whole period then

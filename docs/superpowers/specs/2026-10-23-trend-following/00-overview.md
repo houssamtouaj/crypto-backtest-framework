@@ -1,6 +1,6 @@
 # Daily trend following on Binance USDT-M perpetuals — overview
 
-Status: DRAFT v1, 2026-10-23. Nothing has been implemented.
+Status: v1, 2026-10-23, all user decisions settled. Nothing has been implemented.
 
 This is the second strategy in the repo. The first (the ICT order-block
 strategy, `docs/superpowers/specs/2026-09-26-ob-backtest/`) is closed: no
@@ -62,8 +62,9 @@ finds a reason, and the change is recorded in the phase file.
 | TD1 | Signal | Equal-weight ensemble of 12 members: N-day return sign, close above N-day SMA, and Donchian breakout, each at N ∈ {20, 40, 80, 160} days, on completed UTC daily closes. Long/flat exposure = share of members long, in steps of 1/12. Exact definitions in Phase 1. No weights are ever fitted. |
 | TD2 | Direction | Long/flat is the primary. Long/short (members −1/0/+1) is computed as a labelled exploratory variant: reported, no say in the verdict. It can become a primary only in a later pre-registration, tested out of sample. |
 | TD3 | Sizing | Volatility targeting per pair: target weight = exposure × min(0.30 / σ̂, 2.0), σ̂ = annualised std of the last 60 completed daily returns (funding included). Hard cap 2× notional per pair and 2× gross for the portfolio. |
-| TD4 | Universe | Point-in-time basket of up to 10 USDT-M perps chosen by a mechanical rule from information available before trading starts, delisted perps included. The primary is **one equal-weight portfolio** of the basket; per-pair results are secondary. Rule in Phase 0 §0.3. |
+| TD4 | Universe | Point-in-time basket of up to 10 USDT-M perps chosen by a mechanical rule from information available before trading starts, delisted perps included: candidates with daily archive data for all of 2020-01 – 2020-06, ranked by that period's quote volume; trading from 2020-07-01 (SOLUSDT, listed 2020-09, is therefore excluded). The primary is **one equal-weight portfolio** of the basket; per-pair results are secondary. Rule in Phase 0 §0.3. |
 | TD5 | Rebalancing | Evaluate daily. A pair trades when its ensemble exposure differs from the exposure at its last trade, when its target is zero and it holds a position, or when its held weight is more than 20% (relative) away from target. Fill at the close of the first 15m candle of the next UTC day (00:15), taker fee plus slippage. Weekly rebalancing and fills at 01:00, 04:00, 08:00 UTC are exploratory robustness rows. |
+| TD6a | T1 random paths | One shared circular-shift offset for all pairs per path, so the pairs' exposures keep moving together; only the timing is randomised (Phase 4 §4.1). |
 | TD6 | Verdict | Edge iff **T1 and T2 both pass**, each one-sided at α = 0.05, unadjusted. Requiring every test to pass (an intersection–union test) already keeps the false-positive rate at α, so no Holm. T3 (smaller max drawdown at matched vol) is reported, not part of the verdict. |
 | TD7 | Out-of-sample | All perp data through 2026-10-20 has been seen and is in-sample. Clean tests: (a) Binance **spot 2018–2019**, a one-shot holdout with its own `DONE` marker; (b) the **forward period** after the code lock, with a descriptive review at 12 months and a confirmatory T1/T2 test at 36 months. |
 | TD8 | Signal screen | Before any execution code is built, and after the pre-registration is frozen: a gross-of-costs T1 on the in-sample basket with a simplified return model. Stop the project if `p ≥ 0.10`; otherwise continue with nothing changed. The screen can stop the project, never tune it. |

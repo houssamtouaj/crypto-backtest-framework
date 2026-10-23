@@ -79,11 +79,10 @@ information from the trading period. SOLUSDT (listed 2020-09-14) is not a
 candidate under this rule; BTC, ETH, and SOL are reported per pair in any
 case where they are members, and SOL is not added.
 
-**Open with the user:** the rule approved in conversation ranked perps
-listed by 2020-12-31 on full-year 2020 volume, which uses information from
-the first six months of trading (volume tracks the 2020 rallies). This
-draft proposes the stricter rule above. See the question list in the
-hand-off message; the spec is updated with the answer.
+**Decided with the user (2026-10-23).** The rule first discussed ranked
+perps listed by 2020-12-31 on full-year 2020 volume; that uses information
+from the first six months of trading (volume tracks the 2020 rallies), so
+the stricter rule above was chosen, accepting that SOLUSDT is excluded.
 
 ## 0.4 Universe rule — spot (holdout)
 
