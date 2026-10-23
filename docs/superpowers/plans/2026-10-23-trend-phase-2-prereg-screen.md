@@ -158,3 +158,21 @@ Task 3: complete (commits a6daac6..5c80788, tests: python -m pytest tests/trend 
 Task 4: complete (commits 5c80788..0501197, tests: python -m pytest tests/test_cli.py tests/trend -q -m 'not slow' → 159 passed)
 - Task 5: Ruling: no separate test_prereg_file.py — test_round_trip and test_universe_must_match_universe_json already load the committed prereg and check it against universe.json — cost: none.
 Task 5: suite: python -m pytest -q (full, slow included) → 1103 passed in 152.46s; perpbt trend prereg validate → prereg_hash 9f2f2856cec49fdd38e29da000dd9de315f42f521f3b505763242dddf132c606 (not frozen)
+Final review: fresh reviewer (opus) — "merge with fixes"; 0 Critical, 2 Important, 9 Minor; Review Focus 1-5 hold; all rulings accepted.
+- Final: fixed the screen read a NaN Sharpe as "go" (p = 1/(M+1)) — test_nan_sharpe_refuses RED→GREEN, suite 1108/1108
+- Final: fixed the weekly row's decision weekday was only a YAML comment (outside the hash) — RebalanceConfig.weekday (null for daily, a weekday name for weekly), prereg weekly row weekday: sunday — test_rebalance_config / test_round_trip RED→GREEN, suite 1108/1108; prereg_hash now a011ea29…8fba
+- Final: fixed (re-graded Minor→Important: would burn the one shot) screen.json could be left half-written — serialised with allow_nan=False before opening "x" — test_write_screen_refuses_nan_and_leaves_no_file RED→GREEN, suite 1108/1108
+- Final: fixed (re-graded Minor→Important: silently changes the one-shot result) a pair whose stored data stops 1-7 days early would be treated as delisted — screen refuses; pair_last_day recorded — test_screen_refuses_pair_ending_just_before_period_end, test_screen_records_pair_last_days_and_data_config RED→GREEN, suite 1108/1108
+- Final: fixed (re-graded Minor→Important: data.yaml seeds each pair's first day, not hashed) warmup_start checked against the prereg; data_config_hash (without data_dir) recorded — test_screen_refuses_warmup_mismatch RED→GREEN, suite 1108/1108
+- Final: Ruling: DELISTED_AFTER_DAYS = 7 defined in trend/screen.py (Phase 3 §3.6) instead of importing data.fetch's, which pulls in ccxt — cost if wrong: two constants to keep equal.
+- Final: Ruling (declined to judge): EOS shifts by k mod n_i, so about 2.7% of paths land within 60 days of its real timing (k = 1786 exactly on it) — this is Phase 4 §4.1 as written, and it errs conservative (makes "go" harder) — cost if wrong: the screen is slightly stricter than intended.
+- Final: Ruling (declined to judge): max_gross cannot bind in the screen (mean of |w| <= 2) — nothing to apply — cost: none.
+- Final: Ruling (declined to judge): the lock's git_commit is the commit before the freeze commit — unavoidable when the lock is committed with the prereg — cost: none.
+- Final: Ruling (declined to judge): the one shot is enforced by runs/trend/screen.json (another --runs-dir could rerun it); screen.json records the prereg hash and the run is a committed, audited step — cost if wrong: a rerun is possible by hand, not by accident.
+- Final: minor (deferred): forward_start not validated against insample_end (adding the check later does not change the hash; Phase 5)
+- Final: minor (deferred): an exploratory row with no override (or two equal rows) is accepted and would be a duplicate DSR trial
+- Final: minor (deferred): cost-table pair keys are not checked against the universe (a misspelt key falls back to default)
+- Final: minor (deferred): test_screen_ignores_funding asserts ret_next and exposure, not the portfolio series
+- Final: minor (deferred): hash-stability test does not assert its str.replace edits happened; the refusal CLI tests check exit codes, not stderr
+- Final: minor (deferred): a YAML syntax error, corrupt lock or missing data.yaml gives a traceback instead of exit 2 (nothing written)
+- Final: minor (deferred): listing dates in data.yaml are not checked against universe.json first_day (the data-config hash records them)
