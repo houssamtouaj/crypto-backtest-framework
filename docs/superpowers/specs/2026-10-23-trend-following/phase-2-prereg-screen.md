@@ -156,3 +156,16 @@ rule.
   when `runs/trend/screen.json` exists (the file is also opened with
   `"x"`). Seed: `rng_for(master_seed, prereg_hash, "screen")`. On stop it
   also writes `runs/trend/summary.md`; `.gitignore` admits both files.
+- **Review fixes (before the freeze).** `rebalance.weekday` pins the
+  weekly row's decision day in the hashed content (`sunday`; null for
+  daily), where §2.1 had it only as a comment. The screen refuses rather
+  than decides when any Sharpe is not finite (a NaN compares false and
+  would read as "go"); `screen.json` is serialised before the file is
+  opened, so a failure cannot leave a half-written file that uses up the
+  one shot. The screen also refuses when `data.yaml`'s `warmup_start`
+  differs from the prereg's, or when a pair's stored data ends 1–7 days
+  before the period end (neither complete nor a delisting by Phase 3
+  §3.6); it records each pair's last day and a hash of the data config
+  (without `data_dir`).
+- **Funding in the screen.** The screen's returns carry no funding; its
+  weights do, through `σ̂` (TD3 forecasts vol from returns with funding).

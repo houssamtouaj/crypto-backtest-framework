@@ -15,7 +15,8 @@ from perpbt.trend.daily import FILL_OFFSETS_MIN
 MEMBERS = ("return_sign", "ma_filter", "donchian")
 DIRECTIONS = ("long_flat", "long_short")
 DONCHIAN_EXITS = ("half",)  # exit channel = N // 2 days
-FREQUENCIES = ("daily", "weekly")  # weekly: decisions on the Sunday close, fills on Monday (spec Phase 2 §2.1)
+FREQUENCIES = ("daily", "weekly")
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
 @dataclass(frozen=True)
@@ -69,9 +70,16 @@ class RebalanceConfig(_Config):
     frequency: str  # "daily" | "weekly"
     drift_band: float  # relative: trade when |w_held − w*| > drift_band × |w*|
     fill_offset_min: int  # fill at the close of the 15m candle closing this many minutes after 00:00 UTC
+    weekday: str | None  # weekly only: the UTC day whose close makes the decision (fills the next day)
 
     def _validate(self) -> None:
         _check_literal(self.frequency, FREQUENCIES, "RebalanceConfig.frequency")
+        if self.frequency == "daily" and self.weekday is not None:
+            raise ConfigError(f"RebalanceConfig.weekday: must be null for daily rebalancing, got {self.weekday!r}")
+        if self.frequency == "weekly":
+            if self.weekday is None:
+                raise ConfigError("RebalanceConfig.weekday: weekly rebalancing needs a decision weekday")
+            _check_literal(self.weekday, WEEKDAYS, "RebalanceConfig.weekday")
         _check_non_negative(self.drift_band, "RebalanceConfig.drift_band")
         if self.fill_offset_min not in FILL_OFFSETS_MIN:
             raise ConfigError(

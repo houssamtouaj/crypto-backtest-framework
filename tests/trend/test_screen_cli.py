@@ -134,3 +134,35 @@ def test_screen_refuses_insample_mismatch(env):
     cfg["insample_end"] = "2021-03-30"
     (env / "data.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert main(args(env, "trend", "screen")) == 2
+
+
+def test_screen_records_pair_last_days_and_data_config(env):
+    assert main(args(env, "trend", "prereg", "freeze")) == 0
+    assert main(args(env, "trend", "screen")) == 0
+    res = json.loads((env / "runs" / "trend" / "screen.json").read_text(encoding="utf-8"))
+    assert res["pair_last_day"] == {p: "2021-03-31" for p in PAIRS}
+    assert len(res["data_config_hash"]) == 64
+
+
+def test_screen_refuses_pair_ending_just_before_period_end(env):
+    from perpbt.config import DataConfig, from_dict
+    cfg = from_dict(DataConfig, yaml.safe_load((env / "data.yaml").read_text(encoding="utf-8")))
+    import shutil
+    shutil.rmtree(CandleStore(cfg).dir("CCCUSDT", "15m"))
+    days = (date_ms("2021-03-28") - date_ms("2020-01-01")) // DAY_MS  # last day 2021-03-27: 4 days short
+    c = 100.0 + np.arange(days, dtype=np.float64)
+    ts = date_ms("2020-01-01") + DAY_MS * np.arange(days, dtype=np.int64) + DAY_MS - 900_000
+    CandleStore(cfg).write("CCCUSDT", "15m", pd.DataFrame({
+        "open_ms": ts, "open": c, "high": c, "low": c, "close": c, "volume": 1.0, "quote_volume": 1.0,
+        "trades": 1, "taker_buy_volume": 0.0, "source": "bulk_monthly"}))
+    assert main(args(env, "trend", "prereg", "freeze")) == 0
+    assert main(args(env, "trend", "screen")) == 2
+    assert not (env / "runs" / "trend" / "screen.json").exists()
+
+
+def test_screen_refuses_warmup_mismatch(env):
+    assert main(args(env, "trend", "prereg", "freeze")) == 0
+    cfg = yaml.safe_load((env / "data.yaml").read_text(encoding="utf-8"))
+    cfg["warmup_start"] = "2019-12-01"
+    (env / "data.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    assert main(args(env, "trend", "screen")) == 2

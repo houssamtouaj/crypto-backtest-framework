@@ -185,3 +185,19 @@ def test_run_screen_chunking_does_not_change_result():
     a = run_screen(inp, SIZE5, paths=120, margin=60, rng=np.random.default_rng(5), stop_if_p_at_least=0.1, chunk=7)
     b = run_screen(inp, SIZE5, paths=120, margin=60, rng=np.random.default_rng(5), stop_if_p_at_least=0.1, chunk=120)
     assert a == b
+
+
+def test_nan_sharpe_refuses():
+    falling = 100.0 * np.exp(-0.01 * np.arange(300))  # long/flat exposure 0 throughout: zero-variance returns
+    frames = {p: frame(p, falling) for p in "AB"}
+    inp, _ = inputs_for(frames, SHORT, SIZE5, "2020-02-01", "2020-10-01")
+    with pytest.raises(ValueError, match="not finite"):
+        run_screen(inp, SIZE5, paths=20, margin=60, rng=np.random.default_rng(0), stop_if_p_at_least=0.1)
+
+
+def test_write_screen_refuses_nan_and_leaves_no_file(tmp_path):
+    from perpbt.trend.screen import screen_path, write_screen
+
+    with pytest.raises(ValueError):
+        write_screen({"decision": "go", "p_screen": float("nan")}, tmp_path)
+    assert not screen_path(tmp_path).exists()

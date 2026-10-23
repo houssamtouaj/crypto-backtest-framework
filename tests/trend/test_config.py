@@ -55,7 +55,7 @@ def test_lookbacks_must_increase():
         from_dict(SignalConfig, {**SIGNAL, "lookbacks": [40, 20]})
 
 
-REBALANCE = {"frequency": "daily", "drift_band": 0.20, "fill_offset_min": 15}
+REBALANCE = {"frequency": "daily", "drift_band": 0.20, "fill_offset_min": 15, "weekday": None}
 COSTS = {"fee_taker": 0.0005, "slippage": {"default": 0.0005, "BTCUSDT": 0.0002, "ETHUSDT": 0.0002},
          "mmr": {"default": 0.01, "BTCUSDT": 0.004, "ETHUSDT": 0.005}, "spot_funding_per_8h": 0.0001}
 
@@ -63,8 +63,10 @@ COSTS = {"fee_taker": 0.0005, "slippage": {"default": 0.0005, "BTCUSDT": 0.0002,
 def test_rebalance_config():
     r = from_dict(RebalanceConfig, REBALANCE)
     assert from_dict(RebalanceConfig, to_dict(r)) == r
-    assert from_dict(RebalanceConfig, {**REBALANCE, "frequency": "weekly", "fill_offset_min": 480}).fill_offset_min == 480
-    for bad in ({"frequency": "monthly"}, {"drift_band": -0.1}, {"fill_offset_min": 30}, {"fill_offset_min": 15.0}):
+    w = from_dict(RebalanceConfig, {**REBALANCE, "frequency": "weekly", "weekday": "sunday", "fill_offset_min": 480})
+    assert w.fill_offset_min == 480 and w.weekday == "sunday"
+    for bad in ({"frequency": "monthly"}, {"drift_band": -0.1}, {"fill_offset_min": 30}, {"fill_offset_min": 15.0},
+                {"weekday": "sunday"}, {"frequency": "weekly"}, {"frequency": "weekly", "weekday": "sun"}):
         with pytest.raises(ConfigError):
             from_dict(RebalanceConfig, {**REBALANCE, **bad})
 

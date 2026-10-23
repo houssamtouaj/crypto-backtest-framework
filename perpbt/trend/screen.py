@@ -16,12 +16,13 @@ the number of exposure changes are kept; only the timing moves.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
-from perpbt.config import ConfigError, DataConfig
+from perpbt.config import ConfigError, DataConfig, config_hash, to_dict
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.stats.bootstrap import sharpe
 from perpbt.stats.seeds import rng_for
@@ -29,6 +30,8 @@ from perpbt.trend.config import SizingConfig
 from perpbt.trend.daily import DayFrame, load_dayframe
 from perpbt.trend.prereg import TrendPrereg
 from perpbt.trend.signals import Signals, compute_signals, target_weight
+
+DELISTED_AFTER_DAYS = 7  # Phase 3 §3.6: data ending more than this before the period end is a delisting
 
 
 @dataclass(frozen=True, eq=False)  # eq=False: the generated __eq__ raises on ndarray fields
@@ -120,6 +123,10 @@ def run_screen(
         e = shifted_exposure(inputs, k[a:a + chunk])
         r = portfolio_returns(target_weight(e, inputs.sigma[None], sizing), inputs)
         path_sharpe[a:a + chunk] = [sharpe(row) for row in r]
+    bad = int(np.sum(~np.isfinite(path_sharpe)))
+    if not np.isfinite(observed) or bad:
+        # a NaN compares False with everything and would read as "go": refuse instead of deciding
+        raise ValueError(f"screen Sharpe not finite: observed {observed}, {bad} of {paths} paths NaN")
     p = (1 + int(np.sum(path_sharpe >= observed))) / (paths + 1)
     ones = np.where(inputs.active, 1.0, np.nan)
     return {
@@ -142,10 +149,17 @@ def screen_from_store(prereg: TrendPrereg, data_cfg: DataConfig) -> dict:
     prereg's, so the store guard and the period agree.
     """
     p = prereg.periods
-    if data_cfg.insample_end != p.insample_end:
-        raise ConfigError(f"data config insample_end {data_cfg.insample_end} differs from the prereg's {p.insample_end}")
+    for name in ("insample_end", "warmup_start"):
+        if getattr(data_cfg, name) != getattr(p, name):
+            raise ConfigError(f"data config {name} {getattr(data_cfg, name)} differs from the prereg's {getattr(p, name)}")
     pairs = prereg.universe["um"]["members"]
     frames = {pair: load_dayframe(data_cfg, pair, end=p.insample_end) for pair in pairs}
+    end_ms = date_ms(p.insample_end)
+    for pair, f in frames.items():
+        short = (end_ms - int(f.day_ms[-1])) // DAY_MS
+        if 0 < short <= DELISTED_AFTER_DAYS:
+            # neither complete nor a delisting by Phase 3 §3.6: most likely an incomplete fetch
+            raise ConfigError(f"{pair}: stored data ends {short} day(s) before {p.insample_end}; fetch it first")
     signals = {pair: compute_signals(f, prereg.signal, prereg.sizing) for pair, f in frames.items()}
     inputs = screen_inputs(frames, signals, start=p.insample_start, end=p.insample_end)
     h = prereg.prereg_hash()
@@ -153,7 +167,15 @@ def screen_from_store(prereg: TrendPrereg, data_cfg: DataConfig) -> dict:
         inputs, prereg.sizing, paths=prereg.screen.baseline_runs, margin=prereg.stats.shift_margin_days,
         rng=rng_for(prereg.stats.master_seed, h, "screen"), stop_if_p_at_least=prereg.screen.stop_if_p_at_least,
     )
-    return {"prereg_hash": h, "period": [p.insample_start, p.insample_end], "pairs": list(pairs), **result}
+    return {
+        "prereg_hash": h, "data_config_hash": config_hash({k: v for k, v in to_dict(data_cfg).items() if k != "data_dir"}),
+        "period": [p.insample_start, p.insample_end], "pairs": list(pairs),
+        "pair_last_day": {pair: _iso_day(int(f.day_ms[-1])) for pair, f in frames.items()}, **result,
+    }
+
+
+def _iso_day(ms: int) -> str:
+    return time.strftime("%Y-%m-%d", time.gmtime(ms // 1000))
 
 
 def screen_path(runs_dir: str | Path) -> Path:
@@ -187,11 +209,11 @@ def _summary_md(result: dict) -> str:
 
 def write_screen(result: dict, runs_dir: str | Path) -> list[Path]:
     """Write ``runs/trend/screen.json`` once (and ``summary.md`` on stop); refuses to overwrite."""
+    text = json.dumps(result, indent=2, allow_nan=False) + "\n"  # serialise first: a failure leaves no file
     path = screen_path(runs_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "x", encoding="utf-8", newline="\n") as f:
-        json.dump(result, f, indent=2)
-        f.write("\n")
+        f.write(text)
     written = [path]
     if result["decision"] == "stop":
         summary = path.parent / "summary.md"

@@ -26,7 +26,7 @@ signal:  # Phase 1 §1.2-§1.3: 3 members x 4 lookbacks, equal weight
 
 sizing: {target_vol: 0.30, vol_window: 60, max_weight: 2.0, max_gross: 2.0}   # Phase 1 §1.4, TD3
 
-rebalance: {frequency: daily, drift_band: 0.20, fill_offset_min: 15}           # TD5
+rebalance: {frequency: daily, drift_band: 0.20, fill_offset_min: 15, weekday: null}   # TD5
 
 costs:  # TD9, TD10
   fee_taker: 0.0005
@@ -36,7 +36,7 @@ costs:  # TD9, TD10
 
 exploratory:  # reported; no say in the verdict; DSR trials
   - {name: long_short, signal: {direction: long_short}}
-  - {name: weekly, rebalance: {frequency: weekly}}      # decisions on Sunday close, fills Monday
+  - {name: weekly, rebalance: {frequency: weekly, weekday: sunday}}   # decisions on the Sunday close, fills Monday
   - {name: fill_0100, rebalance: {fill_offset_min: 60}}
   - {name: fill_0400, rebalance: {fill_offset_min: 240}}
   - {name: fill_0800, rebalance: {fill_offset_min: 480}}

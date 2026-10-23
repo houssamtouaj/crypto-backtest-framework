@@ -43,7 +43,8 @@ def test_round_trip():
     ex = {e.name: e for e in p.exploratory}
     assert ex["long_short"].signal.direction == "long_short" and ex["long_short"].rebalance == p.rebalance
     assert ex["fill_0800"].rebalance.fill_offset_min == 480 and ex["fill_0800"].signal == p.signal
-    assert ex["weekly"].rebalance.frequency == "weekly"
+    assert ex["weekly"].rebalance.frequency == "weekly" and ex["weekly"].rebalance.weekday == "sunday"
+    assert p.rebalance.weekday is None
     assert p.periods.insample_start == "2020-07-01" and p.periods.insample_end == "2026-10-20"
     assert p.periods.forward_start is None and p.periods.forward_reviews == (12, 36)
     assert p.universe["um"]["members"][0] == "BTCUSDT" and len(p.universe["um"]["members"]) == 10
