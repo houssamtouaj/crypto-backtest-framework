@@ -24,6 +24,7 @@ from perpbt.data.bulk import (
     period_end,
     period_of,
     round_to_minute,
+    snap_to_grid,
 )
 from tests.fake_archive import FakeArchive, funding_csv, kline_csv, kline_rows, zip_bytes
 
@@ -320,3 +321,34 @@ def test_urllib_get_retries_transient_failures_but_not_404(monkeypatch):
     with pytest.raises(DownloadError, match="still down"):
         bulk.urllib_get("https://x/y.zip", attempts=4)
     assert len(attempts) == 4
+
+
+# --- off-grid archive rows (spot 2018-02-09 restart; trend Phase 0) ------------------------
+
+
+def _frame(open_ms):
+    return pd.DataFrame({"open_ms": np.asarray(open_ms, dtype=np.int64), "close": np.arange(len(open_ms), dtype=float)})
+
+
+def test_snap_to_grid_rounds_small_offsets():
+    step = 900_000
+    shifted = [T0 + 13 * 60_000 + 14_789 + k * step for k in range(3)]  # 13:14.789 past the quarter hour
+    frame = snap_to_grid(_frame([T0] + shifted + [T0 + 5 * step]), step)
+    assert frame["open_ms"].tolist() == [T0, T0 + step, T0 + 2 * step, T0 + 3 * step, T0 + 5 * step]
+    assert frame.attrs["snapped"] == 3
+    assert frame["close"].tolist() == [0.0, 1.0, 2.0, 3.0, 4.0]
+
+
+def test_snap_to_grid_on_grid_is_unchanged():
+    frame = snap_to_grid(_frame([T0, T0 + 900_000]), 900_000)
+    assert frame["open_ms"].tolist() == [T0, T0 + 900_000] and frame.attrs["snapped"] == 0
+
+
+def test_snap_to_grid_leaves_far_offsets_for_the_grid_check():
+    far = T0 + 5 * 60_000  # 5 minutes off: more than a quarter step
+    assert snap_to_grid(_frame([T0, far]), 900_000)["open_ms"].tolist() == [T0, far]
+
+
+def test_snap_to_grid_collision_raises():
+    with pytest.raises(ValueError, match="same grid slot"):
+        snap_to_grid(_frame([T0, T0 + 60_000]), 900_000)

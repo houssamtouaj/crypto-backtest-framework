@@ -36,6 +36,7 @@ from perpbt.data.bulk import (
     months_between,
     parse_funding_zip,
     parse_klines_zip,
+    snap_to_grid,
     period_end,
     period_of,
     sha256_bytes,
@@ -87,7 +88,11 @@ def _ingest(
     frame["source"] = source
     stats = write(frame)
     manifest["files"] = [f for f in manifest["files"] if f["name"] != name]
-    manifest["files"].append({"name": name, "sha256": sha256_bytes(data), "rows": int(len(frame)), "source": source})
+    entry = {"name": name, "sha256": sha256_bytes(data), "rows": int(len(frame)), "source": source}
+    if frame.attrs.get("snapped"):
+        entry["snapped"] = frame.attrs["snapped"]  # off-grid rows moved to the grid (bulk.snap_to_grid)
+        log.warning("%s: %d off-grid candles snapped to the grid", name, frame.attrs["snapped"])
+    manifest["files"].append(entry)
     manifest["overlap_mismatches"] += stats.mismatches
     log.info(
         "%s: %d rows (%d new, %d replaced, %d overlap mismatches)",
@@ -144,6 +149,9 @@ def sync_candles(
     def write(frame: pd.DataFrame):
         return store.write(pair, tf, frame)
 
+    def parse(data: bytes) -> pd.DataFrame:
+        return snap_to_grid(parse_klines_zip(data), _STEP_MS[tf])
+
     for ym in months_between(start, to_date):
         have = {f["name"] for f in manifest["files"]}
         missing = {m["name"] for m in manifest["missing"]}
@@ -153,7 +161,7 @@ def sync_candles(
         if ym < this_month and (name not in missing or _retryable(name, today)):
             ok = _ingest(
                 manifest, url=kline_url(pair, tf, ym, market=store.market), name=name, source="bulk_monthly",
-                parse=parse_klines_zip, write=write, http_get=http_get, today=today,
+                parse=parse, write=write, http_get=http_get, today=today,
             )
             store.write_manifest(pair, tf, manifest)
             if ok:
@@ -164,7 +172,7 @@ def sync_candles(
                 continue
             _ingest(
                 manifest, url=kline_url(pair, tf, day, market=store.market), name=dname, source="bulk_daily",
-                parse=parse_klines_zip, write=write, http_get=http_get, today=today,
+                parse=parse, write=write, http_get=http_get, today=today,
             )
             store.write_manifest(pair, tf, manifest)
     _refresh_candles(store, pair, tf, manifest)

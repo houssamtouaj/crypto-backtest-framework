@@ -256,6 +256,28 @@ def parse_klines_zip(data: bytes) -> pd.DataFrame:
     return parse_klines_csv(_single_csv(data))
 
 
+def snap_to_grid(frame: pd.DataFrame, step_ms: int) -> pd.DataFrame:
+    """Round ``open_ms`` values within a quarter step of the grid to the nearest grid slot.
+
+    The spot archive has candles on a shifted grid after an exchange restart
+    (BTCUSDT and BCCUSDT 2018-02-09 09:58:14.789 .. 2018-02-10 05:58:14.789,
+    81 candles each, 1m45s before a slot). Rows further off are left for the
+    grid check to reject; two rows landing on the same slot raise. The number
+    of rows moved is in ``frame.attrs["snapped"]``.
+    """
+    ts = frame["open_ms"].to_numpy(dtype=np.int64)
+    nearest = (ts + step_ms // 2) // step_ms * step_ms
+    move = (ts != nearest) & (np.abs(ts - nearest) <= step_ms // 4)
+    out = frame.copy()
+    if move.any():
+        snapped = np.where(move, nearest, ts)
+        if len(np.unique(snapped)) != len(snapped):
+            raise ValueError("snapping off-grid candles to the grid puts two candles in the same grid slot")
+        out["open_ms"] = snapped
+    out.attrs["snapped"] = int(move.sum())
+    return out
+
+
 def round_to_minute(ms: np.ndarray) -> np.ndarray:
     """Nearest minute in ms (halves round up)."""
     ms = np.asarray(ms, dtype=np.int64)

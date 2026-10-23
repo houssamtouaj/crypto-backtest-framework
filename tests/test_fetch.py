@@ -480,6 +480,19 @@ def test_stale_pair_skips_ccxt_tail_and_gaps(data_cfg):
     assert summary["BTCUSDT"]["ccxt_tail"]["15m"] > 0 and "ccxt_skipped" not in summary["BTCUSDT"]
 
 
+def test_off_grid_archive_rows_are_snapped_and_recorded(spot_cfg):
+    t = date_ms("2018-02-09")
+    rows = kline_rows(t, 2, STEP) + kline_rows(t + 3 * STEP - 105_211, 3, STEP, price=200.0)  # shifted restart grid
+    a = FakeArchive()
+    a.add_klines("BTCUSDT", "15m", "2018-02", rows, market="spot")
+    summary = spot_fetch(spot_cfg, a, from_date=date(2018, 2, 1), to_date=date(2018, 2, 28))
+    assert summary["BTCUSDT"]["15m"]["rows"] == 5 and summary["BTCUSDT"]["15m"]["gaps"] == 1
+    store = CandleStore(spot_cfg, market="spot")
+    assert store.read_frame("BTCUSDT", "15m")["open_ms"].tolist() == [t, t + STEP] + [t + k * STEP for k in (3, 4, 5)]
+    entry = store.manifest("BTCUSDT", "15m")["files"][0]
+    assert entry["name"] == "BTCUSDT-15m-2018-02.zip" and entry["snapped"] == 3
+
+
 def test_is_stale():
     assert not is_stale({"last_open_ms": None}, TODAY)
     assert not is_stale({"last_open_ms": date_ms("2026-09-20")}, TODAY)  # exactly 7 days
