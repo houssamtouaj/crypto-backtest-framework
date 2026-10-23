@@ -121,3 +121,51 @@ whole build.
 Lock committed and tagged; `runs/trend/screen.json` committed with
 `p_screen`, the observed and random-path Sharpe distribution summary, and
 the decision. Report the decision to the user before starting Phase 3.
+
+## 2.6 Implementation notes (Phase 2 build, 2026-10-23)
+
+Builder's calls taken while building this phase; none changes a trading
+rule.
+
+- **Loader.** The duplicate-key YAML loader moved from
+  `experiments/prereg.py` to `config.read_yaml_unique` (the first strategy
+  imports it from there): `experiments/prereg.py` is outside the Phase 5
+  §5.4 import scope, which `tests/trend/test_imports.py` pins.
+- **Canonical order.** `signal.members` must be listed in the order
+  `return_sign, ma_filter, donchian` and `lookbacks` strictly increasing
+  (`SignalConfig` rejects anything else), so two files with the same signal
+  hash the same and an edited order cannot slip through.
+- **Exploratory rows** are stored as the full merged `signal` and
+  `rebalance` blocks (the hash covers the merged values); a row may override
+  only those two blocks.
+- **Lock.** `configs/trend/prereg.lock` is JSON in the key order of §2.2;
+  `freeze` checks the universe against `universe.json` first and writes the
+  file once. `check_frozen` (the gate for the screen and every later run)
+  refuses a missing lock or a hash that differs from it; editing
+  `periods.forward.start` alone passes.
+- **Screen days.** Decisions are made on the day before each in-sample
+  day, so the returns fall on 2020-07-01 .. 2026-10-20 (`n` = 2,303 days).
+  A pair is active on decision day `d` when its signal is valid and day
+  `d+1` is in its DayFrame; EOSUSDT leaves on its last day (2025-05-21).
+  A day with no active pair returns 0 (none occurs in-sample).
+- **Shift.** One offset per path on `[60, n − 60]`, each pair rotated by
+  `k mod n_i` inside its own active days; weights recomputed with
+  `signals.target_weight` and the actual `σ̂`. The paths are computed in
+  chunks of 100 (output-neutral, pinned by a test).
+- **One shot.** `perpbt trend screen` refuses without a matching lock and
+  when `runs/trend/screen.json` exists (the file is also opened with
+  `"x"`). Seed: `rng_for(master_seed, prereg_hash, "screen")`. On stop it
+  also writes `runs/trend/summary.md`; `.gitignore` admits both files.
+- **Review fixes (before the freeze).** `rebalance.weekday` pins the
+  weekly row's decision day in the hashed content (`sunday`; null for
+  daily), where §2.1 had it only as a comment. The screen refuses rather
+  than decides when any Sharpe is not finite (a NaN compares false and
+  would read as "go"); `screen.json` is serialised before the file is
+  opened, so a failure cannot leave a half-written file that uses up the
+  one shot. The screen also refuses when `data.yaml`'s `warmup_start`
+  differs from the prereg's, or when a pair's stored data ends 1–7 days
+  before the period end (neither complete nor a delisting by Phase 3
+  §3.6); it records each pair's last day and a hash of the data config
+  (without `data_dir`).
+- **Funding in the screen.** The screen's returns carry no funding; its
+  weights do, through `σ̂` (TD3 forecasts vol from returns with funding).

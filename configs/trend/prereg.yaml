@@ -1,0 +1,62 @@
+# Trend-following pre-registration (trend spec Phase 2 §2.1; decisions in 00-overview.md §2).
+# Frozen by `perpbt trend prereg freeze` (configs/trend/prereg.lock, tag trend-prereg-v1) before the
+# screen runs. After the freeze only periods.forward.start may change (set by the code lock, Phase 5).
+# The hash covers the normalised content without periods.forward.start; comments and key order do not count.
+registered_on: 2026-10-23
+
+universe:  # copied from configs/trend/universe.json (Phase 0 §0.3, §0.4); checked on load and freeze
+  um:
+    rule: "USDT-M perpetuals (delisted included) with an archive 1d kline for every day from the later of their first archived day and 2020-01-01 through 2020-06-30, that day no later than 2020-01-23 (warm for the 160-day members on 2020-07-01), ranked by quote volume over 2020-01-01..2020-06-30 (ties by symbol), stablecoin bases and leveraged tokens excluded; top 10; trading from 2020-07-01"
+    members: [BTCUSDT, ETHUSDT, BCHUSDT, LINKUSDT, ETCUSDT, LTCUSDT, XRPUSDT, EOSUSDT, TRXUSDT, XLMUSDT]
+  spot:
+    rule: "spot *USDT pairs (delisted included) with an archive 1d kline for every day from the later of their first archived day and 2017-12-01 through 2017-12-31, ranked by quote volume over 2017-12-01..2017-12-31 (ties by symbol), stablecoin bases and leveraged tokens excluded; up to 10; each enters the holdout when warm, holdout ends 2019-12-31"
+    members: [BTCUSDT, ETHUSDT, BCCUSDT, NEOUSDT, BNBUSDT, LTCUSDT]
+
+periods:
+  warmup:   {start: 2020-01-01, end: 2020-06-30}
+  insample: {start: 2020-07-01, end: 2026-10-20}   # returns on these days; decisions on the day before each
+  holdout:  {market: spot, end: 2019-12-31}         # start is per pair, when warm
+  forward:  {start: null, reviews: [12, 36]}        # start set by the code lock; excluded from the hash
+
+signal:  # Phase 1 §1.2-§1.3: 3 members x 4 lookbacks, equal weight
+  members: [return_sign, ma_filter, donchian]
+  lookbacks: [20, 40, 80, 160]
+  donchian_exit: half
+  direction: long_flat
+
+sizing: {target_vol: 0.30, vol_window: 60, max_weight: 2.0, max_gross: 2.0}   # Phase 1 §1.4, TD3
+
+rebalance: {frequency: daily, drift_band: 0.20, fill_offset_min: 15, weekday: null}   # TD5
+
+costs:  # TD9, TD10
+  fee_taker: 0.0005
+  slippage: {default: 0.0005, BTCUSDT: 0.0002, ETHUSDT: 0.0002}
+  mmr: {default: 0.01, BTCUSDT: 0.004, ETHUSDT: 0.005}
+  spot_funding_per_8h: 0.0001
+
+exploratory:  # reported; no say in the verdict; DSR trials
+  - {name: long_short, signal: {direction: long_short}}
+  - {name: weekly, rebalance: {frequency: weekly, weekday: sunday}}   # decisions on the Sunday close, fills Monday
+  - {name: fill_0100, rebalance: {fill_offset_min: 60}}
+  - {name: fill_0400, rebalance: {fill_offset_min: 240}}
+  - {name: fill_0800, rebalance: {fill_offset_min: 480}}
+
+reprice: {slippage: [0.0, 0.0002, 0.0005, 0.001, 0.002], fee_taker: [0.0004, 0.0005]}
+
+stats:
+  alpha: 0.05
+  baseline_runs: 5000
+  shift_margin_days: 60
+  bootstrap_n: 10000
+  block_len_days: 20
+  master_seed: 20261023
+
+screen: {baseline_runs: 1000, stop_if_p_at_least: 0.10}   # Phase 2 §2.3, TD8
+
+verdict_rule:
+  t1: "one-sided p of the portfolio net Sharpe against the random-days runs < alpha"
+  t2: "one-sided paired block-bootstrap p of (strategy − vol-targeted buy-and-hold) net Sharpe < alpha"
+  edge: "t1 and t2 (intersection-union; no multiplicity adjustment)"
+  t3: "reported only: max drawdown at matched vol, paired block bootstrap"
+  reported_for: [insample, holdout, forward_36m]
+  forward_12m: descriptive only

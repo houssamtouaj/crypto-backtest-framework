@@ -1,0 +1,50 @@
+{
+  "prereg_hash": "a011ea29f9331570e6e2f5a8b8f904a5a39c9aab0b15db1b55392f6d67488fba",
+  "data_config_hash": "8377ab5bcc773a8b5c56e45e4fee158c3a164f47c6a6664c1483cde65b469884",
+  "period": [
+    "2020-07-01",
+    "2026-10-20"
+  ],
+  "pairs": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "BCHUSDT",
+    "LINKUSDT",
+    "ETCUSDT",
+    "LTCUSDT",
+    "XRPUSDT",
+    "EOSUSDT",
+    "TRXUSDT",
+    "XLMUSDT"
+  ],
+  "pair_last_day": {
+    "BTCUSDT": "2026-10-20",
+    "ETHUSDT": "2026-10-20",
+    "BCHUSDT": "2026-10-20",
+    "LINKUSDT": "2026-10-20",
+    "ETCUSDT": "2026-10-20",
+    "LTCUSDT": "2026-10-20",
+    "XRPUSDT": "2026-10-20",
+    "EOSUSDT": "2025-05-21",
+    "TRXUSDT": "2026-10-20",
+    "XLMUSDT": "2026-10-20"
+  },
+  "n_days": 2303,
+  "n_pairs": 10,
+  "observed_sharpe": 1.0793431774517483,
+  "paths": {
+    "n": 1000,
+    "mean": 0.8442350884933453,
+    "std": 0.2325204607072155,
+    "p05": 0.4575444881874817,
+    "p50": 0.8687680956764662,
+    "p95": 1.2014054750346517
+  },
+  "p_screen": 0.15584415584415584,
+  "stop_if_p_at_least": 0.1,
+  "decision": "stop",
+  "bh_sharpe": 0.9855076068378239,
+  "mean_active_pairs": 9.775510204081632,
+  "computed_on": "2026-10-23",
+  "git_commit": "93984c865aff28c7481c2eda0d116391b8c1a8da"
+}

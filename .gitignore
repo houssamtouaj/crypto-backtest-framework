@@ -11,6 +11,9 @@ __pycache__/
 !/runs/summary.md
 !/runs/registry.jsonl
 !/runs/results.parquet
+# trend: the screen result (Phase 2) and the summary
+!/runs/trend/screen.json
+!/runs/trend/summary.md
 *.egg-info/
 build/
 dist/
