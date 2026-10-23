@@ -1,0 +1,25 @@
+# DataConfig for the funding-carry strategy (carry spec Phase 0 §0.2), used for
+# both stores: the perps and the spot pairs of the same symbols.
+# listing: the trend um members (configs/trend/universe.json) with their trend
+# listing dates; the perp is always the later leg (every spot pair predates 2020).
+# The stores refuse loads past insample_end without allow_holdout; spot loads
+# starting before 2020-01-01 (the trend spot holdout) need it whatever the dates.
+# The carry loader (carry/frames.py, Phase 1) also refuses ends after 2023-12-31
+# itself, whatever config it is given.
+data_dir: data
+insample_start: "2020-01-01"
+insample_end: "2023-12-31"
+holdout_start: "2024-01-01"
+holdout_end: "2026-10-20"
+warmup_start: "2020-01-01"
+listing:
+  BTCUSDT: "2020-01-01"
+  ETHUSDT: "2020-01-01"
+  BCHUSDT: "2020-01-01"
+  LINKUSDT: "2020-01-17"
+  ETCUSDT: "2020-01-16"
+  LTCUSDT: "2020-01-09"
+  XRPUSDT: "2020-01-06"
+  EOSUSDT: "2020-01-08"
+  TRXUSDT: "2020-01-15"
+  XLMUSDT: "2020-01-20"
