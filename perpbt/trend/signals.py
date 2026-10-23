@@ -7,8 +7,15 @@ directions.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
+
+from perpbt.trend.config import SignalConfig, SizingConfig
+from perpbt.trend.daily import DayFrame
+
+ANNUALISE = np.sqrt(365.0)  # calendar days: crypto trades every day
 
 
 def _sign(x: np.ndarray, long_short: bool) -> np.ndarray:
@@ -68,3 +75,70 @@ def donchian(c: np.ndarray, h: np.ndarray, l: np.ndarray, n: int, *, long_short:
     out = long.astype(np.float64) - (short if long_short else 0)
     out[:n] = np.nan
     return out
+
+
+_CLOSE_MEMBERS = {"return_sign": return_sign, "ma_filter": ma_filter}  # members that read only closes
+
+
+def member_matrix(frame: DayFrame, signal: SignalConfig) -> tuple[tuple[str, ...], np.ndarray]:
+    """Every member at every lookback: names ``f"{member}_{n}"`` and values of shape ``(K, D)``."""
+    names, rows = [], []
+    for member in signal.members:
+        for n in signal.lookbacks:
+            if member == "donchian":
+                row = donchian(frame.c, frame.h, frame.l, n, long_short=signal.long_short)
+            else:
+                row = _CLOSE_MEMBERS[member](frame.c, n, long_short=signal.long_short)
+            names.append(f"{member}_{n}")
+            rows.append(row)
+    return tuple(names), np.vstack(rows)
+
+
+def warmup_days(signal: SignalConfig, sizing: SizingConfig) -> int:
+    """The first valid day index: every lookback has its ``N`` prior days and ``σ̂`` its window.
+
+    ``ret[0]`` is NaN (no day before the first), so ``σ̂`` is first finite at index ``vol_window``.
+    """
+    return max(max(signal.lookbacks), sizing.vol_window)
+
+
+def vol_forecast(ret: np.ndarray, window: int) -> np.ndarray:
+    """``σ̂_d = std(ret_{d−window+1..d}, ddof=1) × √365``; NaN until ``window`` finite returns exist."""
+    ret = np.asarray(ret, dtype=np.float64)
+    out = np.full(len(ret), np.nan)
+    if len(ret) >= window:
+        out[window - 1:] = sliding_window_view(ret, window).std(axis=1, ddof=1) * ANNUALISE
+    return out
+
+
+def target_weight(e: np.ndarray, sigma: np.ndarray, sizing: SizingConfig) -> np.ndarray:
+    """``w* = e × min(target_vol / σ̂, max_weight)``; ``σ̂ = 0`` gives the cap; NaN where either input is."""
+    sigma = np.asarray(sigma, dtype=np.float64)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        scale = np.where(sigma > 0, np.minimum(sizing.target_vol / sigma, sizing.max_weight), sizing.max_weight)
+    scale[np.isnan(sigma)] = np.nan
+    return np.asarray(e, dtype=np.float64) * scale
+
+
+@dataclass(frozen=True, eq=False)  # eq=False: the generated __eq__ raises on ndarray fields
+class Signals:
+    """One pair's signals per DayFrame row. ``exposure`` and ``weight`` are NaN where not ``valid``."""
+
+    pair: str
+    day_ms: np.ndarray
+    names: tuple[str, ...]
+    members: np.ndarray  # (K, D)
+    exposure: np.ndarray
+    sigma: np.ndarray
+    weight: np.ndarray
+    valid: np.ndarray
+
+
+def compute_signals(frame: DayFrame, signal: SignalConfig, sizing: SizingConfig) -> Signals:
+    """Members, exposure ``e``, vol forecast ``σ̂`` and target weight ``w*`` for every day of ``frame``."""
+    names, members = member_matrix(frame, signal)
+    sigma = vol_forecast(frame.ret, sizing.vol_window)
+    valid = (np.arange(len(frame)) >= max(signal.lookbacks)) & np.isfinite(sigma)
+    exposure = np.where(valid, members.mean(axis=0), np.nan)
+    weight = np.where(valid, target_weight(exposure, sigma, sizing), np.nan)
+    return Signals(frame.pair, frame.day_ms, names, members, exposure, sigma, weight, valid)
