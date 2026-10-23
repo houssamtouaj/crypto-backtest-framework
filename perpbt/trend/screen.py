@@ -15,15 +15,20 @@ the number of exposure changes are kept; only the timing moves.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
+from perpbt.config import ConfigError, DataConfig
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.stats.bootstrap import sharpe
+from perpbt.stats.seeds import rng_for
 from perpbt.trend.config import SizingConfig
-from perpbt.trend.daily import DayFrame
-from perpbt.trend.signals import Signals, target_weight
+from perpbt.trend.daily import DayFrame, load_dayframe
+from perpbt.trend.prereg import TrendPrereg
+from perpbt.trend.signals import Signals, compute_signals, target_weight
 
 
 @dataclass(frozen=True, eq=False)  # eq=False: the generated __eq__ raises on ndarray fields
@@ -128,3 +133,68 @@ def run_screen(
         "bh_sharpe": sharpe(portfolio_returns(target_weight(ones, inputs.sigma, sizing), inputs)),
         "mean_active_pairs": float(inputs.active.sum(axis=0).mean()),
     }
+
+
+def screen_from_store(prereg: TrendPrereg, data_cfg: DataConfig) -> dict:
+    """The screen on the stored in-sample perps: every ``universe.um`` member, the primary signal and sizing.
+
+    Seeded from ``(stats.master_seed, prereg_hash, "screen")``. ``data_cfg.insample_end`` must equal the
+    prereg's, so the store guard and the period agree.
+    """
+    p = prereg.periods
+    if data_cfg.insample_end != p.insample_end:
+        raise ConfigError(f"data config insample_end {data_cfg.insample_end} differs from the prereg's {p.insample_end}")
+    pairs = prereg.universe["um"]["members"]
+    frames = {pair: load_dayframe(data_cfg, pair, end=p.insample_end) for pair in pairs}
+    signals = {pair: compute_signals(f, prereg.signal, prereg.sizing) for pair, f in frames.items()}
+    inputs = screen_inputs(frames, signals, start=p.insample_start, end=p.insample_end)
+    h = prereg.prereg_hash()
+    result = run_screen(
+        inputs, prereg.sizing, paths=prereg.screen.baseline_runs, margin=prereg.stats.shift_margin_days,
+        rng=rng_for(prereg.stats.master_seed, h, "screen"), stop_if_p_at_least=prereg.screen.stop_if_p_at_least,
+    )
+    return {"prereg_hash": h, "period": [p.insample_start, p.insample_end], "pairs": list(pairs), **result}
+
+
+def screen_path(runs_dir: str | Path) -> Path:
+    return Path(runs_dir) / "trend" / "screen.json"
+
+
+def _summary_md(result: dict) -> str:
+    q = result["paths"]
+    return "\n".join([
+        "# Trend following — summary",
+        "",
+        f"**Decision: {result['decision']}.** The gross signal screen (trend spec Phase 2 §2.3) gave "
+        f"p_screen = {result['p_screen']:.4f}, at or above the pre-registered stop threshold "
+        f"{result['stop_if_p_at_least']}. Phases 3–7 are not built.",
+        "",
+        "| | value |",
+        "|---|---|",
+        f"| period (return days) | {result['period'][0]} .. {result['period'][1]} ({result['n_days']} days) |",
+        f"| pairs | {' '.join(result['pairs'])} |",
+        f"| observed gross Sharpe | {result['observed_sharpe']:.3f} |",
+        f"| random-days paths | {q['n']}: mean {q['mean']:.3f}, std {q['std']:.3f}, "
+        f"5/50/95% {q['p05']:.3f} / {q['p50']:.3f} / {q['p95']:.3f} |",
+        f"| p_screen | {result['p_screen']:.4f} |",
+        f"| vol-targeted buy-and-hold gross Sharpe (descriptive) | {result['bh_sharpe']:.3f} |",
+        "",
+        f"Pre-registration hash {result['prereg_hash']}; computed {result['computed_on']} at "
+        f"{result['git_commit']}. Gross model: no fill delay, drift band, fees, slippage or funding.",
+        "",
+    ])
+
+
+def write_screen(result: dict, runs_dir: str | Path) -> list[Path]:
+    """Write ``runs/trend/screen.json`` once (and ``summary.md`` on stop); refuses to overwrite."""
+    path = screen_path(runs_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "x", encoding="utf-8", newline="\n") as f:
+        json.dump(result, f, indent=2)
+        f.write("\n")
+    written = [path]
+    if result["decision"] == "stop":
+        summary = path.parent / "summary.md"
+        summary.write_text(_summary_md(result), encoding="utf-8", newline="\n")
+        written.append(summary)
+    return written
