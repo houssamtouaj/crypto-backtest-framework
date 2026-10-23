@@ -146,3 +146,13 @@ Pre-flight:
 - T2 -> T3: SignalConfig/SizingConfig and the member functions — consistent.
 - Task 1: Ruling: DayFrame arrays are made read-only (as CandleStore.load's) — later phases share one frame across many paths — cost if wrong: none.
 - Task 1: Ruling: added test_fill_offset_validation beyond the brief — pins the offset check — cost: none.
+Task 1: complete (commits 0de5f81..2f2d603, tests: python -m pytest tests/trend/test_daily.py tests/test_holdout.py -q → 24 passed)
+- Task 2: Ruling: test_donchian_uses_highs_and_lows also pins the exit on lows (a close above the prior closes but below the prior N/2 lows exits) — the brief pinned only the entry — cost: none.
+Task 2: complete (commits 2f2d603..68259d9, tests: python -m pytest tests/trend/test_config.py tests/trend/test_signals.py -q → 43 passed)
+- Task 3: Ruling: added test_member_matrix_names_and_shape and a "the walk moves the ensemble" guard in test_exposure_steps_of_one_twelfth — keeps the step test from passing on a constant exposure — cost: none.
+- Task 3: Ruling: σ̂ annualised with √365 (calendar days, as the spec's formula) as module constant ANNUALISE — a fixed part of the definition, not a tunable — cost if wrong: none (the spec fixes it).
+Task 3: complete (commits 68259d9..40fe9d0, tests: python -m pytest tests/trend -q → 90 passed in 1.72s)
+- Task 4: Ruling: the real-data tests check code already written in Tasks 1-3 and were not run RED (as Phase 0's config checks) — each asserts concrete dates and counts — cost if wrong: a check that cannot fail.
+- Task 4: Ruling: real-data perp test also runs long/short and checks all 12 members finite from 2020-07-01; spot check also asserts the listing day holds the first candle — cost: none.
+- Task 4: real data: 10 perps, 0 filled days, valid from 2020-06-09 (BTC ETH BCH) .. 2020-06-28 (XLM); EOS last day 2025-05-21, 5881 funding events kept; each pair loads + signals in < 0.1 s. Spot (manifests only): no filled run > 5; warm BTC/ETH 2018-01-24, BNB 04-15, BCC 04-20, NEO 04-29, LTC 05-22.
+Task 4: complete (commits 40fe9d0..56e7492, tests: python -m pytest -q (full, slow included) → 1053 passed in 154.04s)
