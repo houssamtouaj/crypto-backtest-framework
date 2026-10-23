@@ -67,3 +67,53 @@ All frames and states computed for every pair on real in-sample data;
 tests green. **No return, P&L, or funding statistic beyond the signal
 itself is computed or printed in this phase** (the per-pair share of days
 "on" is not reported either; it would preview the screen).
+
+## 1.6 Implementation notes (Phase 1 build, 2026-10-23)
+
+Builder's calls taken while building this phase; none changes a trading
+rule.
+
+- **Legs built, not loaded, as DayFrames** *(my call)*. `load_pairframe`
+  checks `CARRY_INSAMPLE_END` before any read, loads both legs' 15m candles
+  and the perp funding through the guarded stores (the same windows as
+  `trend.daily.load_dayframe`), and builds each leg with
+  `trend.daily.build_dayframe`, the builder `load_dayframe` uses. The cut at
+  `last_common_ms` and the late-fill prices need the 15m candles, which a
+  DayFrame does not keep. A test pins that the legs equal `load_dayframe`'s
+  output when no cut is needed. There is no second DayFrame type.
+- **The cut** *(my call)*. Both legs' candles are cut at `last_common_ms`
+  before their DayFrames are built, so on the last day both legs' o/h/l/c
+  stop at the last common candle, and the perp DayFrame's own rule drops the
+  funding events after it. `last_common_ms` is the last slot present in both
+  legs, not `min` of the two last candles.
+- **Fields added.** `funding_interval_h` (aligned with `perp.funding_ts`; the
+  DayFrame keeps no interval) feeds §1.2. `fill_late_ms[leg][h]` is the fill
+  time, the candle's close (open + 15 min), so it equals `day + h` when on
+  time. The late fill never reaches into the next day: NaN when the day has
+  no candle closing at or after `day + h`.
+- **`f̄`.** NaN for the first `W − 1` days of the frame and for any window
+  with no event; otherwise the mean of the per-day-normalised rates of the
+  window's events. A funding event at exactly 00:00 belongs to the new day,
+  so `f̄_d` uses only events before `d`'s close.
+- **Config.** `carry/config.py` holds `CarrySignalConfig` (`lookback_days`,
+  `entry_annual`, `exit_annual`: the prereg `signal` block; no defaults;
+  `exit ≤ entry`, so `always_on`'s −1e9/−1e9 is valid). The sleeve, cost and
+  margin configs are left to the phases that use them.
+- **Guard test.** `tests/carry/test_frames.py` pins the refusal of
+  `end > 2023-12-31` under both `configs/carry/data.yaml` and
+  `configs/trend/data.yaml` before any read, and scans `perpbt/carry/` for a
+  literal `allow_holdout=True` (only Phase 5's `holdout.py` and `forward.py`
+  are exempt).
+
+**Real data (in-sample, 2026-10-23).** All ten pairs build through
+2023-12-31 with `last_common_ms` 2023-12-31 23:45, no run of filled pair days
+longer than 5, finite basis, and `f̄` finite from day `W − 1` for W = 3, 7 and
+14. Seven perps (EOS, ETC, LINK, LTC, TRX, XLM 08:00; XRP 08:15) start
+mid-day on their listing day, so day 0 has no on-time 00:15 or 01:00 fill
+(only a late fill). From day 1 every pair has both legs' 00:15 and 01:00
+candles on every in-sample day. Every in-sample funding interval is one of
+1, 2, 4 or 8 h. EOSUSDT, from the manifests only: the perp's last candle is
+2025-05-21 09:00, the spot's is on 2025-05-26, so the pair's common last day
+is the perp's (outside the in-sample; the cut itself is tested on synthetic
+data of the same shape). No return, P&L or funding statistic and no share of
+days on was computed or printed.

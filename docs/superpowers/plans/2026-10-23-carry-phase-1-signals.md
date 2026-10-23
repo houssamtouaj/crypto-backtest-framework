@@ -87,3 +87,8 @@ Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-1-signals.md
 - Ruling (my call): both legs are truncated at `last_common_ms` before building, so the last day's o/h/l/c of both legs stop at the last common candle (consistent with the funding cut and Phase 3's close at that candle) — cost if wrong: the last day's bar differs from the uncut DayFrame.
 - Ruling (my call): `fill_late_ms` is the fill time (the candle's close, open + 15 min), so it equals `day + h` when on time — cost: none.
 - Ruling (my call): `funding_interval_h` is added to the PairFrame (the DayFrame keeps no interval) — cost: none.
+Task 1: complete (cb16830; tests/carry/test_config.py → 7 passed)
+Task 2: complete (b50c7bc; tests/carry/test_frames.py → 12 passed)
+Task 3: complete (506c494; tests/carry/test_signals.py → 16 passed). Fixture: the sine period was lengthened (k/15, 60 days) so the 7-day f̄ crosses both thresholds. Mutation check: an f̄ that reads the next day's funding fails the truncation and funding-perturbation tests.
+Task 4: complete (558e154; real data 13 passed in 1 s; full suite 1177 passed in 2 min 40 s).
+- Task 4: Ruling: seven perps' listing days start mid-day (08:00; XRP 08:15), so `fill_ok` is asserted from day 1. The late fill is asserted on every day — cost: none (trading starts 2020-07-01).
