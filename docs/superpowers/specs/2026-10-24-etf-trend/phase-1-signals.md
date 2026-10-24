@@ -97,3 +97,61 @@ Tests green; on the real store, the first valid day per ticker, exposure
 histogram, mean exposure and mean `w*` per ticker over the in-sample period
 recorded in this file's notes. **No return of the strategy is computed in
 this phase.**
+
+## 1.8 Implementation notes (2026-10-24, branch `etf/1-signals`)
+
+**Code.** `perpbt/etf/frame.py` (`EtfFrame`, `cash_returns`, `build_frame`, `check_aligned`, `load_frames`),
+`perpbt/etf/signals.py` (`vol_forecast252`, `first_valid_index`, `member_matrix`, `etf_target_weight`,
+`compute_signals`, `summarise`), `EtfSizingConfig` in `perpbt/etf/config.py`. Nothing under `perpbt/trend/` or in
+`CARRY_CODE_PATHS` was edited; the carry code version is still `7ce43816…`. Plan and log:
+`docs/superpowers/plans/2026-10-24-etf-phase-1-signals.md`.
+
+**Builder's calls** (on the standing instruction to take the recommended option; the user can overturn any):
+
+1. `EtfFrame` also carries `ticker` and a `stale_open` flag (`O_d = C_{d−1}`). Prices are not changed; the flag lets
+   Phases 2–3 count the stale opens.
+2. `EtfSizingConfig` is the Phase 2 `sizing` block one to one: `target_vol` (float or null), `vol_window`,
+   `max_weight` (in (0, 1]: no leverage), `annualise_days` (must be 252).
+3. The `signal` block reuses `trend.config.SignalConfig` (imported). `compute_signals` refuses `long_short`.
+4. A frame refuses a first row other than `warmup_start`, an `end` after the store's `holdout_end`, and a cash day
+   whose rate is more than 10 calendar days old. Rule 7 makes the last unreachable on this store; it guards a
+   short or synthetic one. Rates are loaded from 14 calendar days before `warmup_start`.
+5. `no_vol_target` has the same valid days as the primary (it needs a finite σ̂ too), so every row starts on the
+   same day.
+6. Frame arrays are read-only. `ret` is `validate.total_return`, the formula rule 5 already checks.
+7. `load_frames` passes `allow_holdout` through to the store (default False), as the carry frame loader does.
+
+**Real store, in-sample** (`tests/etf/test_real_signals.py`, slow; `end = 2017-12-31`, no holdout flag;
+manifest sha256 still `308f5012…`):
+
+- Four aligned frames, 3,302 rows each, 2004-11-18..2017-12-29. `ret`, `r_on`, `r_id` and `cash` are finite from
+  row 1. The largest |`ret`| is 14.5% (SPY, 2008-10-13).
+- **First valid day: 2005-07-11 for all four** (row 160; the spec's "about 2005-07-13" was an estimate). Every
+  ticker is valid on 2005-07-29, the decision day before `insample_start`. All 12 members are finite from then on.
+- **Cash:** negative on six days, all from the 2015 DTB3 prints: 2015-09-21, 09-23, 09-28, 10-01, 10-02, 10-09.
+  The annualised rate stays within −0.1%..6%.
+- **IWM split** (2005-06-09): `ret` that day 0.98%, continuous.
+- **QQQ corrections:** the 2010-06-18 dividend (0.089) is there; the 2010-06-25 duplicate is gone. Dividend days:
+  53 each for SPY, QQQ and IWM, none for GLD. The 2020-09-21 QQQ fix is in the holdout and not loaded here.
+- **Stale opens** over 2004-11-18..2017-12-29: SPY 42, QQQ 55, IWM 42, GLD 34. On 14 of them the stale open is
+  also the day's high or low (SPY 4, QQQ 1, IWM 5, GLD 4), so that extreme may be stale too. Only the Donchian
+  member reads `h` and `l`, and nothing was changed.
+
+**Signals over the in-sample period** (2005-08-01..2017-12-31, 3,127 days; primary sizing 0.15 / 60 / 1.0):
+
+| Ticker | Mean exposure | Mean `w*` | Mean σ̂ | Days with σ̂ ≤ 15% (`w* = e`) | Exposure histogram, k/12 for k = 0..12 |
+|---|---|---|---|---|---|
+| SPY | 0.649 | 0.611 | 0.160 | 64.8% | 246, 159, 122, 130, 132, 136, 165, 182, 195, 216, 230, 296, 918 |
+| QQQ | 0.672 | 0.610 | 0.181 | 47.2% | 206, 159, 100, 110, 123, 143, 141, 184, 173, 259, 291, 298, 940 |
+| IWM | 0.612 | 0.518 | 0.214 | 28.1% | 279, 178, 165, 118, 115, 139, 179, 238, 189, 247, 286, 313, 681 |
+| GLD | 0.540 | 0.455 | 0.181 | 40.4% | 350, 230, 179, 165, 223, 186, 189, 206, 147, 218, 260, 239, 535 |
+
+With `no_vol_target`, mean `w*` equals mean exposure. No return of the strategy was computed.
+
+**For later phases:**
+
+- Phase 2: build the prereg's `signal` block as a `trend.config.SignalConfig` and its `sizing` block as an
+  `EtfSizingConfig`. The screen reads `EtfSignals.weight` and the frame's `ret` and `cash`. The insample check is
+  `summarise(…, insample_start, insample_end)`, which raises on any invalid day.
+- Phase 3: a fill at day `d`'s open earns `r_id[d]` that day. The dividend is in `r_on[d]`, owed to the holder at
+  `d−1`'s close. `stale_open` marks the fills that carry Yahoo's stale opens.
