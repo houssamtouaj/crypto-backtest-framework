@@ -121,3 +121,11 @@
 ## Progress log
 
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-5-experiments.md
+Task 1: complete (d0161e4; ccxt per-event intervals, registry_log).
+Task 2: complete (2d4a8bb; scoped code version, lock_code).
+Task 3: complete (5f624e1; variants, CarryRun).
+Task 4: complete (9819f2e; results.parquet, code check, carry run / lock-code CLI).
+Task 5: complete (492d7d0; holdout, grep test widened).
+Task 6: complete (378f321; forward reviews).
+Task 7: complete (fae9e02; dry run, real-config test, .gitignore, spec §5.9). Full suite 1411 passed (51 min under machine load; re-timed 4:49 + 39 s).
+Final review: fresh reviewer (opus): "merge with fixes"; 0 Critical, 2 Important, 7 Minor; all fixed (spec §5.9 "Review fixes"), each with a test that failed first.

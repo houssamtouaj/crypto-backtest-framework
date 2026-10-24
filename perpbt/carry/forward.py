@@ -19,8 +19,10 @@ exits by the delisting rule; no new members.
 Refusals (ForwardRefused), before any forward data is loaded: the prereg not frozen or changed; the code not
 locked; no forward start; a review that is not pre-registered; too few days; the review already run (its folder
 has a ``stats.json``); no in-sample primary ``stats.json``; the code check (as the holdout). Then the tails of both
-legs are fetched (``fetch_tails``, unless ``--no-fetch``), the frames loaded, and a pair whose data ends within
-``DELISTED_AFTER_DAYS`` of the window end refuses the run. Each run appends its own registry rows (``kind:
+legs are fetched (``fetch_tails``, unless ``--no-fetch``), the frames loaded, and the run refuses unless each pair
+reaches the window end in full (both legs and the last day's funding) or is a known delisting ending on its day
+(``runner.check_caught_up``; a delisting met by a forward window is added to ``runner.KNOWN_DELISTINGS`` first,
+an output-neutral code change). Each run appends its own registry rows (``kind:
 forward``) and writes ``runs/carry/forward/<id>/``; earlier forward results are never overwritten.
 """
 from __future__ import annotations
@@ -164,7 +166,8 @@ def run_forward(prereg_path: str | Path, data_cfg: DataConfig, *, runs_dir: str 
     try:
         code = code_check(lock, cv, allow_code_change=allow_code_change, reason=reason,
                           neutral=lambda: insample_primary_identical(
-                              prereg, load_frames(data_cfg, members, end=prereg.periods.insample_end), root))
+                              prereg, load_frames(data_cfg, members, end=prereg.periods.insample_end), root,
+                              lock["code_version"]))
     except CodeRefused as e:
         raise ForwardRefused(f"forward: {e}") from e
 

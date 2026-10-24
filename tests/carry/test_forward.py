@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 import perpbt.carry.forward as forward_mod
+import perpbt.carry.runner as runner
 from perpbt.carry.forward import (
     REVIEW_DAYS, REVIEW_SCHEMA, ForwardRefused, fetch_tails, review_metrics, review_period, run_forward,
 )
@@ -22,7 +23,8 @@ def store(tmp_path_factory):
 
 
 @pytest.fixture
-def env(store, tmp_path):
+def env(store, tmp_path, monkeypatch):
+    monkeypatch.setitem(runner.KNOWN_DELISTINGS, "CCCUSDT", "2025-05-21")
     return copy_env(store, tmp_path)
 
 
@@ -82,6 +84,14 @@ def test_refuses_a_changed_code_version(ready, monkeypatch):
     monkeypatch.setattr(forward_mod, "insample_primary_identical", lambda *a, **k: False)
     with pytest.raises(ForwardRefused, match="allow-code-change"):
         fwd(ready, 12, date(2027, 10, 26), code_version="f" * 64)
+
+
+def test_refuses_stale_data_and_writes_nothing(ready, monkeypatch):
+    monkeypatch.delitem(runner.KNOWN_DELISTINGS, "CCCUSDT")  # its 2025-05-21 end now reads as a stale fetch
+    with pytest.raises(ForwardRefused, match="CCCUSDT"):
+        fwd(ready, 12, date(2027, 10, 26))
+    assert not (ready / "runs" / "carry" / "forward").exists()
+    assert not [r for r in Registry(ready / "runs" / "carry").rows() if r["kind"] == "forward"]
 
 
 # --- reviews ------------------------------------------------------------------------------------------------------

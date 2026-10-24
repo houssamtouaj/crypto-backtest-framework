@@ -396,7 +396,9 @@ def lock_code(prereg_path: str | Path, *, today: date | None = None, code_versio
 
     Refuses (LockRefused, nothing written) unless the prereg is frozen and unchanged, the lock has no code version
     and the forward start is null. The new YAML text is checked before anything is written: same hash, the new
-    forward start. Both files are replaced whole (``os.replace``), the prereg first.
+    forward start. Both files are replaced whole (``os.replace``), the prereg first; a crash between the two leaves
+    the forward start set to tomorrow with no code lock, and a rerun the same UTC day completes the lock (any other
+    set forward start refuses).
     """
     prereg_path = Path(prereg_path)
     try:
@@ -407,11 +409,13 @@ def lock_code(prereg_path: str | Path, *, today: date | None = None, code_versio
     lock = read_lock(path)
     if lock["code_version"] is not None or lock["code_locked_on"] is not None:
         raise LockRefused(f"lock-code: the code is already locked ({lock['code_locked_on']}, {lock['code_version']})")
-    if prereg.periods.forward_start is not None:
-        raise LockRefused(f"lock-code: periods.forward.start is already set ({prereg.periods.forward_start})")
     today = today or datetime.now(timezone.utc).date()
     start = (today + timedelta(days=1)).isoformat()
-    text = _with_forward_start(prereg_path.read_text(encoding="utf-8"), start)
+    text = prereg_path.read_text(encoding="utf-8")
+    if prereg.periods.forward_start is None:
+        text = _with_forward_start(text, start)
+    elif prereg.periods.forward_start != start:  # == start: a lock interrupted after the prereg write, same day
+        raise LockRefused(f"lock-code: periods.forward.start is already set ({prereg.periods.forward_start})")
     check = prereg_path.with_name(prereg_path.name + ".check")
     try:
         check.write_text(text, encoding="utf-8", newline="\n")

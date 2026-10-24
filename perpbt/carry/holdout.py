@@ -7,15 +7,18 @@ With ``carry/forward.py``, the only carry module that passes ``allow_holdout=Tru
 - ``runs/carry/holdout/DONE`` is absent;
 - the code is locked and the in-sample portfolio primary has run (its ``stats.json`` exists);
 - the carry code version equals the lock's, or the in-sample primary rerun with the current code is byte-identical
-  (output-neutral, recorded in the registry), or ``--allow-code-change`` comes with a ``--reason`` (recorded in
-  every registry row and in ``DONE``).
+  to the run made under the locked code (output-neutral, recorded in the registry), or ``--allow-code-change``
+  comes with a ``--reason`` (recorded in every registry row and in ``DONE``).
 
-It then loads every member through the holdout end and refuses when a pair's data ends within
-``DELISTED_AFTER_DAYS`` of it (a stale fetch; nothing has run, so no ``DONE``). Every variant of every row (the
-portfolio and each pair; ``runner.variants``) runs into ``runs/carry/holdout/<id>/``; a per-pair variant whose pair
-delisted in the holdout is skipped. The primary's V1/V2 use the frozen rule and costs; everything else is
+It then loads every member through the holdout end and refuses (``runner.check_caught_up``) unless each pair either
+reaches the end in full (both legs' candles and the funding of the last day) or is a known delisting ending on its
+day (``runner.KNOWN_DELISTINGS``: EOSUSDT 2025-05-21); nothing has run then, so no ``DONE``. Every variant of every
+row (the portfolio and each pair; ``runner.variants``) runs into ``runs/carry/holdout/<id>/``; a per-pair variant
+whose pair delisted in the holdout is skipped. The primary's V1/V2 use the frozen rule and costs; everything else is
 descriptive. A failing variant does not stop the others, and ``DONE`` (JSON) is written at the end whatever
-happened, so a second touch always needs its manual deletion.
+happened (``status`` ``ok``, ``failed``, or ``interrupted`` when the run did not finish), so a second touch always
+needs its manual deletion. A hard kill (power loss) writes no ``DONE``; the registry's ``started`` rows record that
+attempt, and a later holdout lists them in ``prior_attempts``.
 """
 from __future__ import annotations
 
@@ -84,7 +87,8 @@ def run_holdout(prereg_path: str | Path, data_cfg: DataConfig, *, runs_dir: str 
     try:
         code = code_check(lock, cv, allow_code_change=allow_code_change, reason=reason,
                           neutral=lambda: insample_primary_identical(
-                              prereg, load_insample(data_cfg, members, prereg.periods.insample_end), root))
+                              prereg, load_insample(data_cfg, members, prereg.periods.insample_end), root,
+                              lock["code_version"]))
     except CodeRefused as e:
         raise HoldoutRefused(f"holdout: {e}") from e
 
@@ -104,7 +108,7 @@ def run_holdout(prereg_path: str | Path, data_cfg: DataConfig, *, runs_dir: str 
     run = CarryRun(prereg, frames, period, root / HOLDOUT_DIR, registry, "holdout", batch, cv, reason=code["reason"])
     vs = variants(prereg)
     result = {"ok": [], "skipped": [], "failed": []}
-    status = "failed"
+    status = "interrupted"  # run_variants did not return (an interruption or an unexpected error)
     try:
         result = run_variants(run, vs, skip_complete=False)
         status = "failed" if result["failed"] else "ok"
@@ -119,5 +123,8 @@ def run_holdout(prereg_path: str | Path, data_cfg: DataConfig, *, runs_dir: str 
         done.parent.mkdir(parents=True, exist_ok=True)
         with open(done, "w", encoding="utf-8", newline="\n") as f:
             f.write(json.dumps(content, indent=2) + "\n")
-        rebuild_results(root)
+        try:
+            rebuild_results(root)
+        except Exception as e:  # never masks the run's own outcome; `perpbt carry run` rebuilds it later
+            log.error("holdout: results.parquet was not rebuilt: %s: %s", type(e).__name__, e)
     return content

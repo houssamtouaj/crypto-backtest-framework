@@ -44,7 +44,6 @@ from perpbt.carry.prereg import MARKET, CarryPrereg, carry_code_version, check_f
 from perpbt.carry.signals import compute_signals
 from perpbt.carry.verdict import PERIODS, Seeds, evaluate_row, stats_document, stats_json
 from perpbt.config import ConfigError, DataConfig, _check_iso_date, config_hash, to_dict
-from perpbt.data.fetch import DELISTED_AFTER_DAYS
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.experiments.registry_log import Registry, now_ms
 from perpbt.version import git_commit
@@ -65,6 +64,7 @@ KINDS = ("run", "holdout", "forward")
 STATUSES = ("started", "ok", "failed", "skipped", "output_neutral")
 RUN_MARKET = "um+spot"
 _STEP_15M_MS = 900_000
+_HOUR_MS = 3_600_000
 REGISTRY_KEYS = (
     "variant_id", "name", "kind", "period", "period_start", "period_end", "market", "status", "code_version",
     "git_commit", "prereg_hash", "batch", "started_ms", "finished_ms", "reason", "error",
@@ -200,27 +200,47 @@ def skip_reason(frames: Mapping[str, PairFrame], variant: Variant, period: Perio
     return None
 
 
+# Members whose perp was delisted, with the last day of their PairFrame (the day of the last common candle), from
+# the stored data (Phase 0: EOSUSDT's perp ends 2025-05-21 09:00, its spot five days later). A frame that ends
+# before a run's last day must be one of these; anything else is data not fetched through the end. A later
+# delisting is added here before the run that meets it (a carry code change; output-neutral for the in-sample run).
+KNOWN_DELISTINGS: dict[str, str] = {"EOSUSDT": "2025-05-21"}
+
+
 class DataNotCaughtUp(RuntimeError):
-    """A pair's stored data ends shortly before the period end: a stale fetch, not a delisting."""
+    """A pair's stored data does not reach the period end and it is not a known delisting, or its last day is
+    partial, or its funding stops before the last day's last event."""
 
 
-def check_caught_up(frames: Mapping[str, PairFrame], end: str) -> None:
-    """DataNotCaughtUp unless every pair either reaches ``end``'s last 15m candle or ends more than
-    ``data.fetch.DELISTED_AFTER_DAYS`` days before ``end`` (a delisting, closed by the executor).
+def check_caught_up(frames: Mapping[str, PairFrame], end: str,
+                    delistings: Mapping[str, str] = KNOWN_DELISTINGS) -> None:
+    """DataNotCaughtUp unless every pair is either a known delisting whose frame ends on its delisting day (the
+    executor closes it) or reaches ``end`` in full: both legs through ``end``'s last 15m candle and the perp's
+    funding through the last event of ``end`` (``end + 24 h − its interval``).
 
-    A pair that ends within those days would otherwise read as a delisting; fetch both legs' tails first.
+    Without this a leg or a funding series not fetched through the end would read as a delisting, or as days
+    without funding. Fetch both legs' tails first (``perpbt data fetch``, the perps with ``--ccxt-tail``).
     """
     end_ms = date_ms(end)
     for pair, pf in frames.items():
         last = int(pf.day_ms[-1])
-        if last < end_ms - DELISTED_AFTER_DAYS * DAY_MS:
-            continue
+        known = delistings.get(pair)
         if last < end_ms:
-            raise DataNotCaughtUp(f"{pair}: its data ends {_iso(last)}, within {DELISTED_AFTER_DAYS} days before "
-                                  f"{end}; fetch both legs' tails first (perpbt data fetch)")
-        if last == end_ms and pf.last_common_ms < end_ms + DAY_MS - _STEP_15M_MS:
+            if known is not None and date_ms(known) == last:
+                continue
+            raise DataNotCaughtUp(
+                f"{pair}: its data ends {_iso(last)}, before {end}, and it is not a known delisting "
+                f"({'listed for ' + known if known else 'none listed'}); fetch both legs' tails first, or add a real "
+                "delisting to carry.runner.KNOWN_DELISTINGS")
+        if pf.last_common_ms < end_ms + DAY_MS - _STEP_15M_MS:
             raise DataNotCaughtUp(f"{pair}: {end} is a partial day (last common candle "
                                   f"{pd.Timestamp(pf.last_common_ms, unit='ms')}); fetch both legs' tails first")
+        ts = pf.perp.funding_ts
+        due = end_ms + DAY_MS - int(pf.funding_interval_h[-1]) * _HOUR_MS if len(ts) else None
+        if due is None or int(ts[-1]) < due:
+            got = pd.Timestamp(int(ts[-1]), unit="ms") if len(ts) else "none"
+            raise DataNotCaughtUp(f"{pair}: its funding stops at {got}, before the last event of {end}; fetch the "
+                                  "perps' funding tail first (perpbt data fetch --ccxt-tail)")
 
 
 # --- one variant -----------------------------------------------------------------------------------------------
@@ -391,13 +411,29 @@ def primary_variant(prereg: CarryPrereg) -> Variant:
     return next(v for v in variants(prereg, ["primary"]) if v.is_primary_portfolio)
 
 
-def insample_primary_identical(prereg: CarryPrereg, frames: Mapping[str, PairFrame], root: str | Path) -> bool:
+def attempts(registry: Registry, kind: str) -> dict[str, dict]:
+    """The latest run attempt row (``started``, ``ok`` or ``failed``) of ``kind`` per variant id; the code-check
+    (``output_neutral``) and ``skipped`` rows are not attempts."""
+    out: dict[str, dict] = {}
+    for r in registry.rows():
+        if r.get("kind") == kind and r["status"] in ("started", "ok", "failed"):
+            out[r["variant_id"]] = r
+    return out
+
+
+def insample_primary_identical(prereg: CarryPrereg, frames: Mapping[str, PairFrame], root: str | Path,
+                               lock_code_version: str) -> bool:
     """Whether the in-sample portfolio primary, rerun now into a temporary folder (with its own registry), has the
-    same ``daily.parquet`` and ``stats.json`` bytes as ``<root>/<id>/``; False when there is no locked run."""
+    same ``daily.parquet`` and ``stats.json`` bytes as the locked run in ``<root>/<id>/``. False when there is no
+    locked run: no ``stats.json``, or the folder's latest attempt is not an ``ok`` run under the locked code
+    version (a run made under another code is not the reference)."""
     period = insample_period(prereg)
     v = primary_variant(prereg)
-    locked = Path(root) / v.variant_id(prereg.prereg_hash(), period)
-    if not (locked / STATS_FILE).exists():
+    vid = v.variant_id(prereg.prereg_hash(), period)
+    locked = Path(root) / vid
+    last = attempts(Registry(root), "run").get(vid, {})
+    is_locked_run = last.get("status") == "ok" and last.get("code_version") == lock_code_version
+    if not (locked / STATS_FILE).exists() or not is_locked_run:
         return False
     with tempfile.TemporaryDirectory(prefix="carry-neutral-") as tmp:
         run = CarryRun(prereg, frames, period, Path(tmp), Registry(tmp), "run", "neutral-check", "neutral-check")
@@ -495,9 +531,9 @@ def rebuild_results(root: str | Path) -> Path:
 
 def run_variants(run: CarryRun, vs: Sequence[Variant], *, skip_complete: bool) -> dict[str, list[str]]:
     """Run ``vs`` in order; a failure is logged (its traceback is in the registry) and does not stop the others.
-    With ``skip_complete`` a variant whose folder has a ``stats.json`` and whose latest registry row of this kind is
-    ``ok`` is left as it is. A per-pair variant whose pair is not live through the period is skipped."""
-    latest = run.registry.latest(kind=run.kind) if skip_complete else {}
+    With ``skip_complete`` a variant whose folder has a ``stats.json`` and whose latest attempt of this kind
+    (``attempts``) is ``ok`` is left as it is. A per-pair variant whose pair is not live through the period is skipped."""
+    latest = attempts(run.registry, run.kind) if skip_complete else {}
     done: dict[str, list[str]] = {"ok": [], "exists": [], "skipped": [], "failed": []}
     for v in vs:
         vid = v.variant_id(run.prereg_hash, run.period)
@@ -524,9 +560,10 @@ def run_insample(prereg_path: str | Path, data_cfg: DataConfig, runs_dir: str | 
                  code_version: str | None = None) -> dict[str, list[str]]:
     """``perpbt carry run``: the in-sample variants of ``rows`` (all by default) into ``runs/carry/<id>/``.
 
-    Refuses (ConfigError) unless the prereg is frozen and unchanged and the data config matches it, and
-    (CodeRefused) unless the code is locked and ``code_check`` passes; nothing is loaded before those checks except
-    for the output-neutral rerun. Complete variants are skipped, never overwritten. Rebuilds ``results.parquet``.
+    Refuses (ConfigError) unless the prereg is frozen and unchanged and the data config matches it; (CodeRefused)
+    unless the code is locked; then loads the in-sample frames (refusing, DataNotCaughtUp, a pair that does not
+    reach the in-sample end) and refuses (CodeRefused) unless ``code_check`` passes. Complete variants are
+    skipped, never overwritten. Rebuilds ``results.parquet``.
     """
     prereg = check_frozen(prereg_path)
     lock = read_lock(lock_path(prereg_path))
@@ -536,9 +573,10 @@ def run_insample(prereg_path: str | Path, data_cfg: DataConfig, runs_dir: str | 
     root = carry_root(runs_dir)
     period = insample_period(prereg)
     frames = load_frames(data_cfg, prereg.universe[MARKET]["members"], end=period.end)
+    check_caught_up(frames, period.end)
     cv = code_version or carry_code_version()
     code = code_check(lock, cv, allow_code_change=allow_code_change, reason=reason,
-                      neutral=lambda: insample_primary_identical(prereg, frames, root))
+                      neutral=lambda: insample_primary_identical(prereg, frames, root, lock["code_version"]))
     batch = new_batch()
     registry = Registry(root)
     record_code(registry, prereg, kind="run", batch=batch, code=code)

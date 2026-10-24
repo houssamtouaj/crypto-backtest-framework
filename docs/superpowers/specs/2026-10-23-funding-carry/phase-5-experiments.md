@@ -118,17 +118,30 @@ the docstrings of `perpbt/carry/runner.py`, `holdout.py` and `forward.py`.
   pre-registered slippage is per pair and a cell's applies to every pair (noted in `runner.reprice_table`).
 - **Code check** *(my call)*. `carry run`, `holdout` and `forward` refuse an unlocked code. When the carry code
   version differs from the lock, the in-sample portfolio primary is rerun into a temporary folder; if its
-  `daily.parquet` and `stats.json` equal the locked run's bytes, an `output_neutral` row is recorded and the run
-  proceeds; otherwise `--allow-code-change --reason` is required (the reason goes into every row and `DONE`).
+  `daily.parquet` and `stats.json` equal the bytes of the run made under the locked code (the folder's latest
+  attempt must be an `ok` row with the lock's code version), an `output_neutral` row is recorded and the run
+  proceeds; otherwise `--allow-code-change --reason` is required (the reason goes into every row and `DONE`; a
+  `--reason` without the flag is ignored with a warning).
 - **`carry run`** *(my call)*. Needs the code lock (Phase 7 locks immediately before it). A variant whose folder
-  has a `stats.json` and whose latest row is `ok` is skipped, never overwritten (no `--force`); a failed variant
-  does not stop the others.
+  has a `stats.json` and whose latest attempt (`started | ok | failed` row; the code-check and `skipped` rows do not
+  count) is `ok` is skipped, never overwritten (no `--force`); a failed variant does not stop the others.
+- **Data through the end** *(my call)*. `runner.check_caught_up` refuses a run unless every pair either reaches the
+  period's last day in full (both legs through its 23:45 candle, the perp's funding through its last event) or is a
+  known delisting whose frame ends on its delisting day: `runner.KNOWN_DELISTINGS = {EOSUSDT: 2025-05-21}` (the
+  perp's last candle is 2025-05-21 09:00; a slow test checks it against the store manifest). A distance rule ("ends
+  more than 7 days early = delisted") was rejected: a leg never fetched past 2024-01-01 would read as ten delistings,
+  and a real delisting near a forward window's fixed end would block the review for good. A delisting met later is
+  added to the list before that run (a carry code change, output-neutral for the in-sample primary). `carry run`,
+  `holdout` and `forward` all apply it.
 - **Holdout** *(my call where §5.4 is silent)*. Refusals before any holdout load: the prereg hash, `DONE`, the code
-  lock, no in-sample primary `stats.json`, the code check. Then every member is loaded through 2026-10-20 and a pair
-  whose data ends 1–7 days (`data.fetch.DELISTED_AFTER_DAYS`) before the end, or on a partial last day, refuses the
-  run as a stale fetch; nothing has run then, so no `DONE` is written. All 77 variants run; `DONE` (JSON: status,
-  failed, skipped, batch, hashes, code versions, output-neutral flag, reason, prior attempts, variant ids) is written
-  in a `finally`, even on a failed variant or an interruption.
+  lock, no in-sample primary `stats.json`, the code check. Then every member is loaded through 2026-10-20 and the
+  data check above may refuse; nothing has run then, so no `DONE` is written. All 77 variants run; `DONE` (JSON:
+  status `ok | failed | interrupted`, failed, skipped, batch, hashes, code versions, output-neutral flag, reason,
+  prior attempts, variant ids) is written in a `finally`, even on a failed variant or an interruption; a failing
+  `results.parquet` rebuild is logged and does not mask the outcome. A hard kill writes no `DONE`; its `started`
+  rows stay in the registry and a later holdout lists them in `prior_attempts`.
+- **Code lock recovery.** A crash between `lock_code`'s two writes leaves `forward.start` = tomorrow and no code
+  lock; rerun the same UTC day, it completes the lock. Any other set forward start refuses.
 - **Forward** *(my call)*. `--review` is required. Each review runs the portfolio primary on a fixed window: the
   first 365 days (`forward_12m`) or 1,095 days (`forward_36m`) from `forward.start`, allowed once the last complete
   UTC day reaches its end, so the day it is run cannot choose the confirmatory end. The 12-month review's
@@ -143,3 +156,22 @@ the docstrings of `perpbt/carry/runner.py`, `holdout.py` and `forward.py`.
 **Exit criterion.** `tests/carry/test_dry_run.py` runs freeze → lock-code → `carry run` (28 variants of three
 synthetic pairs) → a rerun that changes nothing → `carry holdout` (21 run, 7 per-pair skipped) → the 12-month
 forward review, on synthetic stores (about 25 s).
+
+**Review fixes (fresh reviewer, 2026-10-24: "merge with fixes"; 0 Critical, 2 Important, 7 Minor; all fixed or
+noted).**
+- (Important) An output-neutral `carry run` reran and overwrote the complete in-sample primary, because the
+  `output_neutral` row became its latest row. The skip now looks at run attempts only; a test pins that the folder's
+  bytes and mtimes stay unchanged.
+- (Important) The data check ignored funding: candles through the end with funding stopping at a month end (no ccxt
+  tail) passed, and a one-shot review would have run with days of zero funding. It now refuses; tests for both the
+  unit check and end-to-end holdout/forward refusals.
+- (Minor) The distance-based delisting rule was replaced by the known-delistings list (above).
+- (Minor) The output-neutral reference must be the run made under the locked code.
+- (Minor) `lock_code` completes a same-day interrupted lock.
+- (Minor) `DONE` says `interrupted` when the run did not finish; a rebuild error cannot mask the outcome.
+- (Minor) The CLI warns about `--reason` without `--allow-code-change`, and a run-time error in `carry run` exits 1
+  (it was 2, "usage").
+- (Minor) The `run_insample` docstring said nothing loads before the code check; the in-sample frames do.
+- (Phase 6 pointer) Carry report code must live outside `perpbt/carry/` (the spec's `perpbt/report/carry/`):
+  `carry/` is in `CARRY_CODE_PATHS`, so a report edit there after the lock would be a carry code change and trigger
+  the output-neutral rerun at every holdout or forward run.

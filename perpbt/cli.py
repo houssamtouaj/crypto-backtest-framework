@@ -469,11 +469,17 @@ def _carry_done(command: str, done: dict) -> int:
     return 1 if done.get("failed") else 0
 
 
+def _warn_ignored_reason(args: argparse.Namespace, command: str) -> None:
+    if args.reason and not args.allow_code_change:
+        print(f"perpbt carry {command}: warning: --reason is ignored without --allow-code-change", file=sys.stderr)
+
+
 def _carry_run(args: argparse.Namespace) -> int:
     from perpbt.carry.prereg import load_prereg
-    from perpbt.carry.runner import CodeRefused, run_insample
+    from perpbt.carry.runner import CodeRefused, DataNotCaughtUp, run_insample
 
     _log_to_stderr()
+    _warn_ignored_reason(args, "run")
     cfg = _load_data_config(args.data_config, "carry run")
     if cfg is None:
         return 2
@@ -485,12 +491,12 @@ def _carry_run(args: argparse.Namespace) -> int:
             rows = [e.name for e in load_prereg(args.prereg).exploratory]
         done = run_insample(args.prereg, cfg, args.runs_dir, rows=rows, allow_code_change=args.allow_code_change,
                             reason=args.reason)
-    except (ConfigError, CodeRefused, HoldoutAccessError) as e:
+    except (ConfigError, CodeRefused, DataNotCaughtUp, HoldoutAccessError) as e:
         print(f"perpbt carry run: refused: {e}", file=sys.stderr)
         return 1
-    except (OSError, ValueError) as e:
+    except (OSError, ValueError) as e:  # a run-time failure (missing store files, a PairFrame build error)
         print(f"perpbt carry run: {e}", file=sys.stderr)
-        return 2
+        return 1
     return _carry_done("run", done)
 
 
@@ -498,6 +504,7 @@ def _carry_holdout(args: argparse.Namespace) -> int:
     from perpbt.carry.holdout import HoldoutRefused, run_holdout
 
     _log_to_stderr()
+    _warn_ignored_reason(args, "holdout")
     cfg = _load_data_config(args.data_config, "carry holdout")
     if cfg is None:
         return 2
@@ -518,6 +525,7 @@ def _carry_forward(args: argparse.Namespace) -> int:
     from perpbt.carry.forward import ForwardRefused, fetch_tails, run_forward
 
     _log_to_stderr()
+    _warn_ignored_reason(args, "forward")
     cfg = _load_data_config(args.data_config, "carry forward")
     if cfg is None:
         return 2

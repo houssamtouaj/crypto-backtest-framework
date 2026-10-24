@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+import perpbt.carry.runner as runner
 from perpbt.carry.forward import REVIEW_SCHEMA, run_forward
 from perpbt.carry.holdout import done_path
 from perpbt.carry.prereg import lock_code
@@ -30,7 +31,8 @@ def snapshot(root: Path) -> dict[str, bytes]:
             if p.is_file() and p.parent != root}
 
 
-def test_dry_run_end_to_end(tmp_path, capsys):
+def test_dry_run_end_to_end(tmp_path, capsys, monkeypatch):
+    monkeypatch.setitem(runner.KNOWN_DELISTINGS, "CCCUSDT", "2025-05-21")  # as EOSUSDT
     env = make_env(tmp_path, end="2027-10-27", last_day={"CCCUSDT": "2025-05-21"})
     lock = lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
     root = env / "runs" / "carry"

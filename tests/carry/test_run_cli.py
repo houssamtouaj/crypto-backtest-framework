@@ -8,7 +8,7 @@ import pytest
 from perpbt.carry.prereg import load_prereg, lock_code, lock_path, read_lock
 from perpbt.carry.runner import (
     RESULT_COLUMNS, CodeRefused, code_check, insample_period, insample_primary_identical, load_frames,
-    rebuild_results, variants,
+    rebuild_results, run_insample, variants,
 )
 from perpbt.cli import main
 from perpbt.experiments.registry_log import Registry
@@ -119,18 +119,67 @@ def test_run_refuses_a_changed_prereg(env, capsys):
 
 
 def test_output_neutral_check(env):
-    lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
+    lock = lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
     prereg = load_prereg(env / "prereg.yaml")
     frames = load_frames(data_config(env), PAIRS, end=prereg.periods.insample_end)
     root = env / "runs" / "carry"
-    assert insample_primary_identical(prereg, frames, root) is False  # no locked run yet
+    cv = lock["code_version"]
+    assert insample_primary_identical(prereg, frames, root, cv) is False  # no locked run yet
     assert main(run_args(env, "--primary")) == 0
-    assert insample_primary_identical(prereg, frames, root) is True
+    assert insample_primary_identical(prereg, frames, root, cv) is True
     primary = next(v for v in variants(prereg, ["primary"]) if v.name == "primary")
     stats = root / primary.variant_id(prereg.prereg_hash(), insample_period(prereg)) / "stats.json"
-    stats.write_bytes(stats.read_bytes().replace(b'"row": "primary"', b'"row": "primary" '))
-    assert insample_primary_identical(prereg, frames, root) is False
+    original = stats.read_bytes()
+    stats.write_bytes(original.replace(b'"row": "primary"', b'"row": "primary" '))
+    assert insample_primary_identical(prereg, frames, root, cv) is False
+    stats.write_bytes(original)
     assert not list(root.glob("**/neutral*"))
+
+
+def test_output_neutral_reference_must_be_the_locked_code(env):
+    # the folder's run was made by another code version (e.g. a fix run with --allow-code-change): not the lock's
+    lock_code(env / "prereg.yaml", today=date(2026, 10, 25), code_version="a" * 64)
+    run_insample(env / "prereg.yaml", data_config(env), env / "runs", rows=["primary"], code_version="b" * 64,
+                 allow_code_change=True, reason="a crash fix")
+    prereg = load_prereg(env / "prereg.yaml")
+    frames = load_frames(data_config(env), PAIRS, end=prereg.periods.insample_end)
+    root = env / "runs" / "carry"
+    assert insample_primary_identical(prereg, frames, root, "b" * 64) is True
+    assert insample_primary_identical(prereg, frames, root, "a" * 64) is False
+
+
+def test_output_neutral_run_keeps_the_complete_primary(env):
+    lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
+    assert main(run_args(env, "--primary")) == 0
+    root = env / "runs" / "carry"
+    before = folder_bytes(root)
+    mtimes = {p: p.stat().st_mtime_ns for p in root.rglob("*") if p.is_file() and p.parent != root}
+    done = run_insample(env / "prereg.yaml", data_config(env), env / "runs", rows=["primary"],
+                        code_version="b" * 64)  # a changed code version that the neutral rerun clears
+    assert done == {"ok": [], "exists": ["primary", *(f"primary/{p}" for p in PAIRS)], "skipped": [], "failed": []}
+    assert folder_bytes(root) == before
+    assert {p: p.stat().st_mtime_ns for p in mtimes} == mtimes
+    statuses = [r["status"] for r in Registry(root).rows()]
+    assert statuses[-1] == "output_neutral" and statuses.count("ok") == 4
+
+
+def test_cli_warns_about_a_reason_without_the_flag(env, capsys):
+    lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
+    assert main(run_args(env, "--primary", "--reason", "ignored")) == 0
+    assert "--reason is ignored without --allow-code-change" in capsys.readouterr().err
+
+
+def test_cli_run_time_error_is_exit_1(env, capsys, monkeypatch):
+    import perpbt.carry.runner as runner
+
+    lock_code(env / "prereg.yaml", today=date(2026, 10, 25))
+
+    def bad(*a, **k):
+        raise ValueError("a PairFrame build error")
+
+    monkeypatch.setattr(runner, "load_frames", bad)
+    assert main(run_args(env, "--primary")) == 1
+    assert "PairFrame build error" in capsys.readouterr().err
 
 
 # --- results.parquet ----------------------------------------------------------------------------------------------

@@ -163,6 +163,15 @@ def test_lock_code_refuses_unfrozen_or_changed(frozen):
         lock_code(frozen, today=date(2026, 10, 30), code_version="c" * 64)
 
 
+def test_lock_code_completes_an_interrupted_lock_the_same_day(frozen):
+    # a crash between the two writes left forward.start = tomorrow with no code lock
+    text = frozen.read_text(encoding="utf-8").replace("forward:  {start: null", "forward:  {start: 2026-10-31", 1)
+    frozen.write_text(text, encoding="utf-8")
+    lock = lock_code(frozen, today=date(2026, 10, 30), code_version="c" * 64)
+    assert lock["code_version"] == "c" * 64 and load_prereg(frozen).periods.forward_start == "2026-10-31"
+    assert frozen.read_text(encoding="utf-8") == text
+
+
 def test_lock_code_writes_nothing_when_refused(frozen):
     lock = json.loads(lock_path(frozen).read_text(encoding="utf-8"))
     lock["code_version"] = "e" * 64

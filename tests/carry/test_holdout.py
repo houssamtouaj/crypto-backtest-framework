@@ -24,7 +24,8 @@ def store(tmp_path_factory):
 
 
 @pytest.fixture
-def env(store, tmp_path):
+def env(store, tmp_path, monkeypatch):
+    monkeypatch.setitem(runner.KNOWN_DELISTINGS, "CCCUSDT", "2025-05-21")
     return copy_env(store, tmp_path)
 
 
@@ -90,18 +91,49 @@ def test_refuses_a_changed_code_version(env, no_loading, monkeypatch):
     assert not done_path(env / "runs").exists()
 
 
-def test_check_caught_up():
-    days = 30
-    pf = pairframe("AAAUSDT", spot=np.full(days, 100.0), perp=np.full(days, 100.0))  # 2020-01-01 .. 2020-01-30
-    check_caught_up({"AAAUSDT": pf}, "2020-01-30")  # through the end
-    check_caught_up({"AAAUSDT": pf}, "2020-02-07")  # 8 days early: a delisting
-    for end in ("2020-01-31", "2020-02-06"):  # 1 to 7 days early: the data was not fetched
-        with pytest.raises(DataNotCaughtUp, match="AAAUSDT"):
-            check_caught_up({"AAAUSDT": pf}, end)
-    short = pairframe("AAAUSDT", spot=np.full(days, 100.0), perp=np.full(days, 100.0), drop_spot=[(29, 95)])
+def flat(days, **kw):
+    return pairframe("AAAUSDT", spot=np.full(days, 100.0), perp=np.full(days, 100.0), **kw)  # from 2020-01-01
+
+
+def test_check_caught_up_through_the_end():
+    check_caught_up({"AAAUSDT": flat(30)}, "2020-01-30", {})
+
+
+def test_check_caught_up_an_early_end_must_be_a_known_delisting():
+    pf = flat(30)  # its last day is 2020-01-30
+    for end in ("2020-01-31", "2020-02-07", "2023-12-31"):  # whatever the distance: the data may not be fetched
+        with pytest.raises(DataNotCaughtUp, match="AAAUSDT.*not a known delisting"):
+            check_caught_up({"AAAUSDT": pf}, end, {})
+    check_caught_up({"AAAUSDT": pf}, "2023-12-31", {"AAAUSDT": "2020-01-30"})  # a known delisting on its day
+    with pytest.raises(DataNotCaughtUp, match="2020-01-29"):
+        check_caught_up({"AAAUSDT": pf}, "2023-12-31", {"AAAUSDT": "2020-01-29"})  # the store ends elsewhere
+
+
+def test_check_caught_up_partial_last_day():
+    short = flat(30, drop_spot=[(29, 95)])
     assert short.last_common_ms < date_ms("2020-01-30") + DAY_MS - 900_000
     with pytest.raises(DataNotCaughtUp, match="partial"):
-        check_caught_up({"AAAUSDT": short}, "2020-01-30")
+        check_caught_up({"AAAUSDT": short}, "2020-01-30", {})
+
+
+def test_check_caught_up_funding_must_reach_the_end_day():
+    # candles through 2020-01-30 but funding only through 2020-01-29 16:00 (a month-end bulk file, no ccxt tail)
+    with pytest.raises(DataNotCaughtUp, match="funding"):
+        check_caught_up({"AAAUSDT": flat(30, rates=np.zeros(3 * 29))}, "2020-01-30", {})
+    with pytest.raises(DataNotCaughtUp, match="funding"):  # the 16:00 event of the last day is missing
+        check_caught_up({"AAAUSDT": flat(30, rates=np.zeros(3 * 30 - 1))}, "2020-01-30", {})
+
+
+def test_known_delistings():
+    assert runner.KNOWN_DELISTINGS["EOSUSDT"] == "2025-05-21"
+
+
+def test_refuses_stale_data_without_done(env, monkeypatch):
+    locked_with_insample(env)
+    monkeypatch.delitem(runner.KNOWN_DELISTINGS, "CCCUSDT")  # its 2025-05-21 end now reads as a stale fetch
+    with pytest.raises(HoldoutRefused, match="CCCUSDT"):
+        holdout(env)
+    assert not done_path(env / "runs").exists() and not (env / "runs" / "carry" / "holdout").exists()
 
 
 # --- runs -------------------------------------------------------------------------------------------------------
@@ -133,7 +165,19 @@ def test_done_written_when_the_run_is_interrupted(env, monkeypatch):
     monkeypatch.setattr(holdout_mod, "run_variants", interrupt)
     with pytest.raises(KeyboardInterrupt):
         holdout(env)
-    assert json.loads(done_path(env / "runs").read_text(encoding="utf-8"))["status"] == "failed"
+    assert json.loads(done_path(env / "runs").read_text(encoding="utf-8"))["status"] == "interrupted"
+
+
+def test_a_results_rebuild_error_does_not_mask_the_run_or_skip_done(env, monkeypatch):
+    locked_with_insample(env)
+
+    def broken(*a, **k):
+        raise OSError("results.parquet is locked")
+
+    monkeypatch.setattr(runner, "evaluate_variant", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+    monkeypatch.setattr(holdout_mod, "rebuild_results", broken)
+    content = holdout(env)  # the variants failed; the rebuild error is logged, not raised
+    assert content["status"] == "failed" and done_path(env / "runs").exists()
 
 
 def test_holdout_output_neutral_end_to_end(env, capsys):
