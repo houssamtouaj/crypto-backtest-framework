@@ -3,7 +3,7 @@
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
 Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
-``carry basis``. Exit codes: 0 success, 1 a download, checksum,
+``carry basis``, ``carry prereg`` and ``carry screen``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -39,6 +39,7 @@ DEFAULT_TREND_PREREG = "configs/trend/prereg.yaml"
 DEFAULT_TREND_DATA = "configs/trend/data.yaml"
 DEFAULT_CARRY_DATA = "configs/carry/data.yaml"
 DEFAULT_BASIS_OUT = "runs/carry/basis_check.json"
+DEFAULT_CARRY_PREREG = "configs/carry/prereg.yaml"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -380,6 +381,73 @@ def _carry_basis(args: argparse.Namespace) -> int:
     return 0
 
 
+def _carry_prereg(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import check_universe, freeze, load_prereg
+
+    try:
+        prereg = load_prereg(args.prereg)
+        check_universe(prereg, json.loads(Path(args.universe).read_text(encoding="utf-8")))
+    except (ConfigError, OSError, ValueError) as e:
+        print(f"perpbt carry prereg: {e}", file=sys.stderr)
+        return 2
+    if args.carry_prereg_command == "validate":
+        print(f"{Path(args.prereg).as_posix()}: valid; prereg_hash {prereg.prereg_hash()}")
+        return 0
+    try:
+        lock = freeze(args.prereg, universe_path=args.universe)
+    except FileExistsError as e:
+        print(f"perpbt carry prereg freeze: {e}", file=sys.stderr)
+        return 1
+    print(f"frozen on {lock['frozen_on']}: prereg_hash {lock['prereg_hash']} (git {lock['git_commit']})")
+    return 0
+
+
+def _carry_screen(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import check_frozen
+    from perpbt.carry.screen import screen_from_store, screen_path, write_screen
+    from perpbt.version import git_commit
+
+    _log_to_stderr()
+    try:
+        prereg = check_frozen(args.prereg)
+    except ConfigError as e:
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    out = screen_path(args.runs_dir)
+    if out.exists():
+        print(f"perpbt carry screen: refused: {out.as_posix()} exists; the screen runs once", file=sys.stderr)
+        return 1
+    try:
+        result = screen_from_store(prereg, load_yaml(args.data_config, DataConfig))
+    except (ConfigError, FileNotFoundError) as e:
+        print(f"perpbt carry screen: {e}", file=sys.stderr)
+        return 2
+    except (HoldoutAccessError, ValueError, KeyError) as e:  # past the in-sample end; a non-finite statistic
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    result = {**result, "computed_on": datetime.now(timezone.utc).date().isoformat(), "git_commit": git_commit()}
+    try:
+        paths = write_screen(result, args.runs_dir)
+    except (FileExistsError, ValueError) as e:
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"{result['n_days']} days ({result['period'][0]}..{result['period'][1]}), {result['n_pairs']} pairs; "
+          f"hurdle {result['hurdle_annual']:.0%}/yr")
+    for name, row in result["rows"].items():
+        v2, v1 = row["v2"], row["v1"]
+        sr = "n/a" if v1["sharpe"] is None else f"{v1['sharpe']:.3f}"
+        p1 = "n/a" if v1["p"] is None else f"{v1['p']:.4f}"
+        print(f"{name}: annualised net return {v2['ann_return']:+.4f} "
+              f"[{v2['ann_return_ci'][0]:+.4f}, {v2['ann_return_ci'][1]:+.4f}]; excess {v2['ann_excess']:+.4f} "
+              f"[{v2['ann_excess_ci'][0]:+.4f}, {v2['ann_excess_ci'][1]:+.4f}], p(V2) {v2['p']:.4f} "
+              f"({v2['reading']}); Sharpe {sr}, p(V1) {p1}; share on {row['share_on']:.3f}, "
+              f"switches {row['switches']}")
+    print(f"p_screen {result['p_screen']:.4f} (stop if >= {result['stop_if_p_at_least']}): {result['decision']}")
+    for p in paths:
+        print(f"wrote {p.as_posix()}")
+    return 0
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -502,6 +570,17 @@ def build_parser() -> argparse.ArgumentParser:
     basis.add_argument("--pairs", nargs="+", metavar="PAIR", help="pairs (default: every pair listed in the config)")
     basis.add_argument("--out", default=DEFAULT_BASIS_OUT, help="JSON output (default: %(default)s)")
     basis.set_defaults(handler=_carry_basis)
+    cprereg = carry_sub.add_parser("prereg", help="validate or freeze the carry pre-registration")
+    cprereg.add_argument("carry_prereg_command", choices=("validate", "freeze"))
+    cprereg.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cprereg.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe file (default: %(default)s)")
+    cprereg.set_defaults(handler=_carry_prereg)
+    cscreen = carry_sub.add_parser("screen", help="the one-shot simplified net screen (go / stop), after the freeze")
+    cscreen.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cscreen.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                         help="DataConfig for both stores (default: %(default)s)")
+    cscreen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    cscreen.set_defaults(handler=_carry_screen)
 
     return parser
 

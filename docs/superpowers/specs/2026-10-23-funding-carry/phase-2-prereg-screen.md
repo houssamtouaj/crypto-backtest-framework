@@ -109,3 +109,90 @@ always-on row under the same model.
 Lock committed and tagged; `runs/carry/screen.json` committed with
 `p_screen`, the annualised net return and CI, and the decision. Report the
 decision to the user before starting Phase 3.
+
+## 2.6 Implementation notes (Phase 2 build, 2026-10-23)
+
+Builder's calls taken while building this phase, before the freeze; none
+was tuned on a return.
+
+- **`f̄` is time-weighted** *(my call; replaces Phase 1 §1.6's per-event
+  mean)*. `f̄_d = Σ rate_e × 24 / Σ interval_h_e × 365` over the window's
+  events: the funding a short receives per hour covered, annualised. In a
+  window that mixes 8 h and 4 h events, the per-event mean of per-day
+  rates weighted each 4 h event like an 8 h one, i.e. twice per hour. Both
+  are identical in steady state, and every in-sample event is 8 h; a slow
+  test pins that the in-sample `on` of every pair (W = 3, 7, 14) equals the
+  per-event formula's. Only holdout/forward transition windows differ.
+- **`master_seed: 202610233`** *(my call)*: the carry spec date followed by
+  3 (the third strategy), written before the freeze and before any return
+  was computed.
+- **Prereg checks.** As trend §2.6 (exact keys, duplicate-key loader,
+  merged exploratory rows limited to `signal` and `sleeve`, the universe
+  `um` block checked against `universe.json` on load and freeze, JSON lock
+  with the trend lock's keys). Also: `insample.end` must be
+  `CARRY_INSAMPLE_END` (2023-12-31) and `holdout.start` the day after.
+  `always_on`'s thresholds are written `-1.0e+9` (PyYAML reads `-1.0e9`
+  as a string). `CarrySignalConfig` is the `signal` block; `SleeveConfig`,
+  `MarginConfig`, `CarryCostConfig`, `CarryRebalanceConfig` (in
+  `carry/config.py`) and `Hurdle`, `CarryStats`, `ScreenConfig`,
+  `RepriceConfig` (in `carry/prereg.py`) validate the other blocks.
+- **Screen data.** Only `carry.frames.load_pairframe(data_cfg, pair,
+  end=insample_end)`; `on` from `carry.signals.compute_signals`. Decisions
+  on 2020-06-30 .. 2023-12-30, returns on 2020-07-01 .. 2023-12-31 (1,279
+  days). The perp leg's return is `perp.c[j+1] / perp.c[j] − 1`; `F_{d+1}`
+  sums `perp.funding_rate` over day `d+1`'s events.
+- **Start and end** *(my call)*. Every pair starts off, so a pair on at
+  2020-06-30 pays an entry cost on 2020-07-01; no exit cost at the period
+  end (not a delisting). A pair is live on `d` when its PairFrame has `d`
+  and `d+1`; an off or not-yet-warm sleeve contributes 0 and counts in the
+  mean (`E / N_live`). The screen refuses when a pair's frame does not end
+  on 2023-12-31 (no in-sample delisting is handled by this model), when
+  `data.yaml`'s `insample_end` or `warmup_start` differs from the prereg's,
+  or when a member has no listing date.
+- **Statistics.** `stats.bootstrap.block_bootstrap_mean` (Phase 4 §4.2's
+  function, added now, backward compatible). V2 replicates `365 ×
+  mean(e*)`, `h_d = 1.05^(1/365) − 1`, `p = (1 + #{≤ 0}) / (B + 1)`; reading
+  `above_hurdle` (passes), `below_hurdle` (CI upper < 0) or `not_proven`.
+  The annualised net return is `365 × mean(ret)` (arithmetic, like V2's
+  statistic); its CI is the excess CI plus `365 × h_d`. V1 (Sharpe, block
+  bootstrap, `p` over finite replicates) and the `always_on` row are
+  descriptive; a descriptive Sharpe that cannot be computed (zero variance)
+  is `null`, while a non-finite V2 statistic refuses the run.
+- **Seeds** *(my call)*. The gating V2 uses `rng_for(master_seed,
+  prereg_hash, "screen")`; the descriptive ones `"screen/v1"`,
+  `"screen/always_on/v2"`, `"screen/always_on/v1"`.
+- **One shot.** `perpbt carry screen` refuses without a matching lock and
+  when `runs/carry/screen.json` exists (also opened with `"x"`); the JSON is
+  serialised before the file is opened. On stop it also writes
+  `runs/carry/summary.md`; `.gitignore` admits both.
+
+**Freeze and screen (2026-10-23).** The prereg was frozen at 7d6f956
+(lock committed in 5799eb5, tag `carry-prereg-v1`; `prereg.yaml` itself was
+committed earlier, in 1707ad3, and did not change in between). The screen
+ran once (0a9a888): primary annualised net return +10.69% [+6.13, +16.07],
+excess over the hurdle +5.81% [+1.25, +11.20], **p_screen 0.0045 → go**;
+Sharpe 8.62 (p 0.0001), share of live pair-days on 0.642, 152 switches;
+`always_on` +10.12%, p(V2) 0.0136. The Sharpe is high because the model has
+no fill delay, margin or liquidation and the hedged daily returns have an
+annualised vol of about 1.2%.
+
+**Review fixes (after the screen; none changes the hash or the result).**
+A fresh reviewer reproduced the screen independently (to 1e-16) and found
+no defect that would have changed the decision. Fixed: tests now catch a
+one-day look-ahead in the decision alignment and the wrong day's funding
+(both mutations passed every test before); `F_{d+1}` reads `perp.funding`
+(bit-identical to the removed duplicate sum); a non-finite statistic or an
+existing output is a clean `refused` (exit 1) instead of a traceback;
+`summary.md` is opened with `"x"` and checked before `screen.json` is
+written; per-pair `mmr` and `slippage` keys must be universe members (a
+misspelt pair fell back to `default` silently); a slow test reruns the
+screen in memory and compares it byte for byte with the committed
+`runs/carry/screen.json`, so Phases 3–5 cannot move the frozen result
+unnoticed.
+
+**Pointer for Phase 5.** `data/fetch.ccxt_fetch` stamps the manifest's
+`last_interval_h` on every event of the funding tail it fetches. The
+time-weighted `f̄` and Phase 3's per-event funding use each event's
+interval, so a funding-interval change inside a ccxt-fetched forward tail
+would be weighted wrongly; check or fix this before the forward runs. The
+in-sample data has only 8 h events.

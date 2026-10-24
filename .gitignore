@@ -16,6 +16,9 @@ __pycache__/
 !/runs/trend/summary.md
 # carry: the Phase 0 basis sanity check
 !/runs/carry/basis_check.json
+# carry: the screen result (Phase 2) and the summary
+!/runs/carry/screen.json
+!/runs/carry/summary.md
 *.egg-info/
 build/
 dist/

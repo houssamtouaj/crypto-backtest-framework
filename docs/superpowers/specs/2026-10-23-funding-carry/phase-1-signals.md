@@ -40,6 +40,8 @@ after `d + h`.
 to 4 h funding is annualised correctly; the mean is over rates normalised
 to per-day first: `Σ rate_e × 24/interval_h_e / n_events`). NaN until `W`
 full days of events exist.
+*Superseded in Phase 2 (§2.6): `f̄` is time-weighted, `Σ rate_e × 24 /
+Σ interval_h_e × 365`; identical in steady state and on every in-sample day.*
 
 ## 1.3 On/off state
 
@@ -105,6 +107,8 @@ rule.
     state is exact. No in-sample event is anything but 8 h, so this touches
     only transition windows in the holdout and forward periods. It is
     fixed now, before the Phase 2 freeze, and not tuned.
+    *Superseded in Phase 2 (§2.6): `f̄` is time-weighted, `Σ rate × 24 /
+    Σ interval_h × 365`; the in-sample states are unchanged.*
 - **Causality wording.** §1.4's "days ≤ the cut's day" is tested as "days
   whose end is at or before the cut": a mid-day cut legitimately moves that
   day's close, basis and `f̄`.

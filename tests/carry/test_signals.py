@@ -55,6 +55,20 @@ def test_interval_change_mid_series():
     np.testing.assert_allclose(g[2:], 0.219, rtol=1e-12)
 
 
+def test_interval_change_time_weighted():
+    # a window with 3 events at 8 h (rate a) and 6 at 4 h (rate b) covers 48 h: f̄ = (3a + 6b) × 24 / 48 × 365,
+    # the funding received per hour covered (a per-event mean of per-day rates would give (a + 4b) × 365)
+    a, b = 1e-4, 0.0
+    f = trailing_funding(*events(eight_h(a), [(b, 4)] * 6), 2)
+    np.testing.assert_allclose(f[1], (3 * a + 6 * b) * 24 / 48 * 365, rtol=1e-14)
+    a, b = 1e-4, 2e-4
+    f = trailing_funding(*events(eight_h(a), [(b, 4)] * 6), 2)
+    np.testing.assert_allclose(f[1], (3 * a + 6 * b) * 24 / 48 * 365, rtol=1e-14)
+    # a 1 h tail and a partial day: still the rate per hour covered
+    f = trailing_funding(*events([(a, 8)], [(b, 1)] * 24), 2)
+    np.testing.assert_allclose(f[1], (a + 24 * b) * 24 / 32 * 365, rtol=1e-14)
+
+
 def test_window_without_events_is_nan_and_off():
     f = trailing_funding(*events(eight_h(5e-4), [], [], eight_h(5e-4)), 2)
     assert np.isnan(f[0]) and np.isnan(f[2])
