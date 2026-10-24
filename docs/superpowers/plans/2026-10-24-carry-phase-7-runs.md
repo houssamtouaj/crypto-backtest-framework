@@ -19,7 +19,7 @@ record (the output-neutral check of Phase 5 §5.9) and a rerun of that step only
 - [x] 4. Report the in-sample verdict to the user.
 - [x] 5. **Ask the user**; `perpbt carry holdout` (once); `perpbt carry report`; commit `runs/carry/holdout/`
   (stats.json, reports, figures, `DONE`), the registry, `results.parquet` and the summary.
-- [ ] 6. Report the holdout verdict (with the "not fully unseen" caveat); spec §7.1 run notes; **ask** before the
+- [x] 6. Report the holdout verdict (with the "not fully unseen" caveat); spec §7.1 run notes; **ask** before the
   `--no-ff` merge into dev and before the dev → main pull request.
 - [ ] 7. Forward reviews are later sessions (`perpbt carry forward --review 12` once 365 days exist, `--review 36`
   once 1,095 days exist), each on its own branch `carry/7-forward-<n>`.
@@ -35,3 +35,4 @@ Step 3: primary 11 ok (35 s), exploratory 66 ok (2 min 36 s), report 7 + summary
 below the hurdle (V1 p 0.0001, V2 p 0.0571); spec §7.1.
 Step 5: holdout run once on the user's go (DONE ok, 70 run, 7 skipped, 0 failed; 2 min 23 s); report 14 + summary;
 holdout verdict positive below the hurdle (V1 p 0.0001, V2 p 0.63); spec §7.1.
+Step 6: holdout verdict reported; the user said go for the --no-ff merge into dev and the dev -> main pull request.
