@@ -73,7 +73,7 @@ through 2029-10-23.
 - **Exploratory rows (descriptive):** `entry_5` would read edge (V2 p 0.0427); the other five positive below the
   hurdle (V2 p: `always_on` 0.407, `entry_20` 0.183, `lookback_3d` 0.200, `lookback_14d` 0.0645, `lev_1` 0.0572).
 - **Reading note.** A V2 "proven above" (one-sided p < 0.05) can sit beside a two-sided 95% excess CI that still
-  contains 0 (`entry_5`: −0.47..7.38%; the per-pair BTCUSDT row; four re-pricing cells): the one-sided 5% test
+  contains 0 (`entry_5`: −0.47..7.38%; the per-pair BTCUSDT row; the three passing re-pricing cells): the one-sided 5% test
   matches a 90% two-sided interval. The labels follow overview §3 (passes first); nothing was changed.
 - Per pair alone (descriptive): five pass both (BTC, ETH, LINK, LTC, EOS), four are positive below the hurdle, TRXUSDT
   has no edge (−2.91%/yr; liquidations).
