@@ -41,7 +41,10 @@ class PairFrame:
     of the first candle of the day that closes at or after ``day + h`` and
     ``fill_late_ms[leg][h]`` its close time (the fill time; ``day + h`` when on
     time), both NaN when the day has none. ``funding_interval_h`` is the
-    published interval of each of ``perp.funding_ts``'s events.
+    published interval of each of ``perp.funding_ts``'s events, and
+    ``funding_px_prev`` the close of the last perp candle opening before it
+    (NaN when there is none): the executor's price for an event whose own
+    candle is missing (``perp.funding_px`` NaN).
     """
 
     pair: str
@@ -55,6 +58,7 @@ class PairFrame:
     fill_late_ms: dict[str, dict[int, np.ndarray]]
     funding_interval_h: np.ndarray
     last_common_ms: int
+    funding_px_prev: np.ndarray
 
     def __len__(self) -> int:
         return len(self.day_ms)
@@ -74,6 +78,16 @@ def _late_fills(candles: Candles, day_ms: np.ndarray, h: int) -> tuple[np.ndarra
     px[ok] = candles.c[i[ok]]
     at[ok] = candles.ts[i[ok]] + _STEP_MS
     return px, at
+
+
+def _px_before(candles: Candles, ts: np.ndarray, first_ms: int) -> np.ndarray:
+    """Close of the last candle opening before each ``ts`` and on or after ``first_ms``; NaN when none."""
+    i = np.searchsorted(candles.ts, ts, side="left") - 1
+    ok = i >= 0
+    ok[ok] = candles.ts[i[ok]] >= first_ms
+    out = np.full(len(ts), np.nan)
+    out[ok] = candles.c[i[ok]]
+    return out
 
 
 def build_pairframe(
@@ -109,7 +123,7 @@ def build_pairframe(
     fill_ok = {h: _frozen(np.isfinite(p.fill_px[h]) & np.isfinite(s.fill_px[h])) for h in p.fill_px}
     return PairFrame(
         perp.pair, p.day_ms, p, s, _frozen(p.c / s.c - 1.0), _frozen(p.filled | s.filled), fill_ok, late_px, late_ms,
-        _frozen(funding.interval_h[k].copy()), last,
+        _frozen(funding.interval_h[k].copy()), last, _frozen(_px_before(perp, p.funding_ts, int(p.day_ms[0]))),
     )
 
 
