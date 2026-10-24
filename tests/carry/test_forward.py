@@ -107,7 +107,7 @@ def test_review_12_is_descriptive_and_runs_once(ready):
     assert doc["annual"]["sharpe_ci"] == [None, None]
     assert set(doc["metrics"]) == {"ann_return", "funding", "basis", "cost_drag", "entries_per_year", "share_on"}
     assert {p.name for p in out.iterdir()} == {"daily.parquet", "daily_pair.parquet", "fills.parquet",
-                                               "events.parquet", "variant.json", "stats.json"}
+                                               "events.parquet", "signals.parquet", "variant.json", "stats.json"}
     rows = [r for r in Registry(ready / "runs" / "carry").rows() if r["kind"] == "forward"]
     assert [r["status"] for r in rows] == ["started", "ok"] and rows[0]["period"] == "forward_12m"
     with pytest.raises(ForwardRefused, match="already"):

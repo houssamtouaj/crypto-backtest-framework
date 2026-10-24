@@ -43,9 +43,10 @@ from perpbt.carry.prereg import MARKET, CarryPrereg, carry_code_version, check_f
 from perpbt.carry.runner import (
     FORWARD_DIR, STATS_FILE, CarryRun, CodeRefused, DataNotCaughtUp, Period, Variant, carry_root, check_caught_up,
     check_data_config, code_check, insample_period, insample_primary_identical, load_frames, new_batch,
-    primary_variant, rebuild_results, record_code, states,
+    primary_variant, rebuild_results, record_code, signal_table,
 )
 from perpbt.carry.screen import DAYS_PER_YEAR
+from perpbt.carry.signals import compute_signals
 from perpbt.config import ConfigError, DataConfig
 from perpbt.data.fetch import run_fetch
 from perpbt.data.store import DAY_MS, date_ms
@@ -110,7 +111,8 @@ def evaluate_review(prereg: CarryPrereg, variant: Variant, period: Period, frame
     """The 12-month review's tables and document (``REVIEW_SCHEMA``; no p-value)."""
     fr = {pair: frames[pair] for pair in variant.pairs}
     cfg = exec_spec(prereg, sleeve=variant.sleeve, start=period.start, end=period.end)
-    result = run_path(fr, states(fr, variant.signal), cfg)
+    signals = {pair: compute_signals(pf, variant.signal) for pair, pf in fr.items()}
+    result = run_path(fr, {pair: np.asarray(s.on) for pair, s in signals.items()}, cfg)
     s = sharpe(result.daily["ret"].to_numpy(dtype=np.float64))
     dec = decomposition(result, equity0=cfg.equity0)
     doc = {
@@ -125,7 +127,8 @@ def evaluate_review(prereg: CarryPrereg, variant: Variant, period: Period, frame
         "insample_ref": {"period": insample_stats["period"], "years": [
             y["year"] for y in insample_stats["diagnostics"]["decomposition"]["per_year"]]},
     }
-    tables = {"daily": result.daily, "daily_pair": result.daily_pair, "fills": result.fills, "events": result.events}
+    tables = {"daily": result.daily, "daily_pair": result.daily_pair, "fills": result.fills, "events": result.events,
+              "signals": signal_table(fr, signals, period)}
     return tables, doc
 
 
