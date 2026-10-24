@@ -14,7 +14,7 @@ record (the output-neutral check of Phase 5 §5.9) and a rerun of that step only
   reaches 2026-10-20 in full or is a known delisting (`runner.KNOWN_DELISTINGS`); commit the manifests.
 - [x] 2. Full test suite once (max timeout), then **ask the user**; `perpbt carry lock-code`; commit
   `configs/carry/prereg.yaml` and `prereg.lock`.
-- [ ] 3. `perpbt carry run --primary`, then `--exploratory` (foreground, one at a time), then `perpbt carry report`;
+- [x] 3. `perpbt carry run --primary`, then `--exploratory` (foreground, one at a time), then `perpbt carry report`;
   commit the registry, `results.parquet`, every `stats.json`, the reports, figures and `runs/carry/summary.md`.
 - [ ] 4. Report the in-sample verdict to the user.
 - [ ] 5. **Ask the user**; `perpbt carry holdout` (once); `perpbt carry report`; commit `runs/carry/holdout/`
@@ -31,3 +31,5 @@ Step 1: fetched and validated both legs (perps 28 s, spot 39 s); manifest-only c
 Step 2 (before the lock): full suite 1489 passed, 2 known warnings (15 min 22 s; slower than Phase 6's 6 min 17 s,
 same count).
 Step 2: code locked on the user's go (code_version 7ce43816…, git ab95921; forward start 2026-10-25).
+Step 3: primary 11 ok (35 s), exploratory 66 ok (2 min 36 s), report 7 + summary (26 s); in-sample verdict positive
+below the hurdle (V1 p 0.0001, V2 p 0.0571); spec §7.1.

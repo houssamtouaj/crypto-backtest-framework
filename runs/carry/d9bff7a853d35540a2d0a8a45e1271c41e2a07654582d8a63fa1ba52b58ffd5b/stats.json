@@ -1,0 +1,471 @@
+{
+  "schema": "carry-stats/1",
+  "prereg_hash": "a44eee47990843ff13c81da0dd0db23d82a0811fdb4896366482818a6e14b242",
+  "period": {
+    "name": "insample",
+    "start": "2020-07-01",
+    "end": "2023-12-31"
+  },
+  "row": "always_on/ETCUSDT",
+  "n_days": 1279,
+  "v1": {
+    "sharpe": 1.7553996452756981,
+    "sharpe_ci": [
+      0.8547408861368528,
+      5.281578541544313
+    ],
+    "p": 0.0007999200079992001,
+    "passes": true
+  },
+  "v2": {
+    "hurdle_annual": 0.05,
+    "ann_excess": 9.808880510637641e-05,
+    "ann_excess_ci": [
+      -0.035736161388561206,
+      0.046254057705631055
+    ],
+    "p": 0.5172482751724827,
+    "passes": false,
+    "reading": "not_proven",
+    "ann_return": 0.04889151405153253,
+    "ann_return_ci": [
+      0.013057263857864952,
+      0.09504748295205721
+    ]
+  },
+  "edge": false,
+  "reading": "positive_below_hurdle",
+  "hurdles": [
+    {
+      "hurdle_annual": 0.0,
+      "ann_excess": 0.04889151405153253,
+      "ann_excess_ci": [
+        0.013057263857864956,
+        0.09504748295205721
+      ],
+      "p": 0.0007999200079992001,
+      "passes": true,
+      "reading": "above_hurdle",
+      "ann_return": 0.04889151405153253,
+      "ann_return_ci": [
+        0.013057263857864956,
+        0.09504748295205721
+      ]
+    },
+    {
+      "hurdle_annual": 0.03,
+      "ann_excess": 0.019331514897123214,
+      "ann_excess_ci": [
+        -0.016502735296544366,
+        0.06548748379764789
+      ],
+      "p": 0.17148285171482852,
+      "passes": false,
+      "reading": "not_proven",
+      "ann_return": 0.04889151405153254,
+      "ann_return_ci": [
+        0.013057263857864956,
+        0.09504748295205721
+      ]
+    },
+    {
+      "hurdle_annual": 0.05,
+      "ann_excess": 9.808880510637641e-05,
+      "ann_excess_ci": [
+        -0.035736161388561206,
+        0.046254057705631055
+      ],
+      "p": 0.5172482751724827,
+      "passes": false,
+      "reading": "not_proven",
+      "ann_return": 0.04889151405153253,
+      "ann_return_ci": [
+        0.013057263857864952,
+        0.09504748295205721
+      ]
+    },
+    {
+      "hurdle_annual": 0.08,
+      "ann_excess": -0.028077641356021022,
+      "ann_excess_ci": [
+        -0.0639118915496886,
+        0.018078327544503656
+      ],
+      "p": 0.8989101089891011,
+      "passes": false,
+      "reading": "not_proven",
+      "ann_return": 0.04889151405153254,
+      "ann_return_ci": [
+        0.01305726385786496,
+        0.09504748295205721
+      ]
+    }
+  ],
+  "diagnostics": {
+    "annual": {
+      "n_days": 1279,
+      "ann_return": 0.04889151405153253,
+      "cagr": 0.04970162790967603,
+      "ann_vol": 0.027852070144319622,
+      "sharpe": 1.7553996452756981,
+      "sharpe_ci": [
+        0.8547408861368528,
+        5.281578541544313
+      ],
+      "max_drawdown": 0.024431465887712722,
+      "worst_day": {
+        "date": "2021-02-14",
+        "ret": -0.024431465887712722
+      },
+      "worst_month": {
+        "month": "2020-10",
+        "ret": -0.006849542188246516
+      }
+    },
+    "decomposition": {
+      "total": {
+        "n_days": 1279,
+        "ret_sum": 0.17132122321071264,
+        "ret_compounded": 0.18526952879261627,
+        "funding": 0.16728936203932487,
+        "basis": 0.01803370510839226,
+        "fees": 0.012497036955174977,
+        "slippage": 0.001504806981830555,
+        "rebalance_cost": 0.0008771124772986345,
+        "liquidation_cost": 0.011461163500192105,
+        "days_live": 1279,
+        "pair_days_on": 227,
+        "entries": 1,
+        "share_on": 0.17748240813135263
+      },
+      "per_year": [
+        {
+          "year": "2020",
+          "n_days": 184,
+          "ret_sum": 0.09291918479575256,
+          "ret_compounded": 0.0972524959788541,
+          "funding": 0.09582731819384,
+          "basis": -0.0008333076357306134,
+          "fees": 0.0012449106746608013,
+          "slippage": 0.0008299150876968532,
+          "rebalance_cost": 0.0004112578028428627,
+          "liquidation_cost": 0.0,
+          "days_live": 184,
+          "pair_days_on": 184,
+          "entries": 1,
+          "share_on": 1.0
+        },
+        {
+          "year": "2021",
+          "n_days": 365,
+          "ret_sum": 0.07840203841496007,
+          "ret_compounded": 0.0802158419655652,
+          "funding": 0.07146204384548488,
+          "basis": 0.018867012744122873,
+          "fees": 0.011252126280514176,
+          "slippage": 0.0006748918941337018,
+          "rebalance_cost": 0.00046585467445577175,
+          "liquidation_cost": 0.011461163500192105,
+          "days_live": 365,
+          "pair_days_on": 43,
+          "entries": 0,
+          "share_on": 0.1178082191780822
+        },
+        {
+          "year": "2022",
+          "n_days": 365,
+          "ret_sum": 0.0,
+          "ret_compounded": 0.0,
+          "funding": 0.0,
+          "basis": 0.0,
+          "fees": 0.0,
+          "slippage": 0.0,
+          "rebalance_cost": 0.0,
+          "liquidation_cost": 0.0,
+          "days_live": 365,
+          "pair_days_on": 0,
+          "entries": 0,
+          "share_on": 0.0
+        },
+        {
+          "year": "2023",
+          "n_days": 365,
+          "ret_sum": 0.0,
+          "ret_compounded": 0.0,
+          "funding": 0.0,
+          "basis": 0.0,
+          "fees": 0.0,
+          "slippage": 0.0,
+          "rebalance_cost": 0.0,
+          "liquidation_cost": 0.0,
+          "days_live": 365,
+          "pair_days_on": 0,
+          "entries": 0,
+          "share_on": 0.0
+        }
+      ],
+      "per_pair": [
+        {
+          "pair": "ETCUSDT",
+          "funding": 0.16728936203932487,
+          "basis": 0.01803370510839226,
+          "fees": 0.012497036955174977,
+          "slippage": 0.001504806981830555,
+          "rebalance_cost": 0.0008771124772986345,
+          "liquidation_cost": 0.011461163500192105,
+          "days_live": 1279,
+          "entries": 1,
+          "net": 0.17132122321071158,
+          "days_on": 227
+        }
+      ]
+    },
+    "margin": {
+      "rebalances": {
+        "count": 2,
+        "cost": 9.55706447646456,
+        "cost_frac": 0.0008771124772986345,
+        "events": [
+          {
+            "date": "2020-07-28",
+            "pair": "ETCUSDT",
+            "qty": 230.4036230445946,
+            "cost": 4.140606550096715,
+            "cost_frac": 0.0004112578028428627
+          },
+          {
+            "date": "2021-02-11",
+            "pair": "ETCUSDT",
+            "qty": 203.97667896980323,
+            "cost": 5.416457926367846,
+            "cost_frac": 0.00046585467445577175
+          }
+        ]
+      },
+      "liquidations": {
+        "count": 1,
+        "cost": 134.41216233488475,
+        "cost_frac": 0.011461163500192105,
+        "events": [
+          {
+            "date": "2021-02-13",
+            "pair": "ETCUSDT",
+            "price": 15.968215365970291,
+            "cost": 134.41216233488475,
+            "cost_frac": 0.011461163500192105
+          }
+        ]
+      }
+    },
+    "reprice": [
+      {
+        "slippage": 0.0,
+        "spot_taker": 0.00075,
+        "perp_taker": 0.0005,
+        "ann_return": 0.04946307851058466,
+        "sharpe": 1.788234979564466,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 0.0006696532641584975,
+          "ann_excess_ci": [
+            -0.03538450240612581,
+            0.04840066562341192
+          ],
+          "p": 0.5092490750924907,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04946307851058466,
+          "ann_return_ci": [
+            0.013408922840300347,
+            0.09719409086983807
+          ]
+        },
+        "fees": 0.011999054791835696,
+        "slippage_cost": 0.0,
+        "entries": 1
+      },
+      {
+        "slippage": 0.0,
+        "spot_taker": 0.001,
+        "perp_taker": 0.0005,
+        "ann_return": 0.049320873312845286,
+        "sharpe": 1.7791332881496833,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 0.00052744806641913,
+          "ann_excess_ci": [
+            -0.03542768712790292,
+            0.04819847113414343
+          ],
+          "p": 0.5112488751124887,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.049320873312845286,
+          "ann_return_ci": [
+            0.013365738118523242,
+            0.0969918963805696
+          ]
+        },
+        "fees": 0.01249735032995381,
+        "slippage_cost": 0.0,
+        "entries": 1
+      },
+      {
+        "slippage": 0.0002,
+        "spot_taker": 0.00075,
+        "perp_taker": 0.0005,
+        "ann_return": 0.049291308650698716,
+        "sharpe": 1.778786836250333,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 0.0004978834042725567,
+          "ann_excess_ci": [
+            -0.03542097242591868,
+            0.048188615700988056
+          ],
+          "p": 0.5115488451154885,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.049291308650698716,
+          "ann_return_ci": [
+            0.013372452820507481,
+            0.09698204094741422
+          ]
+        },
+        "fees": 0.011998950103794294,
+        "slippage_cost": 0.0006019937976393499,
+        "entries": 1
+      },
+      {
+        "slippage": 0.0002,
+        "spot_taker": 0.001,
+        "perp_taker": 0.0005,
+        "ann_return": 0.04914911536687919,
+        "sharpe": 1.769666060085087,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 0.00035569012045302985,
+          "ann_excess_ci": [
+            -0.035441015599067455,
+            0.04798409331432545
+          ],
+          "p": 0.5133486651334866,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04914911536687919,
+          "ann_return_ci": [
+            0.013352409647358704,
+            0.09677751856075162
+          ]
+        },
+        "fees": 0.012497224817579165,
+        "slippage_cost": 0.0006019728672371427,
+        "entries": 1
+      },
+      {
+        "slippage": 0.0005,
+        "spot_taker": 0.00075,
+        "perp_taker": 0.0005,
+        "ann_return": 0.04903368952240821,
+        "sharpe": 1.7645461687236992,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 0.00024026427598205073,
+          "ann_excess_ci": [
+            -0.035457055690467545,
+            0.04786675397598482
+          ],
+          "p": 0.5141485851414859,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04903368952240821,
+          "ann_return_ci": [
+            0.013336369555958613,
+            0.09666017922241098
+          ]
+        },
+        "fees": 0.011998793410252829,
+        "slippage_cost": 0.0015048591724671039,
+        "entries": 1
+      },
+      {
+        "slippage": 0.0005,
+        "spot_taker": 0.001,
+        "perp_taker": 0.0005,
+        "ann_return": 0.04889151405153253,
+        "sharpe": 1.7553996452756981,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": 9.808880510637641e-05,
+          "ann_excess_ci": [
+            -0.035458574893904825,
+            0.047617981541666646
+          ],
+          "p": 0.515948405159484,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04889151405153253,
+          "ann_return_ci": [
+            0.013334850352521334,
+            0.0964114067880928
+          ]
+        },
+        "fees": 0.012497036955174977,
+        "slippage_cost": 0.001504806981830555,
+        "entries": 1
+      },
+      {
+        "slippage": 0.001,
+        "spot_taker": 0.00075,
+        "perp_taker": 0.0005,
+        "ann_return": 0.048604418994089245,
+        "sharpe": 1.7406442390488241,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": -0.00018900625233690902,
+          "ann_excess_ci": [
+            -0.035534600467303654,
+            0.04729874777969242
+          ],
+          "p": 0.5184481551844815,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04860441899408925,
+          "ann_return_ci": [
+            0.013258824779122505,
+            0.09609217302611858
+          ]
+        },
+        "fees": 0.011998533156704847,
+        "slippage_cost": 0.0030093020499561297,
+        "entries": 1
+      },
+      {
+        "slippage": 0.001,
+        "spot_taker": 0.001,
+        "perp_taker": 0.0005,
+        "ann_return": 0.04846227305704312,
+        "sharpe": 1.731462371767147,
+        "v2": {
+          "hurdle_annual": 0.05,
+          "ann_excess": -0.0003311521893830397,
+          "ann_excess_ci": [
+            -0.03553460144840051,
+            0.04700528349105495
+          ],
+          "p": 0.5202479752024798,
+          "passes": false,
+          "reading": "not_proven",
+          "ann_return": 0.04846227305704312,
+          "ann_return_ci": [
+            0.013258823798025648,
+            0.09579870873748111
+          ]
+        },
+        "fees": 0.012496724933815578,
+        "slippage_cost": 0.003009198119693143,
+        "entries": 1
+      }
+    ]
+  }
+}

@@ -51,3 +51,29 @@ option; one-shot steps (the code lock, the holdout) and merges ran only on the u
 locked on 2026-10-24 at git ab95921; `periods.forward.start` = 2026-10-25; the prereg hash is unchanged
 (`a44eee47…b242`, `carry prereg validate`). The 12-month review needs data through 2027-10-24, the 36-month one
 through 2029-10-23.
+
+**Step 3 — in-sample runs (2026-10-24, git 229ce16, code locked).** `perpbt carry run --primary`: 11 ok, 0 failed
+(35 s); `--exploratory`: 66 ok, 0 failed (2 min 36 s); registry 77 `ok` rows, no failure, no output-neutral row.
+`perpbt carry report`: 7 reports (the primary and the six exploratory rows) and `runs/carry/summary.md` (26 s,
+4.3 MB of PNGs). Committed: the registry, `results.parquet`, 77 `stats.json`, the 7 reports with figures, the summary.
+
+- **Verdict (in-sample): positive below the hurdle.** V1 passes (net Sharpe 4.27, 95% CI 2.49..7.27, p 0.0001);
+  V2 fails (annualised net return 7.85%, CI 4.24..11.82%; excess over 5% 2.97%, CI −0.64..6.94%, p 0.0571): not
+  proven. Hurdles (descriptive): passes at 0% and 3%, not at 5% or 8%. Filter value against `always_on`: Sharpe
+  difference 1.26 (CI 0.39..2.61, p 0.0062); random timing: return rank 1 of 1,000 paths; DSR 0.999 (7 trials).
+- Per year (net, sum of daily returns): 2020 H2 8.64%, 2021 14.96%, 2022 0.34%, 2023 3.56%; share on 60.0%; 81 entries.
+- **Margin events:** 91 rebalances (0.35% of equity) and 8 liquidations (0.93%), all from 2020-09-03 to 2021-05-06
+  (TRX twice, XRP twice, XLM, ETC, BCH, EOS). A liquidated sleeve stays out until the signal's next entry, so the
+  primary sat out high-funding stretches (XLM 2020-11-24 to mid 2021): its 2021 share on is 75.4% against `lev_1`'s
+  88.0%. That is why `lev_1` (1 liquidation) earns almost the same funding (29.85% against 30.95%) on 3/4 of the
+  notional, at 1.08% vol and Sharpe 7.20. The unhedged spot leg between a liquidation (at the day high) and the next
+  00:15 fill makes the largest days: TRX 2020-09-03/04 (−139 and −95 USDT; the worst day −1.34%), XLM 2020-11-24
+  (+185 USDT; the best day +1.85%), XRP 2020-11-22, EOS 2021-05-07 (daily skew 4.06, kurtosis 159). This is CD7 as
+  registered (spot sold at the next fill), checked from the in-sample run tables only.
+- **Exploratory rows (descriptive):** `entry_5` would read edge (V2 p 0.0427); the other five positive below the
+  hurdle (V2 p: `always_on` 0.407, `entry_20` 0.183, `lookback_3d` 0.200, `lookback_14d` 0.0645, `lev_1` 0.0572).
+- **Reading note.** A V2 "proven above" (one-sided p < 0.05) can sit beside a two-sided 95% excess CI that still
+  contains 0 (`entry_5`: −0.47..7.38%; the per-pair BTCUSDT row; four re-pricing cells): the one-sided 5% test
+  matches a 90% two-sided interval. The labels follow overview §3 (passes first); nothing was changed.
+- Per pair alone (descriptive): five pass both (BTC, ETH, LINK, LTC, EOS), four are positive below the hurdle, TRXUSDT
+  has no edge (−2.91%/yr; liquidations).
