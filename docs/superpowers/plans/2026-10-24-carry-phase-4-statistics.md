@@ -104,3 +104,4 @@ Final review: fresh reviewer (opus): "merge"; 0 Critical, 0 Important, 4 Minor; 
 - Final: fixed (Minor 2) docstrings and §4.7: a spot leg still held at a delisting is closed with reason delist, so it is not in liquidation_cost.
 - Final: fixed (Minor 3) real-data asserts on plain bools with messages (a failure cannot print real values).
 - Final: fixed (Minor 4) shifted_states refuses a non-bool state.
+After the review fixes: full suite 1352 passed (8 min 15 s, slow included).
