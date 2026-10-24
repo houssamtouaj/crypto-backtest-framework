@@ -64,6 +64,7 @@ PAIR_COLUMNS = ("date", "pair", "state", "spot_qty", "perp_qty", "perp_wallet", 
 FILL_COLUMNS = ("date", "pair", "leg", "qty", "price", "reason", "fee", "slippage")
 EVENT_COLUMNS = ("date", "pair", "kind", "leg", "detail", "value")
 _MIN_MS = 60_000
+CAP_TOL = 1e-12  # n × (E / n) can exceed E by an ulp; that is not a capped entry
 
 
 @dataclass(frozen=True)
@@ -212,6 +213,10 @@ def _check(frames: dict[str, PairFrame], state: dict[str, np.ndarray], cfg: Exec
         paths.add(1 if ndim == 1 else arr.shape[0])
     if len(paths) != 1 or min(paths) < 1:
         raise ValueError(f"every pair needs the same number of paths (>= 1), got {sorted(paths)}")
+    last = max(int(pf.day_ms[-1]) for pf in frames.values())
+    if last < date_ms(cfg.end):
+        raise ValueError(f"no frame reaches the period end {cfg.end} (the latest ends {_iso(last)}): the frames were "
+                         "loaded through an earlier end, and every pair would read as delisted")
     return paths.pop()
 
 
@@ -392,7 +397,7 @@ def run_path(frames: dict[str, PairFrame], state: dict[str, np.ndarray], cfg: Ex
         total = 0.0
         for i in entering:
             total = total + target
-        capped = total > cash
+        capped = total > cash * (1.0 + CAP_TOL)
         lam = cash / total if capped else 1.0
         for i in entering:
             f, jt = F[i], jd[i] + 1
@@ -590,6 +595,14 @@ def _align(frames: dict[str, PairFrame], cfg: ExecSpec, days: np.ndarray) -> _Al
                     ev_px, ev_fb)
 
 
+def _held_amounts(held: np.ndarray, rate: np.ndarray, q: np.ndarray, px: np.ndarray) -> np.ndarray:
+    """``rate × q × px`` per event where a quantity is held; refuses an unpriced event with a holding, as run_path."""
+    amt = np.where(held, rate[None] * q[:, :, None] * px[None], 0.0)
+    if np.isnan(amt).any():
+        raise AssertionError("a funding event has no price while a quantity is held")
+    return amt
+
+
 def run_batch(frames: dict[str, PairFrame], state_batch: dict[str, np.ndarray], cfg: ExecSpec) -> BatchResult:
     """``P`` on/off paths at once (``state_batch[pair]`` bool ``(P, len(frame))``); equals ``run_path`` per path.
 
@@ -653,7 +666,7 @@ def run_batch(frames: dict[str, PairFrame], state_batch: dict[str, np.ndarray], 
             ts, rate, px, fb = A.ev_ts[:, k], A.ev_rate[:, k], A.ev_px[:, k], A.ev_fb[:, k]
             pre = perp_trade[:, :, None] & (ts < A.ms_p[:, k][:, None])[None]
             held = (q != 0)[:, :, None]
-            amt = np.where(held, rate[None] * q[:, :, None] * px[None], 0.0)
+            amt = _held_amounts(held, rate, q, px)
             f_pre = zeros()
             for e in range(K):
                 f_pre = f_pre + np.where(pre[:, :, e], amt[:, :, e], 0.0)
@@ -693,7 +706,7 @@ def run_batch(frames: dict[str, PairFrame], state_batch: dict[str, np.ndarray], 
             total = np.zeros(P)
             for i in range(n):
                 total = total + np.where(ent[:, i], target, 0.0)
-            capped = total > cash
+            capped = total > cash * (1.0 + CAP_TOL)
             lam = np.where(capped, cash / np.where(capped, total, 1.0), 1.0)
             spend = np.where(capped[:, None], lam[:, None] * target[:, None], target[:, None])
             counts["capped_entries"] += (ent & capped[:, None]).sum(axis=1)
@@ -713,7 +726,7 @@ def run_batch(frames: dict[str, PairFrame], state_batch: dict[str, np.ndarray], 
 
             # 1. funding at or after the perp leg's fill, on the new quantity
             held = (q != 0)[:, :, None]
-            amt = np.where(held, rate[None] * q[:, :, None] * px[None], 0.0)
+            amt = _held_amounts(held, rate, q, px)
             f_post = zeros()
             for e in range(K):
                 f_post = f_post + np.where(pre[:, :, e], 0.0, amt[:, :, e])

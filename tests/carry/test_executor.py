@@ -448,3 +448,67 @@ def test_input_refusals():
         run_path(one(pf), {"AUSDT": good["AUSDT"][:-1]}, spec())
     with pytest.raises(ValueError, match="PairFrame"):
         run_path({"BUSDT": pf}, {"BUSDT": good["AUSDT"]}, spec())
+
+
+# --- review fixes: rules the first test set did not pin ----------------------------------------------------------
+
+def path_and_batch(frames, st, cfg):
+    """run_path, checked against a one-path run_batch (counts exactly, money to 1e-12 of the starting equity)."""
+    from perpbt.carry.executor import run_batch
+    r = run_path(frames, st, cfg)
+    b = run_batch(frames, {k: v[None] for k, v in st.items()}, cfg)
+    assert {c: int(v[0]) for c, v in b.counts.items()} == r.counts
+    for c in ("equity", "cash", "funding", "fees"):
+        np.testing.assert_allclose(getattr(b, c)[0], r.daily[c], rtol=0, atol=1e-12 * E0)
+    return r
+
+
+def test_rebalance_trigger_is_at_the_close_not_the_high():
+    # CD7: at the +30% high the wallet equity (20q) is below half the margin needed (32.5q), at the 115 close
+    # (35q against 28.75q) it is not; the next fill at 115 would still rebalance (35q < 57.5q) had the high
+    # triggered it
+    pf = pairframe("AUSDT", spot=[100, 100, 115, 115, 115], perp=[100, 100, 115, 115, 115],
+                   perp_high=[None, None, 130, None, None])
+    r = path_and_batch(one(pf), states(one(pf), {"AUSDT": [0, 1, 2, 3]}), zero_cost_spec())
+    assert r.counts["rebalances"] == 0 and r.counts["liquidations"] == 0
+
+
+def test_fill_exactly_at_the_8h_event_comes_first():
+    # perp candles 00:00..07:30 of day 3 missing: the exit's perp leg fills at the 07:45 candle's close, 08:00
+    # exactly; the exchange closes that candle 1 ms earlier, so the 08:00 event is on the new (zero) quantity
+    rates = [0.0] * 9 + [0.001, 0.002, 0.003] + [0.0] * 3
+    pf = pairframe("AUSDT", spot=[100] * 5, perp=[100] * 5, rates=rates, drop_perp=[(3, s) for s in range(31)])
+    assert pf.fill_late_ms["perp"][15][3] == pf.perp.funding_ts[10] == T0_MS + 3 * DAY_MS + 8 * H_MS
+    r = path_and_batch(one(pf), states(one(pf), {"AUSDT": [0, 1]}), zero_cost_spec())
+    q = X * E0 / 100
+    assert r.daily["funding"].iloc[2] == pytest.approx(0.001 * q * 100, rel=1e-13)
+
+
+def test_spot_sale_after_liquidation_needs_only_the_spot_leg():
+    pf = pairframe("AUSDT", spot=[100] * 5, perp=[100] * 5, perp_high=[None, None, 160, None, None],
+                   drop_perp=[(3, s) for s in range(96)])
+    r = path_and_batch(one(pf), states(one(pf), {"AUSDT": [0, 1, 2, 3]}), spec())
+    liq = r.fills[r.fills["reason"] == "liquidation"]
+    assert liq["date"].tolist() == ["2020-01-03", "2020-01-04"] and r.counts["postponed"] == 0
+
+
+def test_no_rebalance_when_the_perp_fills_beyond_the_liquidation_price():
+    # due at day 2's close (125); day 3's perp fill 150 is above the liquidation price 150/1.01: no rebalance,
+    # and day 3's high (>= the fill) liquidates
+    pf = pairframe("AUSDT", spot=[100, 100, 125, 150, 150], perp=[100, 100, 125, 150, 150])
+    r = path_and_batch(one(pf), states(one(pf), {"AUSDT": [0, 1, 2, 3]}), zero_cost_spec())
+    assert r.counts["rebalances"] == 0 and r.counts["liquidations"] == 1
+    assert r.events.loc[r.events["kind"] == "liquidation", "date"].tolist() == ["2020-01-04"]
+
+
+def test_a_one_ulp_shortfall_is_not_capped():
+    frames = {f"P{i}USDT": pairframe(f"P{i}USDT", spot=[100 + i] * 5, perp=[100 + i] * 5) for i in range(7)}
+    cfg = spec(end="2020-01-05")
+    r = path_and_batch(frames, states(frames, {p: [0, 1, 2, 3] for p in frames}), cfg)
+    assert r.counts["entries"] == 7 and r.counts["capped_entries"] == 0 and (r.daily["cash"] >= 0).all()
+
+
+def test_refuses_frames_that_all_end_before_the_period_end():
+    pf = pairframe("AUSDT", spot=[100] * 5, perp=[100] * 5)
+    with pytest.raises(ValueError, match="period end"):
+        run_path(one(pf), states(one(pf), {}), spec(end="2020-01-06"))

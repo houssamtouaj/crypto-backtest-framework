@@ -117,3 +117,13 @@ Task 1: complete (6889e27; tests/carry 137 passed).
 Task 2: complete (39936b7; test_executor 26 passed). Mutations: pre-fill funding on the new quantity → 3 failures; liquidation at the high → 1; no delisting → 2; delisting at the period end → 7; late fills ignored → 3; no block after liquidation → 1; funding sign → 4; no price fallback → 1; never rebalance → 3.
 Task 3: complete (ef2a085; test_executor_batch 4 passed; bit for bit on 10 paths).
 Task 4: complete (4e23567; test_real_executor 6 passed: one path ≈ 0.17 s, 1,000 paths ≈ 11.4 s; no performance number computed or printed).
+Task 5: notes 11ac491; full suite 1302 passed (8 min 59 s).
+Final review: fresh reviewer (opus) — "merge with fixes"; 0 Critical, 2 Important, 5 Minor; accounting re-derived by hand, run_batch == run_path on extra edge cases.
+- Final: fixed (Important 1) test pins CD7's close-based rebalance trigger; mutation trigger-on-high (path or batch) → 1 failure each.
+- Final: fixed (Important 2) test of a perp fill at exactly 08:00 (the 08:00 event on the new quantity); mutation `<=` → 1 failure each.
+- Final: fixed (Minor 3) capped_entry ignores a 1-ulp shortfall (CAP_TOL 1e-12); 7 pairs entering from all-cash count 0 capped.
+- Final: fixed (Minor 4) both runs refuse frames that all end before the period end.
+- Final: fixed (Minor 5) tests for the spot-only post-liquidation sale and the pp < pl rebalance gate; each mutation → 1 failure.
+- Final: fixed (Minor 6) §3.8 rebalance-gate note states the post-fill funding edge case.
+- Final: fixed (Minor 7) run_batch refuses an unpriced funding event with a holding, as run_path.
+The review-fix tests also run run_batch on one path.

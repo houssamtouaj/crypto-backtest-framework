@@ -137,7 +137,11 @@ are in `perpbt/carry/executor.py`'s docstring.
   it pro rata, so the order of the pairs does not matter, and each counts as
   `capped_entry`. An entry capped to 0 does not trade and is tried again the
   next day. After the entries, a rounding residue below 0 is set to 0, so
-  cash never goes negative.
+  cash never goes negative. A shortfall within 1e-12 of the cash (`n × (E /
+  n)` can exceed `E` by an ulp) does not count as capped.
+- **Period guard.** Both runs refuse frames that all end before the period's
+  last return day: an earlier load end would otherwise read as delistings of
+  every pair.
 - **Costs** are fees and slippage on traded notional at the raw fill price,
   booked as cash. Rebalance costs are paid out of the freed spot cash, inside
   the sleeve. The liquidation fee is reported under `fees`.
@@ -145,8 +149,11 @@ are in `perpbt/carry/executor.py`'s docstring.
   wallet equity after the trade and its costs equals `q'·Pp / L`. There is no
   trade when:
   - `δ ≤ 0` (the wallet recovered before the fill);
-  - the perp fill is at or above the liquidation price (that day's high check
-    then liquidates).
+  - the perp fill is at or above the liquidation price, evaluated after the
+    pre-fill funding. That day's high check normally liquidates then. Positive
+    funding booked after the fill can lift the liquidation price above the
+    high, leaving neither trade that day; the trigger is checked again at the
+    close.
 
   The trigger is re-evaluated at every close.
 - **Liquidation** *(my call)*.
@@ -193,3 +200,21 @@ days and `n_live` is 10 throughout, with no delisting, cash ≥ 0, and the
 equity identity holding to 1e-9 of the starting equity. One path runs in
 about 0.17 s and 1,000 random paths through `run_batch` in about 11 s.
 `run_batch` equals `run_path` on the primary and five random real paths.
+
+**Review fixes (fresh reviewer, 2026-10-24: 0 Critical, 2 Important, 5
+Minor; "merge with fixes").** Tests now pin:
+- CD7's close-based rebalance trigger (a day high that would trigger does
+  not);
+- a perp fill exactly at 08:00, which puts the 08:00 event on the new
+  quantity;
+- the spot-only fill of the post-liquidation sale;
+- the `pp < pl` rebalance gate.
+
+Code changes:
+- `capped_entry` ignores a 1-ulp shortfall.
+- Both runs refuse frames that all end before the period end.
+- `run_batch` refuses an unpriced funding event with a holding, as
+  `run_path` does.
+- The rebalance-gate note above now states the edge case where positive
+  funding after the fill leaves neither a rebalance nor a liquidation that
+  day.
