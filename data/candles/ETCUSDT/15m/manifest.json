@@ -5,10 +5,16 @@
       "purpose": "tail",
       "rows": 48,
       "start_ms": 1792713600000
+    },
+    {
+      "end_ms": 1792863000000,
+      "purpose": "tail",
+      "rows": 70,
+      "start_ms": 1792800000000
     }
   ],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "ETCUSDT-15m-2020-01.zip",
@@ -627,14 +633,20 @@
       "rows": 96,
       "sha256": "8deece70de5d0375e91e21ba5a19d90a07e967edb6d27d581e289eafe44a0906",
       "source": "bulk_daily"
+    },
+    {
+      "name": "ETCUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "31708f26d905b0589038c7d0d290e46b9255cd851ed3b81433d1cfab304ab1f1",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1579161600000,
   "gaps": [],
-  "last_open_ms": 1792755900000,
+  "last_open_ms": 1792862100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "ETCUSDT",
-  "rows": 237328,
+  "rows": 237446,
   "tf": "15m"
 }

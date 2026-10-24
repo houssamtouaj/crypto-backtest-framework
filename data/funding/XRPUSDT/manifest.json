@@ -6,9 +6,15 @@
       "purpose": "tail",
       "rows": 68,
       "start_ms": 1790784060000
+    },
+    {
+      "end_ms": 1792863828434,
+      "purpose": "tail",
+      "rows": 4,
+      "start_ms": 1792742460000
     }
   ],
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "XRPUSDT-fundingRate-2020-01.zip",
@@ -499,12 +505,12 @@
   ],
   "first_funding_ms": 1578297600000,
   "intervals": {
-    "8": 7447
+    "8": 7451
   },
-  "last_funding_ms": 1792742400000,
+  "last_funding_ms": 1792857600000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "XRPUSDT",
-  "rows": 7447
+  "rows": 7451
 }

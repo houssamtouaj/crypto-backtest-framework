@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "ETHUSDT-15m-2017-08.zip",
@@ -783,6 +783,24 @@
       "rows": 96,
       "sha256": "7aea54885b73af3e1739d16991281f154dbb268aedea15a5e5d69d23bce9c2d1",
       "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "675f411e194ec57bbf0cdd5cbbb5b7cd361bd760c4b3c3a00933ba46abde059b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "dee8a8a4e034eb58a08c2d34bcf48c76da6e598c99af75f1cdae9227432b7aee",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETHUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "5f6445838c5863b1c110312690c6d252c2081936538ece708d0232fb07c54f9c",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1502942400000,
@@ -943,10 +961,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "ETHUSDT",
-  "rows": 321214,
+  "rows": 321502,
   "tf": "15m"
 }

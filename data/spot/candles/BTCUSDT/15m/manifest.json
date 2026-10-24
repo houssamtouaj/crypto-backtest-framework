@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "BTCUSDT-15m-2017-08.zip",
@@ -783,6 +783,24 @@
       "rows": 96,
       "sha256": "4a48d57daa2ab84a24acc73c9101ef7256396d75108cb71e72236b349086e8d1",
       "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "3e5387da2202fc239c50d95a4401368050ea6cf6f196f5a56957fb3df10f1c2c",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "91015d24bc067b3621fe20af074358e4512dd652843fa9a2467cefeb14a73192",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "b26d961452a87d6110650a0701cc724247e593d55b46ea5b565a900cf03cdcf0",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1502942400000,
@@ -943,10 +961,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BTCUSDT",
-  "rows": 321214,
+  "rows": 321502,
   "tf": "15m"
 }

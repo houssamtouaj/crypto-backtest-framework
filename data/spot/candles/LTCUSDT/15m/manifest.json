@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "LTCUSDT-15m-2017-12.zip",
@@ -759,6 +759,24 @@
       "rows": 96,
       "sha256": "c5c15434b5fadc593220dc9ff715db664ad6fd66b729b383e649323855b89eaf",
       "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "4266d97efa7b7a399166cc4b236247793f3f0f9d24527903b962c1b7bb88fcfb",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "f58e013894ff618845297601d8603e924be11379fffde9c458400fe07e232716",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LTCUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "5d0d406447f16b492ef42855f7c14c11b53ffe2cce5960595f856f2cf506847c",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1513135800000,
@@ -914,10 +932,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "LTCUSDT",
-  "rows": 309915,
+  "rows": 310203,
   "tf": "15m"
 }

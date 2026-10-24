@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "TRXUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "507ec66567ab707cc01c443fc54a0e197a57ac50c885beaafb522d465932b5d9",
       "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "a6a4982f2732aa14f1cf5d2a16d505ee4dd30438aa74457ef6e7e044ada2f9df",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "703c8749bea9770fefec193f03ea6a8917e622fdf41c49e6b688f30e53ecf643",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "99983af0203eb10981513373bfe8924df9673b75553b3f67600dc28f5c38f2fd",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "TRXUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

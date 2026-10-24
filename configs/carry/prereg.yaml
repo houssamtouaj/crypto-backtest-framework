@@ -13,7 +13,7 @@ periods:  # CD5
   warmup:   {start: 2020-01-01, end: 2020-06-30}
   insample: {start: 2020-07-01, end: 2023-12-31}   # returns on these days; decisions on the day before each
   holdout:  {start: 2024-01-01, end: 2026-10-20}   # one shot, own DONE marker (Phase 5)
-  forward:  {start: null, reviews: [12, 36]}        # start set at the code lock; excluded from the hash
+  forward:  {start: 2026-10-25, reviews: [12, 36]}        # start set at the code lock; excluded from the hash
 
 # CD2: f̄ = 7-day trailing funding, time-weighted (Σ rate × 24 / Σ interval_h × 365; Phase 2 §2.6);
 # on above entry, off below exit, else hold
