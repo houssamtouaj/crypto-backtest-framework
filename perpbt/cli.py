@@ -4,7 +4,8 @@ Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
 Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
 ``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout``,
-``carry forward`` and ``carry report``; the ETF strategy ``etf fetch`` and ``etf validate``. Exit codes: 0 success, 1 a download, checksum,
+``carry forward`` and ``carry report``; the ETF strategy ``etf fetch``, ``etf validate``, ``etf prereg`` and
+``etf screen``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -42,6 +43,7 @@ DEFAULT_CARRY_DATA = "configs/carry/data.yaml"
 DEFAULT_BASIS_OUT = "runs/carry/basis_check.json"
 DEFAULT_CARRY_PREREG = "configs/carry/prereg.yaml"
 DEFAULT_ETF_DATA = "configs/etf/data.yaml"
+DEFAULT_ETF_PREREG = "configs/etf/prereg.yaml"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -612,6 +614,80 @@ def _etf_validate(args: argparse.Namespace) -> int:
     return 0 if all(r.ok for r in results) else 1
 
 
+def _etf_prereg(args: argparse.Namespace) -> int:
+    import yaml
+
+    from perpbt.etf.config import load_data_config
+    from perpbt.etf.prereg import check_snapshot, freeze, load_prereg
+    from perpbt.etf.store import EtfStore
+
+    try:
+        prereg = load_prereg(args.prereg)
+        cfg = load_data_config(args.data_config)
+        check_snapshot(prereg, cfg, EtfStore(cfg.data_dir))
+    except (ConfigError, OSError, ValueError, yaml.YAMLError) as e:
+        print(f"perpbt etf prereg: {e}", file=sys.stderr)
+        return 2
+    if args.etf_prereg_command == "validate":
+        print(f"{Path(args.prereg).as_posix()}: valid, matches {Path(args.data_config).as_posix()} and the stored "
+              f"snapshot; prereg_hash {prereg.prereg_hash()}")
+        return 0
+    try:
+        lock = freeze(args.prereg, data_cfg=cfg)
+    except FileExistsError as e:
+        print(f"perpbt etf prereg freeze: {e}", file=sys.stderr)
+        return 1
+    print(f"frozen on {lock['frozen_on']}: prereg_hash {lock['prereg_hash']} (git {lock['git_commit']})")
+    return 0
+
+
+def _etf_screen(args: argparse.Namespace) -> int:
+    import yaml
+
+    from perpbt.etf.config import load_data_config
+    from perpbt.etf.prereg import check_frozen
+    from perpbt.etf.screen import BENCHMARK, screen_from_store, screen_path, write_screen
+    from perpbt.etf.store import StoreRefused
+    from perpbt.version import git_commit
+
+    try:
+        prereg = check_frozen(args.prereg)
+    except ConfigError as e:
+        print(f"perpbt etf screen: refused: {e}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError, yaml.YAMLError) as e:
+        print(f"perpbt etf screen: {e}", file=sys.stderr)
+        return 2
+    out = screen_path(args.runs_dir)
+    if out.exists():
+        print(f"perpbt etf screen: refused: {out.as_posix()} exists; the screen runs once", file=sys.stderr)
+        return 1
+    try:
+        cfg = load_data_config(args.data_config)
+    except (ConfigError, OSError, yaml.YAMLError) as e:
+        print(f"perpbt etf screen: cannot load {args.data_config}: {e}", file=sys.stderr)
+        return 2
+    try:
+        result = screen_from_store(prereg, cfg)
+    except ConfigError as e:  # the prereg does not describe the data config or the stored snapshot
+        print(f"perpbt etf screen: refused: {e}", file=sys.stderr)
+        return 1
+    except (StoreRefused, OSError, ValueError) as e:
+        print(f"perpbt etf screen: {e}", file=sys.stderr)
+        return 1
+    result = {**result, "computed_on": datetime.now(timezone.utc).date().isoformat(), "git_commit": git_commit()}
+    paths = write_screen(result, args.runs_dir)
+    q = result["paths"]
+    print(f"observed gross excess Sharpe {result['observed_sharpe']:.3f}; {q['n']} random-days paths: "
+          f"5/50/95% {q['p05']:.3f} / {q['p50']:.3f} / {q['p95']:.3f}")
+    print(f"p_screen {result['p_screen']:.4f} (stop if >= {result['stop_if_p_at_least']}): {result['decision']}")
+    print(f"descriptive: vol-targeted buy-and-hold {result['bh_sharpe']:.3f}, 100% {BENCHMARK} "
+          f"{result['spy_sharpe']:.3f}")
+    for p in paths:
+        print(f"wrote {p.as_posix()}")
+    return 0
+
+
 def _add_code_change_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--allow-code-change", action="store_true",
                    help="run although the carry code version differs from the lock (needs --reason)")
@@ -798,6 +874,17 @@ def build_parser() -> argparse.ArgumentParser:
     evalidate = etf_sub.add_parser("validate", help="re-run the data rules on the stored snapshot")
     evalidate.add_argument("--config", default=DEFAULT_ETF_DATA, help="EtfDataConfig YAML (default: %(default)s)")
     evalidate.set_defaults(handler=_etf_validate)
+    eprereg = etf_sub.add_parser("prereg", help="validate or freeze the ETF pre-registration (checks the data config "
+                                                "and the manifest hash)")
+    eprereg.add_argument("etf_prereg_command", choices=("validate", "freeze"))
+    eprereg.add_argument("--prereg", default=DEFAULT_ETF_PREREG, help="ETF pre-registration (default: %(default)s)")
+    eprereg.add_argument("--data-config", default=DEFAULT_ETF_DATA, help="EtfDataConfig YAML (default: %(default)s)")
+    eprereg.set_defaults(handler=_etf_prereg)
+    escreen = etf_sub.add_parser("screen", help="the one-shot gross in-sample screen (go / stop), after the freeze")
+    escreen.add_argument("--prereg", default=DEFAULT_ETF_PREREG, help="ETF pre-registration (default: %(default)s)")
+    escreen.add_argument("--data-config", default=DEFAULT_ETF_DATA, help="EtfDataConfig YAML (default: %(default)s)")
+    escreen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    escreen.set_defaults(handler=_etf_screen)
 
     return parser
 
