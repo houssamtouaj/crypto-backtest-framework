@@ -31,7 +31,7 @@ def _frame(n=400, seed=7):
 
 
 def test_members_are_the_trend_objects():
-    for name in ("return_sign", "ma_filter", "donchian", "target_weight"):
+    for name in ("return_sign", "ma_filter", "donchian", "member_matrix", "target_weight"):
         assert getattr(etf_signals, name) is getattr(trend_signals, name), name
 
 
@@ -148,18 +148,18 @@ def test_signals_causal(column):
             assert not np.array_equal(full.sigma[d + 1:], moved.sigma[d + 1:], equal_nan=True)
 
 
-def _hand_signals(ticker, exposure, weight, start="2005-01-03"):
+def _hand_signals(ticker, exposure, weight, start="2005-01-03", k_members=12):
     n = len(exposure)
     day_ms = date_ms(start) + 86_400_000 * np.arange(n)
     valid = np.isfinite(exposure)
-    return EtfSignals(ticker, day_ms, ("m",), np.zeros((1, n)), np.asarray(exposure, float), np.ones(n),
-                      np.asarray(weight, float), valid)
+    return EtfSignals(ticker, day_ms, tuple(f"m{k}" for k in range(k_members)), np.zeros((k_members, n)),
+                      np.asarray(exposure, float), np.ones(n), np.asarray(weight, float), valid)
 
 
 def test_summarise():
-    a = _hand_signals("SPY", [np.nan, 0.5, 1.0, 0.5, 1 / 12], [np.nan, 0.4, 0.8, 0.5, 0.05])
-    b = _hand_signals("GLD", [np.nan, 0.0, 0.0, 1.0, 1.0], [np.nan, 0.0, 0.0, 0.9, 0.7])
-    out = summarise({"SPY": a, "GLD": b}, day_iso(a.day_ms[1]), day_iso(a.day_ms[-1]))
+    a = _hand_signals("SPY", [np.nan, 0.5, 0.5, 1.0, 0.5, 1 / 12], [np.nan, 0.4, 0.4, 0.8, 0.5, 0.05])
+    b = _hand_signals("GLD", [np.nan, 0.0, 0.0, 0.0, 1.0, 1.0], [np.nan, 0.0, 0.0, 0.0, 0.9, 0.7])
+    out = summarise({"SPY": a, "GLD": b}, day_iso(a.day_ms[2]), day_iso(a.day_ms[-1]))
     assert list(out) == ["SPY", "GLD"]
     spy = out["SPY"]
     assert spy["first_valid"] == day_iso(a.day_ms[1]) and spy["days"] == 4
@@ -167,5 +167,20 @@ def test_summarise():
     assert spy["mean_exposure"] == pytest.approx(np.mean([0.5, 1.0, 0.5, 1 / 12]))
     assert spy["mean_weight"] == pytest.approx(np.mean([0.4, 0.8, 0.5, 0.05]))
     assert sum(out["GLD"]["exposure_hist"]) == 4
-    with pytest.raises(ValueError, match="not valid"):
+    with pytest.raises(ValueError, match="not valid"):  # a window day before the first valid one
         summarise({"SPY": a}, day_iso(a.day_ms[0]), day_iso(a.day_ms[-1]))
+
+
+def test_summarise_needs_the_decision_day_before_start():
+    a = _hand_signals("SPY", [np.nan, 0.5, 0.5, 1.0], [np.nan, 0.4, 0.4, 0.8])
+    summarise({"SPY": a}, day_iso(a.day_ms[2]), day_iso(a.day_ms[-1]))
+    with pytest.raises(ValueError, match="decision day"):  # every window day valid, the day before not
+        summarise({"SPY": a}, day_iso(a.day_ms[1]), day_iso(a.day_ms[-1]))
+
+
+def test_summarise_bins_by_the_member_count():
+    a = _hand_signals("SPY", [1 / 3, 1 / 3, 2 / 3, 1.0], [0.3, 0.3, 0.6, 0.9], k_members=3)
+    assert summarise({"SPY": a}, day_iso(a.day_ms[1]), day_iso(a.day_ms[-1]))["SPY"]["exposure_hist"] == [0, 1, 1, 1]
+    b = _hand_signals("SPY", [0.5, 0.5, 0.5], [0.5, 0.5, 0.5], k_members=3)
+    with pytest.raises(ValueError, match="multiple"):
+        summarise({"SPY": b}, day_iso(b.day_ms[1]), day_iso(b.day_ms[-1]))

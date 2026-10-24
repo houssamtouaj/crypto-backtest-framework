@@ -1,9 +1,9 @@
 """ETF signals (ETF spec Phase 1 §1.4-§1.5): the crypto trend members, exposure, √252 vol forecast, target weights.
 
-The member functions and ``target_weight`` are imported from
-``perpbt/trend/signals.py``, never copied or edited (a test checks they are
-the same objects). They are pure functions of the frame's ``c, h, l`` arrays,
-so they run on an ``EtfFrame`` as they do on a crypto ``DayFrame``; lookbacks
+The member functions, ``member_matrix`` and ``target_weight`` are imported
+from ``perpbt/trend/signals.py``, never copied or edited (a test checks they
+are the same objects). They read only the frame's ``c, h, l`` arrays, so they
+run on an ``EtfFrame`` as they do on a crypto ``DayFrame``; lookbacks
 count rows, here US trading days. Members read the split-adjusted close (a
 price trend, not a total-return index), so the Donchian member's high and low
 stay consistent with its close.
@@ -29,7 +29,7 @@ from perpbt.etf.config import ANNUALISE_DAYS, EtfSizingConfig
 from perpbt.etf.frame import EtfFrame
 from perpbt.etf.store import day_iso
 from perpbt.trend.config import SignalConfig
-from perpbt.trend.signals import donchian, ma_filter, return_sign, target_weight
+from perpbt.trend.signals import donchian, ma_filter, member_matrix, return_sign, target_weight
 
 ANNUALISE = np.sqrt(float(ANNUALISE_DAYS))  # trading days
 
@@ -49,22 +49,6 @@ def vol_forecast252(ret: np.ndarray, window: int) -> np.ndarray:
 def first_valid_index(signal: SignalConfig, sizing: EtfSizingConfig) -> int:
     """The first row index where every lookback has its ``N`` prior bars and ``σ̂`` its window (``ret[0]`` is NaN)."""
     return max(max(signal.lookbacks), sizing.vol_window)
-
-
-def member_matrix(frame: EtfFrame, signal: SignalConfig) -> tuple[tuple[str, ...], np.ndarray]:
-    """Every member at every lookback, long/flat: names ``f"{member}_{n}"`` and values of shape ``(K, D)``."""
-    names, rows = [], []
-    for member in signal.members:
-        for n in signal.lookbacks:
-            if member == "donchian":
-                row = donchian(frame.c, frame.h, frame.l, n)
-            elif member == "return_sign":
-                row = return_sign(frame.c, n)
-            else:
-                row = ma_filter(frame.c, n)
-            names.append(f"{member}_{n}")
-            rows.append(row)
-    return tuple(names), np.vstack(rows)
 
 
 def etf_target_weight(e: np.ndarray, sigma: np.ndarray, sizing: EtfSizingConfig) -> np.ndarray:
@@ -110,8 +94,10 @@ def compute_signals(frame: EtfFrame, signal: SignalConfig, sizing: EtfSizingConf
 def summarise(signals: Mapping[str, EtfSignals], start: str, end: str) -> dict[str, dict]:
     """Descriptive signal facts per ticker over ``start <= day <= end`` (Phase 1 §1.7); no returns.
 
-    ``exposure_hist[k]`` counts the days with exposure ``k/12``. Raises when a
-    day in the window is not valid (the period must start after the warmup).
+    ``exposure_hist[k]`` counts the days with exposure ``k/K`` (``K`` members).
+    Raises when a day in the window is not valid, or when the decision day
+    before ``start`` is missing or not valid: day ``start``'s return is earned
+    by the weight decided the trading day before (Phase 1 §1.4, Phase 2 §2.3).
     """
     lo, hi = date_ms(start), date_ms(end)
     out = {}
@@ -119,14 +105,20 @@ def summarise(signals: Mapping[str, EtfSignals], start: str, end: str) -> dict[s
         window = (s.day_ms >= lo) & (s.day_ms <= hi)
         if not window.any():
             raise ValueError(f"summarise({t}): no day in {start}..{end}")
+        first = int(np.argmax(window))
+        if first == 0 or not s.valid[first - 1]:
+            raise ValueError(f"summarise({t}): the decision day before {start} is missing or not valid")
         if not s.valid[window].all():
             bad = day_iso(s.day_ms[window & ~s.valid][0])
             raise ValueError(f"summarise({t}): {bad} is not valid (the warmup reaches into {start}..{end})")
         e, w = s.exposure[window], s.weight[window]
-        k = np.rint(e * 12).astype(int)
+        k_members = len(s.names)
+        k = np.rint(e * k_members).astype(int)
+        if not np.allclose(k, e * k_members, rtol=0, atol=1e-9):
+            raise ValueError(f"summarise({t}): exposure is not a multiple of 1/{k_members}")
         out[t] = {
             "first_valid": day_iso(s.first_valid_ms), "days": int(window.sum()),
-            "exposure_hist": np.bincount(k, minlength=13).tolist(),
+            "exposure_hist": np.bincount(k, minlength=k_members + 1).tolist(),
             "mean_exposure": float(e.mean()), "mean_weight": float(w.mean()),
         }
     return out

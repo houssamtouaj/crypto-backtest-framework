@@ -113,13 +113,17 @@ this phase.**
 2. `EtfSizingConfig` is the Phase 2 `sizing` block one to one: `target_vol` (float or null), `vol_window`,
    `max_weight` (in (0, 1]: no leverage), `annualise_days` (must be 252).
 3. The `signal` block reuses `trend.config.SignalConfig` (imported). `compute_signals` refuses `long_short`.
+   `trend.signals.member_matrix` is imported too: it reads only `c`, `h` and `l`, so it runs on an `EtfFrame`.
 4. A frame refuses a first row other than `warmup_start`, an `end` after the store's `holdout_end`, and a cash day
    whose rate is more than 10 calendar days old. Rule 7 makes the last unreachable on this store; it guards a
    short or synthetic one. Rates are loaded from 14 calendar days before `warmup_start`.
 5. `no_vol_target` has the same valid days as the primary (it needs a finite σ̂ too), so every row starts on the
    same day.
-6. Frame arrays are read-only. `ret` is `validate.total_return`, the formula rule 5 already checks.
+6. Frame arrays are read-only copies; a later change to the source rows does not reach them. `ret` is
+   `validate.total_return`, the formula rule 5 already checks.
 7. `load_frames` passes `allow_holdout` through to the store (default False), as the carry frame loader does.
+8. **"Published on or before `d−1`" means the DTB3 observation date.** FRED releases the rate dated `d−1` on day
+   `d`. That is not lookahead: no decision reads `cash`. It is the interest accrued over `d−1 → d`.
 
 **Real store, in-sample** (`tests/etf/test_real_signals.py`, slow; `end = 2017-12-31`, no holdout flag;
 manifest sha256 still `308f5012…`):
@@ -152,6 +156,9 @@ With `no_vol_target`, mean `w*` equals mean exposure. No return of the strategy 
 
 - Phase 2: build the prereg's `signal` block as a `trend.config.SignalConfig` and its `sizing` block as an
   `EtfSizingConfig`. The screen reads `EtfSignals.weight` and the frame's `ret` and `cash`. The insample check is
-  `summarise(…, insample_start, insample_end)`, which raises on any invalid day.
+  `summarise(…, insample_start, insample_end)`. It raises on any invalid day in the window, and when the
+  decision day before `insample_start` is missing or invalid (day `d+1`'s return uses `w*_d`).
+- Phase 5: `ETF_CODE_PATHS` must include `perpbt/trend/signals.py` and `perpbt/trend/config.py` (and what they
+  import, `perpbt/trend/daily.py`), or the ETF code lock would not cover the member code.
 - Phase 3: a fill at day `d`'s open earns `r_id[d]` that day. The dividend is in `r_on[d]`, owed to the holder at
   `d−1`'s close. `stale_open` marks the fills that carry Yahoo's stale opens.

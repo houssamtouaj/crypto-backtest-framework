@@ -98,6 +98,11 @@ def test_frame_arrays_read_only():
     f = build_frame("SPY", load_rows(DAYS3, [100, 101, 102]), RATES3, first_day=DAYS3[0])
     with pytest.raises(ValueError):
         f.c[0] = 1.0
+    rows = load_rows(DAYS3, [100, 101, 102])
+    g = build_frame("SPY", rows, RATES3, first_day=DAYS3[0])
+    rows.loc[1, "close"] = 999.0
+    rows.loc[1, "day_ms"] = 0
+    assert g.c[1] == 101 and g.day_ms[1] == date_ms(DAYS3[1])  # the frame does not see its source change
 
 
 # --- causality -----------------------------------------------------------------------

@@ -126,3 +126,13 @@
 
 ## Progress log
 
+- Task 1: Ruling: the end-after-holdout_end test uses a synthetic store whose holdout_end is 2006-12-29, so it needs no holdout flag — cost: none.
+- Task 1: Ruling: the causal test also asserts the perturbation moved something after the cut; a mutation (cash from the rate on day d instead of d−1) fails 4 tests — cost: none.
+- Task 1: Ruling: added test_bad_prices_refused (non-positive prices) and test_columns_are_the_store_columns beyond the brief — cost: none.
+Task 1: complete (b803652; python -m pytest tests/etf tests/test_holdout.py -q → 107 passed)
+- Task 2: Ruling: the frame-input helpers moved to tests/etf/synth.py (load_rows, walk_inputs) so test_frame and test_signals share them — cost: none.
+- Task 2: Ruling: test_zero_vol_hits_cap also calls etf_target_weight directly (e = 1, σ̂ = 0 → 1.0), because flat closes give exposure 0 and the cap would otherwise be checked only on zeros — cost: none.
+Task 2: complete (fc280c2; python -m pytest tests/etf tests/test_holdout.py -q → 131 passed)
+- Task 3: real store: 3,302 rows per ticker to 2017-12-29; first valid 2005-07-11 (row 160) for all four; six negative cash days (2015); IWM split day ret 0.98%; QQQ 2010-06-25 duplicate absent; stale opens SPY 42, QQQ 55, IWM 42, GLD 34. Numbers in spec §1.8. No strategy return computed.
+Task 3: complete (11e350f; full suite python -m pytest -q → 1618 passed in 559 s; git diff dev -- perpbt/trend perpbt/carry perpbt/stats empty)
+- Final review (fresh opus reviewer, whole branch): verdict "merge"; no Critical, no Important. Minors fixed: (1) summarise also requires the decision day before start to be valid (test_summarise_needs_the_decision_day_before_start); (2) build_frame copies the source arrays (to_numpy returned views; a mutation to view fails test_frame_arrays_read_only); (3) summarise bins by the member count K, not 12 (test_summarise_bins_by_the_member_count); (4) member_matrix is imported from trend.signals instead of re-implemented (identity test). Recorded in spec §1.8, not code: (5) Phase 5's ETF_CODE_PATHS must include trend/signals.py, trend/config.py, trend/daily.py; (6) "published" in §1.3 means the DTB3 observation date (call 8).

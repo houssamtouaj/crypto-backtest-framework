@@ -101,9 +101,10 @@ def build_frame(ticker: str, prices: pd.DataFrame, rates: pd.DataFrame, *, first
     if len(prices) == 0 or int(prices["day_ms"].iloc[0]) != date_ms(first_day):
         first = day_iso(prices["day_ms"].iloc[0]) if len(prices) else None
         raise ValueError(f"build_frame({ticker}): the first row is {first}, expected the first day {first_day}")
-    day_ms = prices["day_ms"].to_numpy(np.int64)
-    o, h, l, c = (prices[k].to_numpy(np.float64) for k in ("open", "high", "low", "close"))  # noqa: E741
-    div = prices["dividend"].to_numpy(np.float64)
+    # copies: to_numpy can return a view of ``prices``, which a later write to the frame would see through
+    day_ms = prices["day_ms"].to_numpy(np.int64, copy=True)
+    o, h, l, c = (prices[k].to_numpy(np.float64, copy=True) for k in ("open", "high", "low", "close"))  # noqa: E741
+    div = prices["dividend"].to_numpy(np.float64, copy=True)
     px = np.concatenate((o, h, l, c))
     if not (np.isfinite(px).all() and (px > 0).all()):
         raise ValueError(f"build_frame({ticker}): prices must be positive and finite")
