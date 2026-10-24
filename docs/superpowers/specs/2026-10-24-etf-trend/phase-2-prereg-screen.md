@@ -160,3 +160,22 @@ prereg blocks in `perpbt/etf/config.py`, and `perpbt etf prereg validate|freeze`
 in the CLI, tests for the end-gap refusal and the seed, this section, the §4.2 reference. Not changed: the
 summary is written after `screen.json` (recoverable from the JSON), and the one-shot check is per `--runs-dir`,
 as in trend and carry.
+
+**Freeze and screen (2026-10-24 UTC, on the user's go).** Frozen at 570c809 (lock: `frozen_on` 2026-10-24,
+`prereg_hash` `46ba8b847fc966d3e5b8969b1de3ea869e06c20540388cde88415916693c319d`, git 31f57a9), tagged
+`etf-prereg-v1`. The screen ran once (3db910d):
+
+| | value |
+|---|---|
+| return days | 2005-08-01 .. 2017-12-29 (3,127; first decision day 2005-07-29) |
+| observed gross excess Sharpe | 0.663 |
+| 1,000 random-days paths | mean 0.680, std 0.110, 5/50/95% 0.513 / 0.678 / 0.844 |
+| **p_screen** | **0.5455 ≥ 0.10 → STOP** |
+| vol-targeted buy-and-hold (descriptive) | 0.795 |
+| 100% SPY (descriptive) | 0.468 |
+| per ETF, strategy / buy-and-hold | SPY 0.535 / 0.627, QQQ 0.678 / 0.769, IWM 0.203 / 0.470, GLD 0.579 / 0.567 |
+| mean T-bill return | 1.13% a year |
+
+The timing is no better than random timing with the same time in market. The positive Sharpe comes from being
+long rising assets, and the vol-targeted buy-and-hold did better. By §2.3, Phases 3–7 are not built: the ETF
+project is stopped. `tests/etf/test_real_screen.py` reproduces the committed `screen.json`.

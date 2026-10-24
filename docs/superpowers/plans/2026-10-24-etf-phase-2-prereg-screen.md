@@ -107,3 +107,5 @@ and `perpbt etf screen`.
   1,705 passed, 1 skipped (the screen pin, by design). Real prereg validates against data.yaml and the store.
 - 2026-10-25: fresh review (the first reviewer stalled; a second one reported): freeze-ready after one fix.
   Fixed: `.gitignore` admits `runs/etf/screen.json` and `summary.md`; minors (spec §2.6).
+- 2026-10-24 (UTC): on the user's go, frozen (570c809, tag `etf-prereg-v1`), screen run once (3db910d):
+  observed 0.663, paths median 0.678, p_screen 0.5455 -> STOP. Pin test passes. Phases 3-7 not built.
