@@ -15,8 +15,9 @@ import pandas as pd
 import yaml
 
 from perpbt.carry.prereg import freeze
-from perpbt.config import DataConfig, from_dict, read_yaml_unique
+from perpbt.config import DataConfig, from_dict
 from perpbt.data.store import DAY_MS, CandleStore, FundingStore, date_ms
+from tests.carry.prelock import prelock_raw
 
 ROOT = Path(__file__).resolve().parents[2]
 PAIRS = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
@@ -58,7 +59,7 @@ def make_env(tmp: Path, *, end: str = "2024-01-10", last_day: dict[str, str] | N
         write_pair(dc, pair, j, end=(last_day or {}).get(pair, end))
     universe = {"um": {"rule": RULE, "members": PAIRS}, "spot": {"rule": RULE, "members": ["BTCUSDT"]}}
     (tmp / "universe.json").write_text(json.dumps(universe), encoding="utf-8")
-    raw = read_yaml_unique(ROOT / "configs" / "carry" / "prereg.yaml")
+    raw = prelock_raw()  # the committed prereg before its code lock
     raw["universe"] = {"um": copy.deepcopy(universe["um"])}
     raw["margin"]["mmr"] = {"default": 0.01, "AAAUSDT": 0.004}
     raw["costs"]["slippage"] = {"default": 0.0005, "AAAUSDT": 0.0002}

@@ -13,6 +13,7 @@ from perpbt.carry.prereg import (
 )
 from perpbt.config import read_yaml_unique
 from perpbt.version import PACKAGE_DIR, files_code_version
+from tests.carry.prelock import prelock_text, write_prelock
 
 ROOT = Path(__file__).resolve().parents[2]
 PREREG = ROOT / "configs" / "carry" / "prereg.yaml"
@@ -109,10 +110,8 @@ def test_edits_outside_the_scope_keep_the_carry_code_version(tmp_path):
 
 @pytest.fixture
 def frozen(tmp_path) -> Path:
-    """Copies of the frozen prereg and its lock (code fields null, forward start null)."""
-    shutil.copyfile(PREREG, tmp_path / "prereg.yaml")
-    shutil.copyfile(lock_path(PREREG), tmp_path / "prereg.lock")
-    return tmp_path / "prereg.yaml"
+    """The frozen prereg and its lock as they were before the code lock (code fields null, forward start null)."""
+    return write_prelock(tmp_path)
 
 
 def test_lock_code_once(frozen):
@@ -127,7 +126,7 @@ def test_lock_code_once(frozen):
     assert after.prereg_hash() == before.prereg_hash() == lock["prereg_hash"]
     text = frozen.read_text(encoding="utf-8")
     assert "forward:  {start: 2026-10-31, reviews: [12, 36]}" in text  # comments and layout kept
-    assert text.replace("2026-10-31", "null", 1) == PREREG.read_text(encoding="utf-8")
+    assert text.replace("2026-10-31", "null", 1) == prelock_text()
     with pytest.raises(LockRefused, match="already"):
         lock_code(frozen, today=date(2026, 11, 1), code_version="d" * 64)
     assert read_lock(lock_path(frozen)) == lock
