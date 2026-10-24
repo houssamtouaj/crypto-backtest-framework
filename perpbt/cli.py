@@ -615,6 +615,8 @@ def _etf_validate(args: argparse.Namespace) -> int:
 
 
 def _etf_prereg(args: argparse.Namespace) -> int:
+    import yaml
+
     from perpbt.etf.config import load_data_config
     from perpbt.etf.prereg import check_snapshot, freeze, load_prereg
     from perpbt.etf.store import EtfStore
@@ -623,7 +625,7 @@ def _etf_prereg(args: argparse.Namespace) -> int:
         prereg = load_prereg(args.prereg)
         cfg = load_data_config(args.data_config)
         check_snapshot(prereg, cfg, EtfStore(cfg.data_dir))
-    except (ConfigError, OSError, ValueError) as e:
+    except (ConfigError, OSError, ValueError, yaml.YAMLError) as e:
         print(f"perpbt etf prereg: {e}", file=sys.stderr)
         return 2
     if args.etf_prereg_command == "validate":
@@ -640,6 +642,8 @@ def _etf_prereg(args: argparse.Namespace) -> int:
 
 
 def _etf_screen(args: argparse.Namespace) -> int:
+    import yaml
+
     from perpbt.etf.config import load_data_config
     from perpbt.etf.prereg import check_frozen
     from perpbt.etf.screen import BENCHMARK, screen_from_store, screen_path, write_screen
@@ -651,7 +655,7 @@ def _etf_screen(args: argparse.Namespace) -> int:
     except ConfigError as e:
         print(f"perpbt etf screen: refused: {e}", file=sys.stderr)
         return 1
-    except (OSError, ValueError) as e:
+    except (OSError, ValueError, yaml.YAMLError) as e:
         print(f"perpbt etf screen: {e}", file=sys.stderr)
         return 2
     out = screen_path(args.runs_dir)
@@ -660,7 +664,7 @@ def _etf_screen(args: argparse.Namespace) -> int:
         return 1
     try:
         cfg = load_data_config(args.data_config)
-    except (ConfigError, OSError) as e:
+    except (ConfigError, OSError, yaml.YAMLError) as e:
         print(f"perpbt etf screen: cannot load {args.data_config}: {e}", file=sys.stderr)
         return 2
     try:

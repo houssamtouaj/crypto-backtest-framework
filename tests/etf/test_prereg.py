@@ -164,6 +164,8 @@ def test_forward_start_excluded_from_hash(raw):
     lambda d: d["exploratory"].append({"name": "weekly", "rebalance": {"drift_band": 0.1}}),
     lambda d: d["exploratory"].append({"signal": {"lookbacks": [20, 40]}}),
     lambda d: d["exploratory"].append({"name": "same"}),
+    lambda d: d["exploratory"].append({"name": "same_band", "rebalance": {"drift_band": 0.2}}),
+    lambda d: d["costs"]["slippage"].update(QQQQ=0.0002),
     lambda d: d["exploratory"].append({"name": "short", "signal": {"direction": "long_short"}}),
     lambda d: d["exploratory"].append({"name": "monday", "rebalance": {"frequency": "weekly", "weekday": "monday"}}),
     lambda d: d["exploratory"].append({"name": "bad", "sizing": {"target": 0.1}}),

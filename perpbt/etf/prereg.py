@@ -185,12 +185,12 @@ def _exploratory(raw: Any, base: Mapping[str, _Config]) -> tuple[Exploratory, ..
             raise ConfigError(f"{where}: unknown keys {unknown}; an exploratory row may override {list(OVERRIDABLE)}")
         if not isinstance(entry.get("name"), str) or not entry["name"]:
             raise ConfigError(f"{where}: needs a name")
-        if not any(key in entry for key in OVERRIDABLE):
-            raise ConfigError(f"{where}: overrides nothing; it would repeat the primary")
         parts = {
             key: from_dict(cls, {**to_dict(base[key]), **_mapping(entry.get(key, {}), f"{where}.{key}")})
             for key, cls in OVERRIDABLE.items()
         }
+        if all(parts[key] == base[key] for key in OVERRIDABLE):
+            raise ConfigError(f"{where}: changes nothing; it would repeat the primary")
         _long_flat(parts["signal"], f"{where}.signal")
         out.append(Exploratory(name=entry["name"], **parts))
     names = [e.name for e in out]
@@ -206,13 +206,18 @@ def parse_prereg(raw: Any) -> EtfPrereg:
         "sizing": from_dict(EtfSizingConfig, _mapping(raw["sizing"], "sizing")),
         "rebalance": from_dict(EtfRebalanceConfig, _mapping(raw["rebalance"], "rebalance")),
     }
+    universe = from_dict(Universe, _mapping(raw["universe"], "universe"))
+    costs = from_dict(EtfCostConfig, _mapping(raw["costs"], "costs"))
+    stray = [k for k in costs.slippage if k != "default" and k not in universe.tickers]
+    if stray:  # a misspelt ticker would silently give the real one the default
+        raise ConfigError(f"costs.slippage: {stray} not in universe.tickers {list(universe.tickers)}")
     return EtfPrereg(
         registered_on=_iso(raw["registered_on"], "registered_on"),
-        universe=from_dict(Universe, _mapping(raw["universe"], "universe")),
+        universe=universe,
         periods=_periods(raw["periods"]),
         data=_data(raw["data"]),
         **base,
-        costs=from_dict(EtfCostConfig, _mapping(raw["costs"], "costs")),
+        costs=costs,
         cash=from_dict(EtfCashConfig, _mapping(raw["cash"], "cash")),
         exploratory=_exploratory(raw["exploratory"], base),
         reprice=from_dict(EtfRepriceConfig, _mapping(raw["reprice"], "reprice")),

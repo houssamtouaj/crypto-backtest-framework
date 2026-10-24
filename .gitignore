@@ -33,6 +33,9 @@ __pycache__/
 !/runs/carry/holdout/*/figures/*.png
 !/runs/carry/forward/*/report.md
 !/runs/carry/forward/*/figures/*.png
+# etf: the screen result (Phase 2) and the summary
+!/runs/etf/screen.json
+!/runs/etf/summary.md
 *.egg-info/
 build/
 dist/

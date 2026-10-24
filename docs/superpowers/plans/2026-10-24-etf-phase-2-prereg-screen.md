@@ -102,4 +102,8 @@ and `perpbt etf screen`.
 
 ## Progress log
 
-(filled in as tasks complete)
+
+- 2026-10-24: Task 1 (8599d8f), Task 2 (2c5ce62), Task 3 CLI and real-store checks (0a12b65). Full suite
+  1,705 passed, 1 skipped (the screen pin, by design). Real prereg validates against data.yaml and the store.
+- 2026-10-25: fresh review (the first reviewer stalled; a second one reported): freeze-ready after one fix.
+  Fixed: `.gitignore` admits `runs/etf/screen.json` and `summary.md`; minors (spec §2.6).

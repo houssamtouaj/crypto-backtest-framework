@@ -1,5 +1,7 @@
 """`perpbt etf prereg validate|freeze` and `perpbt etf screen` on a synthetic store (ETF spec Phase 2 §2.2-§2.3, §2.5)."""
+import dataclasses
 import json
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -9,6 +11,7 @@ import yaml
 from perpbt.cli import main
 from perpbt.config import read_yaml_unique, to_dict
 from perpbt.etf.prereg import load_prereg
+from perpbt.etf.screen import screen_from_store
 from tests.etf.synth import make_config, make_data, write_store
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -100,6 +103,36 @@ def test_screen_refuses_a_changed_snapshot(env, capsys):
     assert main(args(env, "etf", "screen")) == 1
     assert "snapshot changed" in capsys.readouterr().err
     assert not (env / "runs" / "etf" / "screen.json").exists()
+
+
+def test_screen_refuses_frames_that_end_early(env, capsys):
+    short = make_data(end=date(2017, 12, 15))  # the store lists holdout_end 2018-01-30 but stops on 2017-12-15
+    store = write_store(env / "short", short, download_date=DOWNLOAD, holdout_end=HOLDOUT_END)
+    cfg = make_config(data_dir=str(env / "short"), holdout_end=HOLDOUT_END, download_date=DOWNLOAD)
+    (env / "data.yaml").write_text(yaml.safe_dump(to_dict(cfg), sort_keys=False), encoding="utf-8")
+    raw = read_yaml_unique(env / "prereg.yaml")
+    raw["data"]["manifest_sha256"] = store.manifest_sha256()
+    (env / "prereg.yaml").write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    assert main(args(env, "etf", "prereg", "freeze")) == 0
+    assert main(args(env, "etf", "screen")) == 1
+    assert "2017-12-15" in capsys.readouterr().err
+    assert not (env / "runs" / "etf" / "screen.json").exists()
+
+
+def test_screen_is_seeded_from_master_seed_and_hash(env):
+    prereg = load_prereg(env / "prereg.yaml")
+    cfg = make_config(data_dir=str(env / "etf"), holdout_end=HOLDOUT_END, download_date=DOWNLOAD)
+    a, b = screen_from_store(prereg, cfg), screen_from_store(prereg, cfg)
+    assert a == b
+    other = dataclasses.replace(prereg, stats=dataclasses.replace(prereg.stats, master_seed=1))
+    c = screen_from_store(other, cfg)
+    assert c["paths"] != a["paths"] and c["observed_sharpe"] == a["observed_sharpe"]
+
+
+def test_the_screen_result_is_not_gitignored():
+    for rel in ("runs/etf/screen.json", "runs/etf/summary.md"):
+        r = subprocess.run(["git", "check-ignore", "-q", rel], cwd=ROOT)
+        assert r.returncode == 1, f"{rel} is ignored by .gitignore"
 
 
 def test_screen_refuses_a_different_data_config(env, capsys):
