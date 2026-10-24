@@ -448,6 +448,57 @@ def _carry_screen(args: argparse.Namespace) -> int:
     return 0
 
 
+def _carry_lock_code(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import LockRefused, lock_code
+
+    try:
+        lock = lock_code(args.prereg)
+    except LockRefused as e:
+        print(f"perpbt carry lock-code: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"code locked on {lock['code_locked_on']}: code_version {lock['code_version']} "
+          f"(git {lock['code_git_commit']}); periods.forward.start set in {Path(args.prereg).as_posix()}")
+    return 0
+
+
+def _carry_done(command: str, done: dict) -> int:
+    print(f"perpbt carry {command}: " + ", ".join(f"{k} {len(v)}" for k, v in done.items()))
+    for name in done.get("failed", []):
+        print(f"  failed: {name} (traceback in the registry)", file=sys.stderr)
+    return 1 if done.get("failed") else 0
+
+
+def _carry_run(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import load_prereg
+    from perpbt.carry.runner import CodeRefused, run_insample
+
+    _log_to_stderr()
+    cfg = _load_data_config(args.data_config, "carry run")
+    if cfg is None:
+        return 2
+    rows = None
+    try:
+        if args.primary:
+            rows = ["primary"]
+        elif args.exploratory:
+            rows = [e.name for e in load_prereg(args.prereg).exploratory]
+        done = run_insample(args.prereg, cfg, args.runs_dir, rows=rows, allow_code_change=args.allow_code_change,
+                            reason=args.reason)
+    except (ConfigError, CodeRefused, HoldoutAccessError) as e:
+        print(f"perpbt carry run: refused: {e}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as e:
+        print(f"perpbt carry run: {e}", file=sys.stderr)
+        return 2
+    return _carry_done("run", done)
+
+
+def _add_code_change_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--allow-code-change", action="store_true",
+                   help="run although the carry code version differs from the lock (needs --reason)")
+    p.add_argument("--reason", help="why the code changed; recorded in the registry")
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -581,6 +632,19 @@ def build_parser() -> argparse.ArgumentParser:
                          help="DataConfig for both stores (default: %(default)s)")
     cscreen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     cscreen.set_defaults(handler=_carry_screen)
+    clock = carry_sub.add_parser("lock-code", help="lock the carry code version once and set the forward start "
+                                                   "(immediately before the in-sample primary run)")
+    clock.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    clock.set_defaults(handler=_carry_lock_code)
+    crun = carry_sub.add_parser("run", help="the in-sample variants (all rows, each for the portfolio and each pair)")
+    which = crun.add_mutually_exclusive_group()
+    which.add_argument("--primary", action="store_true", help="only the primary row")
+    which.add_argument("--exploratory", action="store_true", help="only the six exploratory rows")
+    crun.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    crun.add_argument("--data-config", default=DEFAULT_CARRY_DATA, help="DataConfig for both stores (default: %(default)s)")
+    crun.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(crun)
+    crun.set_defaults(handler=_carry_run)
 
     return parser
 
