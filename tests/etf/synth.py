@@ -92,6 +92,32 @@ def make_config(**over) -> EtfDataConfig:
     return EtfDataConfig(**base)
 
 
+def load_rows(days, c, o=None, div=None, split=None) -> pd.DataFrame:
+    """``EtfStore.load``-shaped rows (prices with actions, 0 where none) for the frame tests (Phase 1)."""
+    c = np.asarray(c, dtype=float)
+    o = c.copy() if o is None else np.asarray(o, dtype=float)
+    n = len(c)
+    return pd.DataFrame({
+        "day_ms": [date_ms(d) for d in days], "open": o, "high": np.maximum(o, c) * 1.01,
+        "low": np.minimum(o, c) * 0.99, "close": c, "volume": 1e6, "adj_close": c,
+        "dividend": np.zeros(n) if div is None else np.asarray(div, dtype=float),
+        "split": np.zeros(n) if split is None else np.asarray(split, dtype=float), "capital_gain": 0.0,
+    })
+
+
+def walk_inputs(n: int = 300, seed: int = 7) -> tuple[list[str], pd.DataFrame, pd.DataFrame]:
+    """``n`` trading days from 2004-11-18 of a seeded walk with a quarterly dividend, and daily rates around 2%."""
+    days = trading_days(START, date(2008, 12, 31))[:n]
+    rng = np.random.default_rng(seed)
+    c = 100 * np.exp(np.cumsum(rng.normal(0.0003, 0.01, n)))
+    o = c * (1 + rng.normal(0, 0.002, n))
+    div = np.where(np.arange(n) % 63 == 30, 0.4, 0.0)
+    lo = date_ms(days[0]) - 14 * 86_400_000
+    rate_ms = np.arange(lo, date_ms(days[-1]) + 86_400_000, 86_400_000)
+    rates = pd.DataFrame({"day_ms": rate_ms, "rate_pct": 2 + rng.normal(0, 0.3, len(rate_ms))})
+    return days, load_rows(days, c, o=o, div=div), rates
+
+
 def replace(data: EtfData, **frames) -> EtfData:
     """``data`` with some of its mappings or frames replaced."""
     parts = {"prices": dict(data.prices), "actions": dict(data.actions), "rates": data.rates,

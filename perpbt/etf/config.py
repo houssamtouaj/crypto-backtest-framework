@@ -1,4 +1,4 @@
-"""ETF configuration types (ETF spec overview §6; Phase 0 §0.1 the data config).
+"""ETF configuration types (ETF spec overview §6; Phase 0 §0.1 the data config; Phase 1 §1.5 the sizing).
 
 Frozen dataclasses on the first strategy's ``_Config`` base: fields are
 coerced to their annotation, validated, and hash through
@@ -12,15 +12,17 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from perpbt.config import ConfigError, _check_iso_date, _Config, from_dict, read_yaml_unique
+from perpbt.config import ConfigError, _check_iso_date, _check_positive, _Config, from_dict, read_yaml_unique
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.etf.store import ETF_HOLDOUT_START
 
 RATE_SOURCES = ("fred",)
 CROSS_CHECK_SOURCES = ("nasdaq",)
+ANNUALISE_DAYS = 252  # US trading days a year (overview §7)
 _TICKER = re.compile(r"^[A-Z]{1,5}$")
 
-__all__ = ["CrossCheckSource", "EtfDataConfig", "RatesSource", "load_data_config"]
+__all__ = ["ANNUALISE_DAYS", "CrossCheckSource", "EtfDataConfig", "EtfSizingConfig", "RatesSource",
+           "load_data_config"]
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,31 @@ class EtfDataConfig(_Config):
                     f"EtfDataConfig.holdout_end: must be before download_date ({self.download_date}), "
                     f"got {self.holdout_end}"
                 )
+
+
+@dataclass(frozen=True)
+class EtfSizingConfig(_Config):
+    """The prereg ``sizing`` block (Phase 1 §1.5, Phase 2 §2.1): ``w* = e × min(target_vol / σ̂, max_weight)``.
+
+    ``target_vol`` None is the ``no_vol_target`` row (``w* = e × max_weight``).
+    ``trend.signals.target_weight`` reads only ``target_vol`` and ``max_weight``
+    (a test checks), so it takes this config as it is.
+    """
+
+    target_vol: float | None  # annualised, 0.15; None: no vol targeting
+    vol_window: int  # daily total returns in σ̂, 60
+    max_weight: float  # cap on w* per ETF, in (0, 1]: a cash account does not borrow
+    annualise_days: int  # 252 (trading days); fixed, σ̂ uses √252
+
+    def _validate(self) -> None:
+        if self.target_vol is not None:
+            _check_positive(self.target_vol, "EtfSizingConfig.target_vol")
+        if self.vol_window < 2:
+            raise ConfigError(f"EtfSizingConfig.vol_window: must be >= 2, got {self.vol_window}")
+        if not (math.isfinite(self.max_weight) and 0 < self.max_weight <= 1):
+            raise ConfigError(f"EtfSizingConfig.max_weight: must be in (0, 1], got {self.max_weight!r}")
+        if self.annualise_days != ANNUALISE_DAYS:
+            raise ConfigError(f"EtfSizingConfig.annualise_days: must be {ANNUALISE_DAYS}, got {self.annualise_days}")
 
 
 def load_data_config(path: str | Path) -> EtfDataConfig:

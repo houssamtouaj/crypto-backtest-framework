@@ -9,22 +9,9 @@ from perpbt.etf.frame import (
 )
 from perpbt.etf.store import ACTION_COLUMNS, PRICE_COLUMNS, EtfStore, FileSource, HoldoutAccessError
 from perpbt.etf.validate import total_return
-from tests.etf.synth import make_config, make_data, trading_days
+from tests.etf.synth import load_rows, make_config, make_data, walk_inputs
 
 ARRAYS = ("day_ms", "o", "h", "l", "c", "div", "ret", "r_on", "r_id", "cash", "stale_open")
-
-
-def _prices(days, c, o=None, div=None, split=None):
-    """EtfStore.load-shaped rows: prices plus actions, 0 where none."""
-    c = np.asarray(c, dtype=float)
-    o = c.copy() if o is None else np.asarray(o, dtype=float)
-    n = len(c)
-    return pd.DataFrame({
-        "day_ms": [date_ms(d) for d in days], "open": o, "high": np.maximum(o, c) * 1.01,
-        "low": np.minimum(o, c) * 0.99, "close": c, "volume": 1e6, "adj_close": c,
-        "dividend": np.zeros(n) if div is None else np.asarray(div, dtype=float),
-        "split": np.zeros(n) if split is None else np.asarray(split, dtype=float), "capital_gain": 0.0,
-    })
 
 
 def _rates(pairs):
@@ -36,7 +23,7 @@ RATES3 = _rates([("2005-01-03", 2.0), ("2005-01-04", 2.0), ("2005-01-05", 2.0)])
 
 
 def test_total_return_identities():
-    f = build_frame("SPY", _prices(DAYS3, [100, 101, 102], o=[100, 100.5, 101.5], div=[0, 0, 0.5]), RATES3,
+    f = build_frame("SPY", load_rows(DAYS3, [100, 101, 102], o=[100, 100.5, 101.5], div=[0, 0, 0.5]), RATES3,
                     first_day=DAYS3[0])
     assert f.r_on[2] == pytest.approx((101.5 + 0.5) / 101 - 1, abs=1e-15)
     assert f.r_id[2] == pytest.approx(102 / 101.5 - 1, abs=1e-15)
@@ -48,8 +35,8 @@ def test_total_return_identities():
 
 def test_dividend_in_overnight_only():
     kw = dict(o=[100, 100.5, 101.5])
-    a = build_frame("SPY", _prices(DAYS3, [100, 101, 102], **kw), RATES3, first_day=DAYS3[0])
-    b = build_frame("SPY", _prices(DAYS3, [100, 101, 102], div=[0, 0, 0.5], **kw), RATES3, first_day=DAYS3[0])
+    a = build_frame("SPY", load_rows(DAYS3, [100, 101, 102], **kw), RATES3, first_day=DAYS3[0])
+    b = build_frame("SPY", load_rows(DAYS3, [100, 101, 102], div=[0, 0, 0.5], **kw), RATES3, first_day=DAYS3[0])
     np.testing.assert_array_equal(a.r_id, b.r_id)
     assert a.ret[1] == b.ret[1] and a.r_on[1] == b.r_on[1]
     assert b.r_on[2] > a.r_on[2] and b.ret[2] > a.ret[2]
@@ -57,12 +44,12 @@ def test_dividend_in_overnight_only():
 
 
 def test_split_day_is_continuous():
-    f = build_frame("IWM", _prices(DAYS3, [100, 100.4, 100.0], split=[0, 2.0, 0]), RATES3, first_day=DAYS3[0])
+    f = build_frame("IWM", load_rows(DAYS3, [100, 100.4, 100.0], split=[0, 2.0, 0]), RATES3, first_day=DAYS3[0])
     assert f.ret[1] == pytest.approx(0.004, abs=1e-12)
 
 
 def test_stale_open_flag():
-    f = build_frame("SPY", _prices(DAYS3, [100, 101, 102], o=[99, 100, 101.5]), RATES3, first_day=DAYS3[0])
+    f = build_frame("SPY", load_rows(DAYS3, [100, 101, 102], o=[99, 100, 101.5]), RATES3, first_day=DAYS3[0])
     assert f.stale_open.tolist() == [False, True, False]
 
 
@@ -99,34 +86,21 @@ def test_stale_or_missing_rate_raises():
 
 def test_first_row_must_be_first_day():
     with pytest.raises(ValueError, match="first"):
-        build_frame("SPY", _prices(DAYS3[1:], [100, 101]), RATES3, first_day=DAYS3[0])
+        build_frame("SPY", load_rows(DAYS3[1:], [100, 101]), RATES3, first_day=DAYS3[0])
 
 
 def test_bad_prices_refused():
     with pytest.raises(ValueError, match="positive"):
-        build_frame("SPY", _prices(DAYS3, [100, 0.0, 102]), RATES3, first_day=DAYS3[0])
+        build_frame("SPY", load_rows(DAYS3, [100, 0.0, 102]), RATES3, first_day=DAYS3[0])
 
 
 def test_frame_arrays_read_only():
-    f = build_frame("SPY", _prices(DAYS3, [100, 101, 102]), RATES3, first_day=DAYS3[0])
+    f = build_frame("SPY", load_rows(DAYS3, [100, 101, 102]), RATES3, first_day=DAYS3[0])
     with pytest.raises(ValueError):
         f.c[0] = 1.0
 
 
 # --- causality -----------------------------------------------------------------------
-
-def _series(n=300, seed=7):
-    days = trading_days()[:n]
-    rng = np.random.default_rng(seed)
-    c = 100 * np.exp(np.cumsum(rng.normal(0, 0.01, n)))
-    o = c * (1 + rng.normal(0, 0.002, n))
-    div = np.where(np.arange(n) % 63 == 30, 0.4, 0.0)
-    prices = _prices(days, c, o=o, div=div)
-    lo = date_ms(days[0]) - 14 * DAY_MS
-    rate_ms = np.arange(lo, date_ms(days[-1]) + DAY_MS, DAY_MS)
-    rates = pd.DataFrame({"day_ms": rate_ms, "rate_pct": 2 + rng.normal(0, 0.3, len(rate_ms))})
-    return days, prices, rates
-
 
 def _perturbed(prices, rates, d, column, seed):
     """``prices`` with ``column`` changed after row ``d``, or ``rates`` from day ``d``'s date on."""
@@ -150,7 +124,7 @@ def _assert_head_equal(a: EtfFrame, b: EtfFrame, d: int):
 
 @pytest.mark.parametrize("column", ["open", "high", "low", "close", "dividend", "rates"])
 def test_frame_causal(column):
-    days, prices, rates = _series()
+    days, prices, rates = walk_inputs()
     full = build_frame("SPY", prices, rates, first_day=days[0])
     for k, d in enumerate((5, 40, 200)):
         p, r = _perturbed(prices, rates, d, column, seed=k)
@@ -187,7 +161,7 @@ def test_load_frames_aligned_and_guarded(tmp_path):
 
 
 def test_check_aligned_refuses_misaligned():
-    days, prices, rates = _series(n=50)
+    days, prices, rates = walk_inputs(n=50)
     a = build_frame("SPY", prices, rates, first_day=days[0])
     b = build_frame("GLD", prices.drop(index=20).reset_index(drop=True), rates, first_day=days[0])
     check_aligned({"SPY": a, "QQQ": a})
@@ -203,4 +177,4 @@ def test_end_after_holdout_end_refused(tmp_path):
 
 def test_columns_are_the_store_columns():
     # the frame reads the store's load columns; a renamed store column must fail here, not silently
-    assert set(PRICE_COLUMNS) | set(ACTION_COLUMNS) == set(_prices(DAYS3, [1, 2, 3]).columns)
+    assert set(PRICE_COLUMNS) | set(ACTION_COLUMNS) == set(load_rows(DAYS3, [1, 2, 3]).columns)
