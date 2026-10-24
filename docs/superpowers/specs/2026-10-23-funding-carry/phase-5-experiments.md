@@ -76,3 +76,70 @@ byte-identical; registry rows complete; the transitive import-scope test.
 
 Tests green; a full in-sample dry run on a synthetic dataset end to end.
 No real-data result in this phase.
+
+## 5.9 Implementation notes (Phase 5 build, 2026-10-24)
+
+Builder's calls taken while building this phase. Nothing was run on real data: no variant, holdout or forward
+command ran, and no return, Sharpe, p-value, P&L or funding total was computed on real data. The calls are also in
+the docstrings of `perpbt/carry/runner.py`, `holdout.py` and `forward.py`.
+
+- **The Phase 2 pointer is fixed** *(my call)*. `data.ccxt_fetch.fetch_funding_range` stamps each fetched event
+  with the hours since the previous event (the last stored event before the first), the convention of the bulk
+  archive: on the stored data the gap before each event equals its `interval_h` on every carry pair (and on all but
+  one SOLUSDT event of 2022-11). A gap that is not an allowed interval (a missing event) keeps the previous
+  interval. `fetch_tail` passes the last stored event's time. Only timestamps and intervals were read for the check.
+- **Registry module** *(my call)*. `experiments/registry.py` imports the first strategy (`stats.variant`,
+  `strategy.order_block`). `Registry`, `file_lock` and `now_ms` moved to `experiments/registry_log.py`, re-exported
+  by `registry.py` (backward compatible); carry imports the lean module.
+- **Scoped code version** *(my call)*. `version.files_code_version(paths)` hashes listed files exactly as
+  `code_version` hashes a tree. `carry.prereg.CARRY_CODE_PATHS` is §5.3's list made exact by the transitive import
+  test: it adds `trend/prereg.py` and `trend/config.py` (the lock helpers carry reuses), the package `__init__.py`
+  files (they run on import) and `experiments/registry_log.py` in place of `experiments/registry.py`. `cli.py` and
+  `report/` are outside it.
+- **Code lock.** `lock_code` refuses unless the prereg is frozen and unchanged, the lock has no code version and
+  `forward.start` is null. It sets `forward.start` in the YAML text (the first `start: null` after `forward:`, flow
+  or block style, comments kept), checks the new text keeps the hash, then replaces the prereg and the lock whole.
+- **Variants** *(my call)*. 7 rows × (portfolio + 10 pairs) = 77 per period; a per-pair variant is named
+  `<row>/<pair>` (its `stats.json` row and seed purposes). `variant_id` = SHA-256 of the canonical JSON of
+  `{strategy, prereg_hash, row, scope, pairs, signal, sleeve, period}`: no code version (it is in the registry
+  rows), so the locked in-sample run keeps its folder.
+- **Per-pair rows** *(my call)*. Only the portfolio primary gets `filter_value`, `random_timing` (and
+  `random_timing.parquet`) and `dsr`; every variant gets `annual`, `decomposition`, `margin`, `reprice`. A per-pair
+  variant whose pair's frame ends before the period end (EOSUSDT in the holdout and forward) is skipped with a
+  `skipped` registry row; the portfolio closes that pair by the delisting rule.
+- **Folders and rows.** In-sample `runs/carry/<id>/`, holdout `runs/carry/holdout/<id>/`, forward
+  `runs/carry/forward/<id>/`; files `daily`, `daily_pair`, `fills`, `events`, `reprice`(, `random_timing`)
+  `.parquet`, `variant.json`, `stats.json` last; byte-identical on rerun. Registry rows (`runs/carry/registry.jsonl`)
+  carry `variant_id, name, kind, period, period_start, period_end, market ("um+spot"), status, code_version,
+  git_commit, prereg_hash, batch, started_ms, finished_ms, reason, error`; statuses `started | ok | failed | skipped
+  | output_neutral`. `results.parquet` has one row per `stats.json` (run, holdout, forward) with the headline
+  numbers; a 12-month review has null test columns.
+- **Re-pricing note for Phase 6** (from Phase 4): no `reprice.parquet` cell equals the verdict's costs, because the
+  pre-registered slippage is per pair and a cell's applies to every pair (noted in `runner.reprice_table`).
+- **Code check** *(my call)*. `carry run`, `holdout` and `forward` refuse an unlocked code. When the carry code
+  version differs from the lock, the in-sample portfolio primary is rerun into a temporary folder; if its
+  `daily.parquet` and `stats.json` equal the locked run's bytes, an `output_neutral` row is recorded and the run
+  proceeds; otherwise `--allow-code-change --reason` is required (the reason goes into every row and `DONE`).
+- **`carry run`** *(my call)*. Needs the code lock (Phase 7 locks immediately before it). A variant whose folder
+  has a `stats.json` and whose latest row is `ok` is skipped, never overwritten (no `--force`); a failed variant
+  does not stop the others.
+- **Holdout** *(my call where §5.4 is silent)*. Refusals before any holdout load: the prereg hash, `DONE`, the code
+  lock, no in-sample primary `stats.json`, the code check. Then every member is loaded through 2026-10-20 and a pair
+  whose data ends 1–7 days (`data.fetch.DELISTED_AFTER_DAYS`) before the end, or on a partial last day, refuses the
+  run as a stale fetch; nothing has run then, so no `DONE` is written. All 77 variants run; `DONE` (JSON: status,
+  failed, skipped, batch, hashes, code versions, output-neutral flag, reason, prior attempts, variant ids) is written
+  in a `finally`, even on a failed variant or an interruption.
+- **Forward** *(my call)*. `--review` is required. Each review runs the portfolio primary on a fixed window: the
+  first 365 days (`forward_12m`) or 1,095 days (`forward_36m`) from `forward.start`, allowed once the last complete
+  UTC day reaches its end, so the day it is run cannot choose the confirmatory end. The 12-month review's
+  `stats.json` (`carry-forward-review/1`) has no p-value: annual stats with the point Sharpe, decomposition, margin
+  events and six metrics (annualised return, funding, basis, cost drag, entries a year, share on) against the
+  in-sample primary's per-year range. The 36-month review is the full `carry-stats/1` document. `carry forward`
+  fetches both legs' 15m tails first (perps with the ccxt tail, spot from the archive) unless `--no-fetch`. A review
+  whose folder has a `stats.json` refuses to run again.
+- **`.gitignore`** admits `runs/carry/registry.jsonl`, `results.parquet`, every `stats.json` and
+  `holdout/DONE`, for Phase 7.
+
+**Exit criterion.** `tests/carry/test_dry_run.py` runs freeze → lock-code → `carry run` (28 variants of three
+synthetic pairs) → a rerun that changes nothing → `carry holdout` (21 run, 7 per-pair skipped) → the 12-month
+forward review, on synthetic stores (about 25 s).

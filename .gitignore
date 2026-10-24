@@ -19,6 +19,13 @@ __pycache__/
 # carry: the screen result (Phase 2) and the summary
 !/runs/carry/screen.json
 !/runs/carry/summary.md
+# carry: the Phase 5 registry, results table, every stats.json and the holdout marker (Phase 7 commits them)
+!/runs/carry/registry.jsonl
+!/runs/carry/results.parquet
+!/runs/carry/*/stats.json
+!/runs/carry/holdout/*/stats.json
+!/runs/carry/forward/*/stats.json
+!/runs/carry/holdout/DONE
 *.egg-info/
 build/
 dist/

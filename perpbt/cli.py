@@ -3,7 +3,8 @@
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
 Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
-``carry basis``, ``carry prereg`` and ``carry screen``. Exit codes: 0 success, 1 a download, checksum,
+``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout`` and
+``carry forward``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
