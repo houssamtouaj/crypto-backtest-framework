@@ -10,6 +10,7 @@ from perpbt.cli import main
 from perpbt.data.store import date_ms
 from perpbt.etf import fetch as fetch_mod
 from perpbt.etf.config import load_data_config
+from perpbt.etf.corrections import corrections_hash, load_corrections
 from perpbt.etf.fetch import run_fetch
 from perpbt.etf.sources import Fetched, SourceError
 from perpbt.etf.store import EtfStore, FileSource, StoreRefused, day_iso
@@ -98,7 +99,10 @@ def test_fetch_writes_the_store_and_the_dates(env):
     assert ("nasdaq_history", "GLD", "2004-11-18", "2018-01-31") in src.calls
     m = EtfStore("data/etf").manifest()
     assert m["cross_check_basis"] == {t: "raw" for t in TICKERS} and m["cross_check_source"] == "nasdaq"
-    assert m["corrections_sha256"] == hashlib.sha256(Path("configs/etf/corrections.yaml").read_bytes()).hexdigest()
+    assert m["corrections_hash"] == corrections_hash(load_corrections("configs/etf/corrections.yaml"))
+    crlf = Path("configs/etf/corrections.yaml")
+    crlf.write_bytes(crlf.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n") + b"# a comment\r\n")
+    assert main(["etf", "validate"]) == 0  # line endings and comments are not content
     assert [v["rule"] for v in m["validation"]][0] == "1 calendar" and all(v["ok"] for v in m["validation"])
     assert m["files"]["SPY/prices.parquet"]["source"] == "yahoo"
     assert main(["etf", "validate"]) == 0

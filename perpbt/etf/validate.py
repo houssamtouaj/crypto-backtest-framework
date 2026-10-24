@@ -26,7 +26,7 @@ import pandas as pd
 
 from perpbt.data.store import date_ms
 from perpbt.etf.config import EtfDataConfig
-from perpbt.etf.corrections import file_sha256, load_corrections
+from perpbt.etf.corrections import corrections_hash, load_corrections
 from perpbt.etf.store import EtfData, EtfStore, StoreRefused, day_iso
 
 # NYSE full-day closures (holidays and special closures: 2007-01-02 President Ford, 2012-10-29/30 Hurricane
@@ -388,9 +388,10 @@ def validate_store(store: EtfStore, cfg: EtfDataConfig) -> tuple[list[RuleResult
     manifest = store.manifest()
     if manifest is None:
         raise StoreRefused(f"no manifest under {store.root}; run `perpbt etf fetch` first")
-    if file_sha256(cfg.corrections) != manifest.get("corrections_sha256"):
+    corrections = load_corrections(cfg.corrections)
+    if corrections_hash(corrections) != manifest.get("corrections_hash"):
         raise StoreRefused(f"{cfg.corrections} changed since the fetch; re-fetch to apply it")
-    accepted = load_corrections(cfg.corrections).accepted_keys()
+    accepted = corrections.accepted_keys()
     return validate(store.load_all(allow_holdout=True), cfg, basis=manifest.get("cross_check_basis"),
                     accepted=accepted)
 

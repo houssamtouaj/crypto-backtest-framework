@@ -13,11 +13,10 @@ The fetch applies ``prices`` and ``dividends`` to the parsed Yahoo frames
 before validation (``apply``); rule 6 lists ``accepted`` differences instead
 of failing on them, and fails on an accepted difference that no longer
 occurs, so the file cannot go stale silently. The manifest records the
-file's hash; ``validate_store`` refuses a changed file.
+content's hash (``corrections_hash``); ``validate_store`` refuses a changed file.
 """
 from __future__ import annotations
 
-import hashlib
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,13 +24,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from perpbt.config import ConfigError, _check_iso_date, _Config, from_dict, read_yaml_unique, to_dict
+from perpbt.config import ConfigError, _check_iso_date, _Config, config_hash, from_dict, read_yaml_unique, to_dict
 from perpbt.data.store import date_ms
 from perpbt.etf.store import ACTION_COLUMNS, EtfData
 
 CHECKS = ("open", "close", "dividend")
 
-__all__ = ["CHECKS", "Accepted", "Corrections", "DividendFix", "PriceFix", "apply", "file_sha256",
+__all__ = ["CHECKS", "Accepted", "Corrections", "DividendFix", "PriceFix", "apply", "corrections_hash",
            "load_corrections"]
 
 
@@ -116,8 +115,10 @@ def load_corrections(path: str | Path) -> Corrections:
     return from_dict(Corrections, raw if raw is not None else {})
 
 
-def file_sha256(path: str | Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def corrections_hash(corrections: Corrections) -> str:
+    """SHA-256 of the canonical JSON of the parsed content: line endings and comments do not count (git may turn
+    the file's LF into CRLF on checkout)."""
+    return config_hash(corrections)
 
 
 def apply(data: EtfData, corrections: Corrections) -> EtfData:

@@ -10,8 +10,8 @@ warmup_start: "2004-11-18"     # GLD's first trading day; the common start
 insample_start: "2005-08-01"   # after the 160-bar warmup (about 2005-07-13)
 insample_end: "2017-12-31"
 holdout_start: "2018-01-01"
-holdout_end: null              # set by the fetch
-download_date: null            # set by the fetch (UTC date)
+holdout_end: "2026-10-23"      # set by the fetch
+download_date: "2026-10-24"    # set by the fetch (UTC date)
 rates: {source: fred, series: DTB3}
 cross_check: {source: nasdaq, close_tol: 0.005}
 corrections: configs/etf/corrections.yaml   # reviewed fixes and accepted cross-check differences

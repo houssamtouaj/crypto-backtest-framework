@@ -1,4 +1,5 @@
 """The ETF data config (ETF spec Phase 0 §0.1) and the corrections file (§0.9)."""
+import re
 from pathlib import Path
 
 import pytest
@@ -56,13 +57,18 @@ def test_duplicate_and_unknown_keys(tmp_path):
 
 def test_set_fetch_dates_keeps_comments_and_can_reset(tmp_path):
     path = tmp_path / "data.yaml"
-    path.write_text(DATA_YAML.read_text(encoding="utf-8").replace(
-        'holdout_end: "', 'holdout_end: null  # "').replace('download_date: "', 'download_date: null  # "'),
-        encoding="utf-8")
+    text = DATA_YAML.read_text(encoding="utf-8")
+    text = re.sub(r'^holdout_end: .*$', "holdout_end: null              # set by the fetch", text, flags=re.M)
+    text = re.sub(r'^download_date: .*$', "download_date: null            # set by the fetch (UTC date)", text,
+                  flags=re.M)
+    path.write_text(text, encoding="utf-8")
+    assert load_data_config(path).holdout_end is None
     set_fetch_dates(path, download_date="2026-10-24", holdout_end="2026-10-23")
     cfg = load_data_config(path)
     assert (cfg.holdout_end, cfg.download_date) == ("2026-10-23", "2026-10-24")
-    assert "# set by the fetch" in path.read_text(encoding="utf-8")
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert 'holdout_end: "2026-10-23"      # set by the fetch' in lines  # the comment keeps its column
+    assert 'download_date: "2026-10-24"    # set by the fetch (UTC date)' in lines
     set_fetch_dates(path, download_date="2026-11-02", holdout_end="2026-10-30")
     assert load_data_config(path).holdout_end == "2026-10-30"
     before = path.read_text(encoding="utf-8")

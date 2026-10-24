@@ -20,7 +20,7 @@ from pathlib import Path
 
 from perpbt.data.store import _replace
 from perpbt.etf.config import EtfDataConfig, load_data_config
-from perpbt.etf.corrections import apply, file_sha256, load_corrections
+from perpbt.etf.corrections import apply, corrections_hash, load_corrections
 from perpbt.etf.sources import (
     Fetched, fetch_fred, fetch_nasdaq_dividends, fetch_nasdaq_history, fetch_yahoo, parse_fred_csv,
     parse_nasdaq_dividends, parse_nasdaq_history, parse_yahoo_csv,
@@ -53,9 +53,14 @@ def set_fetch_dates(path: str | Path, *, download_date: str, holdout_end: str) -
     """Set the two values in the YAML text (comments kept), then check the result loads."""
     path = Path(path)
     text = path.read_text(encoding="utf-8")
+    def put(m: re.Match, value: str) -> str:
+        new = f'"{value}"'
+        pad = m[3] if not m[3] else " " * max(1, len(m[2]) + len(m[3]) - len(new))  # keep a trailing comment's column
+        return f"{m[1]}{new}{pad}"
+
     for key, value in (("holdout_end", holdout_end), ("download_date", download_date)):
-        text, n = re.subn(rf'^({key}:[ \t]*)(null|"\d{{4}}-\d{{2}}-\d{{2}}")', rf'\g<1>"{value}"', text,
-                          flags=re.MULTILINE)
+        text, n = re.subn(rf'^({key}:[ \t]*)(null|"\d{{4}}-\d{{2}}-\d{{2}}")([ \t]*)',
+                          lambda m, v=value: put(m, v), text, flags=re.MULTILINE)
         if n != 1:
             raise ValueError(f"{path}: expected one '{key}:' line with null or a quoted date, found {n}")
     tmp = path.with_name(path.name + ".tmp")
@@ -74,7 +79,6 @@ def run_fetch(config_path: str | Path, *, refetch: bool = False, today: date | N
               nasdaq_dividends: Callable[..., Fetched] = fetch_nasdaq_dividends) -> FetchResult:
     """Download every source, validate, and on a pass write the store and the fetch dates."""
     cfg = load_data_config(config_path)
-    corrections_sha = file_sha256(cfg.corrections)
     corrections = load_corrections(cfg.corrections)
     download_date = (today or datetime.now(timezone.utc).date()).isoformat()
     store = EtfStore(cfg.data_dir)
@@ -109,7 +113,7 @@ def run_fetch(config_path: str | Path, *, refetch: bool = False, today: date | N
     if not all(r.ok for r in results):
         return FetchResult(False, results, basis, download_date, holdout_end, None)
     extra = {"cross_check_source": cfg.cross_check.source, "cross_check_basis": basis,
-             "corrections_file": Path(cfg.corrections).as_posix(), "corrections_sha256": corrections_sha,
+             "corrections_file": Path(cfg.corrections).as_posix(), "corrections_hash": corrections_hash(corrections),
              "corrections": corrections.as_dict(), "validation": [r.as_dict() for r in results]}
     manifest = store.write(data, provenance, download_date=download_date, holdout_end=holdout_end, extra=extra,
                            refetch=refetch)
