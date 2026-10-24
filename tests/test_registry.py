@@ -84,3 +84,12 @@ def test_concurrent_appends_from_spawned_processes_never_interleave(tmp_path):
         assert sum(pool.map(_append_many, [(str(tmp_path), w, 50) for w in range(4)])) == 200
     rows = Registry(tmp_path).rows()  # every line parses
     assert len(rows) == 200 and len({r["variant_id"] for r in rows}) == 200
+
+
+def test_registry_lives_in_the_lean_module():
+    # carry Phase 5: carry imports the registry without the first strategy's modules
+    from perpbt.experiments import registry, registry_log
+
+    assert registry.Registry is registry_log.Registry
+    assert registry.file_lock is registry_log.file_lock and registry.now_ms is registry_log.now_ms
+    assert registry.REGISTRY_FILE == registry_log.REGISTRY_FILE == "registry.jsonl"

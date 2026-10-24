@@ -7,6 +7,7 @@ leaves a ``started`` row without a final one. ``kind`` tells a simulation
 run (``run``) from a baselines pass (``baselines``); ``batch`` is one id
 per CLI invocation; ``reason`` carries a holdout code-change reason.
 Worker processes append under an OS file lock, so lines never interleave.
+``Registry`` and the lock live in ``registry_log`` (re-exported here), which imports no strategy module.
 
 ``runs/results.parquet`` is derived: ``rebuild_results`` reads every
 ``runs/<variant_id>/stats.json`` (with its ``config.yaml``) of the current
@@ -16,11 +17,7 @@ code version (older ones go to ``results_superseded.parquet``) and takes
 """
 from __future__ import annotations
 
-import contextlib
 import json
-import os
-import time
-from collections.abc import Iterator
 from pathlib import Path
 
 import pandas as pd
@@ -28,11 +25,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from perpbt.config import VariantConfig, load_yaml
+from perpbt.experiments.registry_log import REGISTRY_FILE, Registry, file_lock, now_ms  # noqa: F401 (re-exported)
 from perpbt.stats.variant import read_stats
 from perpbt.strategy.order_block import SKIP_REASONS
 from perpbt.version import code_version as current_code_version
 
-REGISTRY_FILE = "registry.jsonl"
 RESULTS_FILE = "results.parquet"
 SUPERSEDED_FILE = "results_superseded.parquet"
 STATUSES = ("started", "ok", "failed")
@@ -60,42 +57,6 @@ RESULTS_SCHEMA = pa.schema(
 RESULT_COLUMNS = tuple(RESULTS_SCHEMA.names)
 
 
-def now_ms() -> int:
-    return time.time_ns() // 1_000_000
-
-
-@contextlib.contextmanager
-def file_lock(path: Path) -> Iterator[None]:
-    """An exclusive OS lock on ``<path>.lock``, held across processes; released when the holder dies."""
-    fd = os.open(str(path) + ".lock", os.O_RDWR | os.O_CREAT, 0o644)
-    try:
-        if os.name == "nt":
-            import msvcrt
-
-            while True:
-                os.lseek(fd, 0, os.SEEK_SET)
-                try:
-                    msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # retries for about 10 s, then raises
-                    break
-                except OSError:
-                    continue
-            try:
-                yield
-            finally:
-                os.lseek(fd, 0, os.SEEK_SET)
-                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(fd, fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(fd, fcntl.LOCK_UN)
-    finally:
-        os.close(fd)
-
-
 def make_row(cfg: VariantConfig, variant_id: str, *, kind: str, status: str, code_version: str,
              git_commit: str | None, artifacts_path: str, batch: str, error: str | None = None,
              reason: str | None = None, runtime_s: float | None = None) -> dict:
@@ -109,42 +70,6 @@ def make_row(cfg: VariantConfig, variant_id: str, *, kind: str, status: str, cod
         "is_holdout": cfg.is_holdout, "params_json": cfg.canonical_json(), "artifacts_path": artifacts_path,
         "error": error, "reason": reason, "batch": batch, "runtime_s": runtime_s,
     }
-
-
-class Registry:
-    """``<runs_dir>/registry.jsonl``: append and read."""
-
-    def __init__(self, runs_dir: str | Path) -> None:
-        self.runs_dir = Path(runs_dir)
-        self.path = self.runs_dir / REGISTRY_FILE
-
-    def append(self, row: dict) -> None:
-        self.runs_dir.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(row, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
-        with file_lock(self.path), open(self.path, "a", encoding="utf-8", newline="\n") as f:
-            f.write(line)
-
-    def rows(self) -> list[dict]:
-        if not self.path.exists():
-            return []
-        with open(self.path, encoding="utf-8") as f:
-            return [json.loads(line) for line in f if line.strip()]
-
-    def latest(self, rows: list[dict] | None = None, *, kind: str = "run") -> dict[str, dict]:
-        """The last row of ``kind`` per variant id."""
-        out: dict[str, dict] = {}
-        for r in self.rows() if rows is None else rows:
-            if r.get("kind", "run") == kind:
-                out[r["variant_id"]] = r
-        return out
-
-    def latest_ok(self, *, kind: str = "run") -> dict[str, dict]:
-        """The last ``ok`` row of ``kind`` per variant id."""
-        out: dict[str, dict] = {}
-        for r in self.rows():
-            if r.get("kind", "run") == kind and r["status"] == "ok":
-                out[r["variant_id"]] = r
-        return out
 
 
 # --- results.parquet -----------------------------------------------------------------------------

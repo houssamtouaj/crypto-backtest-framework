@@ -125,3 +125,33 @@ def test_the_report_package_is_left_out(tmp_path):
     assert code_version(tmp_path, exclude=()) != code_version(tmp_path)
     (tmp_path / "sub" / "report" / "b.py").write_text("z = 2\n")  # only the top-level directory is left out
     assert code_version(tmp_path) != before
+
+
+def test_files_code_version_over_listed_entries(tmp_path):
+    """carry Phase 5 §5.3: the code version of a listed subset, hashed like code_version."""
+    from perpbt.version import files_code_version
+
+    make_tree(tmp_path)
+    (tmp_path / "other.py").write_bytes(b"z = 3\n")
+    ref = tmp_path / "ref"
+    ref.mkdir()
+    (ref / "a.py").write_bytes(b"x = 1\n")
+    (ref / "sub").mkdir()
+    (ref / "sub" / "__init__.py").write_bytes(b"")
+    (ref / "sub" / "b.py").write_bytes(b"y = 2\r\n")
+    assert files_code_version(["a.py", "sub/"], tmp_path) == code_version(ref)  # same files, same bytes, same hash
+    before = files_code_version(["sub/", "a.py"], tmp_path)  # order of entries does not matter
+    assert before == code_version(ref)
+    (tmp_path / "other.py").write_bytes(b"z = 4\n")  # outside the list
+    assert files_code_version(["a.py", "sub/"], tmp_path) == before
+    (tmp_path / "sub" / "b.py").write_bytes(b"y = 3\n")
+    assert files_code_version(["a.py", "sub/"], tmp_path) != before
+
+
+def test_files_code_version_refuses_a_missing_entry(tmp_path):
+    from perpbt.version import files_code_version
+
+    make_tree(tmp_path)
+    for entry in ("nope.py", "nope/", "sub", "a.py/"):
+        with pytest.raises(FileNotFoundError):
+            files_code_version([entry], tmp_path)
