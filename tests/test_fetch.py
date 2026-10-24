@@ -294,6 +294,19 @@ def test_tail_funding_uses_the_last_stored_interval(data_cfg):
     assert exchange.calls[0][2] == last + 60_000
 
 
+def test_tail_funding_interval_change_is_stamped_per_event(data_cfg):
+    # carry Phase 5: the tail switches from 8 h to 4 h funding; each fetched event gets the gap before it
+    cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
+    last = date_ms("2026-09-26")
+    fstore.write("BTCUSDT", funding_frame([(last - 8 * H, 1e-4, 8), (last, 2e-4, 8)]))
+    fstore.write_manifest("BTCUSDT", {**fstore.manifest("BTCUSDT"), "last_funding_ms": last, "last_interval_h": 8})
+    events = [{"timestamp": last + t * H + 2, "fundingRate": 1e-4} for t in (8, 16, 20, 24)]
+    fetch_tail(cstore, fstore, "BTCUSDT", (), exchange=FakeExchange(funding=events), now_ms=NOW_MS)
+    frame = fstore.read_frame("BTCUSDT")
+    assert frame["interval_h"].tolist() == [8, 8, 8, 8, 4, 4]
+    assert fstore.manifest("BTCUSDT")["last_interval_h"] == 4
+
+
 def test_tail_skips_series_without_stored_rows(data_cfg):
     cstore, fstore = CandleStore(data_cfg), FundingStore(data_cfg)
     exchange = FakeExchange(ccxt_candles(date_ms("2026-09-26"), 10), funding=ccxt_funding(date_ms("2026-09-26"), 3))
