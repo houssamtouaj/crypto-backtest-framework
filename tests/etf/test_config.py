@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from perpbt.config import ConfigError
+from perpbt.config import ConfigError, config_hash, from_dict, to_dict
 from perpbt.data.store import date_ms
-from perpbt.etf.config import load_data_config
+from perpbt.etf.config import EtfSizingConfig, load_data_config
 from perpbt.etf.corrections import Corrections, apply, load_corrections
 from perpbt.etf.fetch import rates_start, set_fetch_dates
 from perpbt.etf.store import day_iso
@@ -162,3 +162,23 @@ def test_apply_price_and_dividend_fixes():
     with pytest.raises(ValueError, match="stale dividend fix"):
         apply(data, _corr(dividends=[{"ticker": "GLD", "date": "2006-03-01", "amount": 1.0, "was": 0.3,
                                       "reason": "x"}]))
+
+
+# --- EtfSizingConfig (Phase 1 §1.5; the Phase 2 prereg sizing block) ---------------------------
+
+SIZING = {"target_vol": 0.15, "vol_window": 60, "max_weight": 1.0, "annualise_days": 252}
+
+
+def test_sizing_config_round_trip_and_null_target():
+    s = from_dict(EtfSizingConfig, SIZING)
+    assert (s.target_vol, s.vol_window, s.max_weight, s.annualise_days) == (0.15, 60, 1.0, 252)
+    assert to_dict(s) == SIZING
+    assert from_dict(EtfSizingConfig, {**SIZING, "target_vol": None}).target_vol is None
+    assert config_hash(s) != config_hash(from_dict(EtfSizingConfig, {**SIZING, "target_vol": None}))
+
+
+@pytest.mark.parametrize("over", [{"annualise_days": 365}, {"max_weight": 1.5}, {"max_weight": 0.0},
+                                  {"target_vol": 0.0}, {"target_vol": -0.1}, {"vol_window": 1}, {"extra": 1}])
+def test_sizing_config_refuses(over):
+    with pytest.raises(ConfigError):
+        from_dict(EtfSizingConfig, {**SIZING, **over})
