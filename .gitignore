@@ -26,6 +26,13 @@ __pycache__/
 !/runs/carry/holdout/*/stats.json
 !/runs/carry/forward/*/stats.json
 !/runs/carry/holdout/DONE
+# carry: the Phase 6 reports and their figures (one per portfolio run; Phase 7 commits them)
+!/runs/carry/*/report.md
+!/runs/carry/*/figures/*.png
+!/runs/carry/holdout/*/report.md
+!/runs/carry/holdout/*/figures/*.png
+!/runs/carry/forward/*/report.md
+!/runs/carry/forward/*/figures/*.png
 *.egg-info/
 build/
 dist/
