@@ -1,5 +1,6 @@
 """The carry diagnostics (carry spec Phase 4 §4.4); synthetic frames and hand-built tables only."""
 import math
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -294,15 +295,17 @@ GRID = from_dict(RepriceConfig, {"slippage": [0.0, 0.0002, 0.0005, 0.001], "spot
 
 
 def test_reprice_specs_change_only_the_costs():
-    cfg = spec(end=MESSY_END, mmr=0.02)
+    base = spec(end=MESSY_END, mmr=0.02)
+    cfg = replace(base, costs=replace(base.costs, slippage={"default": 0.0005, "AUSDT": 0.0002}))
     cells = reprice_specs(cfg, GRID)
     assert [(s, t) for s, t, _ in cells] == [(s, t) for s in GRID.slippage for t in GRID.spot_taker]
     for s, t, c in cells:
         assert c.costs.spot_taker == t and c.costs.slippage == {"default": s}
+        assert c.costs.slippage_for("AUSDT") == s  # the cell's slippage for every pair
         assert c.costs.perp_taker == cfg.costs.perp_taker
         assert (c.sleeve, c.margin, c.rebalance, c.start, c.end, c.equity0) == (
             cfg.sleeve, cfg.margin, cfg.rebalance, cfg.start, cfg.end, cfg.equity0)
-    assert cfg.costs.slippage == {"default": 0.0005}  # the base is untouched
+    assert cfg.costs.slippage == {"default": 0.0005, "AUSDT": 0.0002}  # the base is untouched
 
 
 def test_reprice_cells():

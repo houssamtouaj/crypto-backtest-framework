@@ -14,6 +14,9 @@ dividing each day's amount by the previous day's equity (``equity0`` before the 
 - ``reprice``: the row re-run at every cell of the ``reprice`` grid (``dataclasses.replace`` on its costs).
 - ``filter_value``: the paired Sharpe difference primary − always_on.
 - ``dsr_block``: the primary's deflated Sharpe with the seven pre-registered rows as trials.
+
+``row_diagnostics`` (every row) and ``primary_diagnostics`` (the primary) build ``stats.json``'s ``diagnostics``
+blocks with the prereg's settings and the seed purposes of ``carry/verdict.py``.
 """
 from __future__ import annotations
 
@@ -28,6 +31,7 @@ from perpbt.carry.executor import ExecSpec, PathResult, run_batch, run_path
 from perpbt.carry.frames import PairFrame
 from perpbt.carry.prereg import CarryPrereg, RepriceConfig
 from perpbt.carry.screen import DAYS_PER_YEAR, v2_stats
+from perpbt.carry.verdict import Seeds
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.stats.bootstrap import paired_sharpe_diff, sharpe
 from perpbt.stats.diagnostics import max_drawdown
@@ -355,3 +359,40 @@ def dsr_block(rets: Mapping[str, np.ndarray], rows: Sequence[str]) -> dict:
     trial = {row: sr_moments(rets[row])["sr"] for row in rows}
     d = dsr_from_trials(m, [trial[row] for row in rows])
     return {"rows": rows, "trial_sr": trial, "sr": m["sr"], "T": m["T"], "skew": m["skew"], "kurt": m["kurt"], **d}
+
+
+# --- the stats.json "diagnostics" blocks -----------------------------------------------------------------------
+
+def row_diagnostics(result: PathResult, frames: Mapping[str, PairFrame], state: Mapping[str, np.ndarray],
+                    cfg: ExecSpec, prereg: CarryPrereg, seeds: Seeds, row: str, *, v1: Mapping) -> dict:
+    """Every row's blocks: ``annual``, ``decomposition``, ``margin`` and ``reprice`` (seed ``<period>/<row>/reprice/v2``).
+
+    ``result`` is ``run_path(frames, state, cfg)``; ``v1`` the row's V1 block (``evaluate_row``).
+    """
+    s = prereg.stats
+    return {
+        "annual": annual_stats(result.daily, equity0=cfg.equity0, v1=v1),
+        "decomposition": decomposition(result, equity0=cfg.equity0),
+        "margin": margin_events(result, equity0=cfg.equity0),
+        "reprice": reprice(frames, state, cfg, prereg.reprice, hurdle=prereg.hurdle.annual, alpha=s.alpha,
+                           B=s.bootstrap_n, block_len=s.block_len_days, rng_v2=lambda: seeds.rng(row, "reprice", "v2")),
+    }
+
+
+def primary_diagnostics(frames: Mapping[str, PairFrame], state: Mapping[str, np.ndarray], cfg: ExecSpec,
+                        prereg: CarryPrereg, seeds: Seeds,
+                        results: Mapping[str, PathResult]) -> tuple[dict, pd.DataFrame]:
+    """The primary's extra blocks ``filter_value`` (seed ``<period>/filter_value``), ``random_timing`` (seed
+    ``<period>/random_timing``; ``stats.random_timing_runs`` paths, margin ``stats.shift_margin_days``) and ``dsr``,
+    and the random-timing per-path table.
+
+    ``state`` / ``cfg`` are the primary's; ``results`` holds ``run_path`` of every row in ``row_names(prereg)``.
+    """
+    s = prereg.stats
+    primary = results["primary"].daily
+    fv = filter_value(primary, results["always_on"].daily, B=s.bootstrap_n, block_len=s.block_len_days,
+                      rng=seeds.rng("filter_value"))
+    summary, table = random_timing(frames, state, cfg, runs=s.random_timing_runs, margin=s.shift_margin_days,
+                                   rng=seeds.rng("random_timing"), primary_ret=primary["ret"].to_numpy())
+    dsr = dsr_block({row: r.daily["ret"].to_numpy() for row, r in results.items()}, row_names(prereg))
+    return {"filter_value": fv, "random_timing": summary, "dsr": dsr}, table
