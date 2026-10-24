@@ -74,7 +74,8 @@ def test_carry_imports_stay_inside_the_scoped_code_version():
 
 def test_the_closure_helper_follows_imports_transitively():
     closure = carry_import_closure()
-    assert {"indicators/atr.py", "trend/daily.py", "__init__.py", "carry/__init__.py"} <= closure
+    assert {"indicators/atr.py", "trend/daily.py", "__init__.py", "carry/__init__.py",
+            "experiments/registry_log.py"} <= closure
     assert "experiments/registry.py" not in closure and "stats/variant.py" not in closure
 
 
