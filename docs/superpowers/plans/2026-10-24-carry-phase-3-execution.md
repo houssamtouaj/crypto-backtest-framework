@@ -25,7 +25,7 @@
 1. **Delisting** = the pair's frame ends on a day before the period's last return day. A frame that ends on the last return day is the window's end, even mid-day: it is marked, with no exit cost, as in the screen. In-sample, every pair ends 2023-12-31 23:45, so nothing is delisted. Trend's "more than 7 days" threshold is not used: a PairFrame has no rows after its last day, so an earlier end cannot be held.
 2. **Funding at a fill:** an event strictly before the perp leg's fill time is charged on the old quantity, and one at or after it on the new quantity. The fill time is the candle's close, `open + 15 min`; the exchange closes the candle 1 ms earlier, so a fill "at" 08:00 comes before the 08:00 event. Only the perp leg's fill time matters, because funding is paid on the perp. A late perp fill after the 08:00 event therefore leaves that event on the old quantity.
 3. **`funding_px` NaN when a quantity is held:** the event is priced at the close of the last perp candle before it (new PairFrame field `funding_px_prev`; backward compatible). Each use is counted as an event. There is none in-sample. An event with no quantity held is never priced, so XLM's pre-listing event is never charged.
-4. **One settlement per day.** The day's trades settle together at the fill, in this order:
+4. **One settlement per day; the entry spends the target, costs included** (changed while writing the tests: with costs on top, every entry would be capped whenever all pairs enter at once). The day's trades settle together at the fill, in this order:
    1. exits and post-liquidation spot sales;
    2. rebalances;
    3. entries.
@@ -112,3 +112,8 @@
 
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-3-execution.md
 - Real-data structure (2020-06-30..2023-12-31, before any code): no NaN `funding_px`, 3 events every day, no late or missing 00:15 fill on either leg, no filled day, for all ten pairs. The fallback, late-fill and postponement rules are exercised on synthetic data only.
+- Ruling (my call, during Task 2): an entry's outlay, costs included, is min(target, free-cash share); the sleeve amount is net of costs. Cost if wrong: sleeves start one round of costs (~0.2%) below the target instead of at it.
+Task 1: complete (6889e27; tests/carry 137 passed).
+Task 2: complete (39936b7; test_executor 26 passed). Mutations: pre-fill funding on the new quantity → 3 failures; liquidation at the high → 1; no delisting → 2; delisting at the period end → 7; late fills ignored → 3; no block after liquidation → 1; funding sign → 4; no price fallback → 1; never rebalance → 3.
+Task 3: complete (ef2a085; test_executor_batch 4 passed; bit for bit on 10 paths).
+Task 4: complete (4e23567; test_real_executor 6 passed: one path ≈ 0.17 s, 1,000 paths ≈ 11.4 s; no performance number computed or printed).

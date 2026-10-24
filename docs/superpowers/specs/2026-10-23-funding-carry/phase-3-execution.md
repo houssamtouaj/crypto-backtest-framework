@@ -85,3 +85,111 @@ path by path to 1e-12.
 
 Tests green; one real in-sample path in under a second; 1,000 paths in
 under a minute. **No performance number is reported in this phase.**
+
+## 3.8 Implementation notes (Phase 3 build, 2026-10-24)
+
+Builder's calls taken while building this phase. None was tuned on a
+return: no return, P&L or funding total was computed on real data. They
+are in `perpbt/carry/executor.py`'s docstring.
+
+- **Inputs.** `ExecSpec` holds the frozen prereg's `sleeve`, `margin`,
+  `costs` and `rebalance` blocks, the return days and `equity0`
+  (`START_EQUITY` 10,000, §3.2). `exec_spec(prereg, sleeve=, start=, end=)`
+  builds it; the in-sample period is the default. `state[pair]` is bool per
+  PairFrame row (the decision at that row's close); `run_batch` takes
+  `(P, rows)`.
+- **Liveness and start** *(my call, as the screen)*. Every pair starts flat.
+  A pair is live on decision day `d` when its frame has `d` and `d+1`;
+  `N_live` counts those pairs. An entry on a delisting day is allowed,
+  because it is decided the day before.
+- **Delisting** *(my call)*. A frame that ends on a day before the period's
+  last return day is a delisting: the sleeve closes at the last common
+  candle's close with costs, and the pair leaves `N_live` from the next
+  decision. A frame that ends on the last return day is the window's end,
+  even a partial day: it is marked, with no exit cost. The in-sample end
+  (`last_common_ms` 2023-12-31 23:45) is therefore never a delisting. Trend's
+  "more than 7 days" threshold is not used, because a PairFrame has no rows
+  after its last day and an earlier end cannot be held.
+- **Funding quantity at a fill** *(my call)*. An event strictly before the
+  perp leg's fill time is charged on the old quantity, and one at or after
+  it on the new quantity. The fill time is the candle close (`open + 15 min`;
+  the exchange's close time is 1 ms earlier, so a fill at 08:00 precedes the
+  08:00 event). Only the perp leg's time matters. A late perp fill after the
+  08:00 event leaves that event on the old quantity. An event with no
+  quantity held is never priced, so XLM's pre-listing 00:00 event cannot be
+  charged.
+- **Missing `funding_px`** *(my call)*. The event is priced at the close of
+  the last perp candle before it, from a new PairFrame field
+  `funding_px_prev` (backward compatible; the screen does not read it). Each
+  use is counted as `funding_px_fallback`.
+- **Entry size** *(my call)*. An entry spends the target `E_d / N_live`,
+  costs included. The sleeve amount `A` satisfies `A` + both legs' costs =
+  the spend; spot notional `x·A`, perp wallet `x·A / L`. §3.2's
+  `min(E / N_live, free cash)` is the spend. Reading the costs as additional
+  would cap nearly every entry whenever all pairs enter together.
+- **One settlement per day** *(my call)*. The day's trades settle at the fill
+  in this order:
+  1. exits and post-liquidation spot sales;
+  2. rebalances;
+  3. entries.
+
+  When free cash cannot cover every entry at the target, the entries share
+  it pro rata, so the order of the pairs does not matter, and each counts as
+  `capped_entry`. An entry capped to 0 does not trade and is tried again the
+  next day. After the entries, a rounding residue below 0 is set to 0, so
+  cash never goes negative.
+- **Costs** are fees and slippage on traded notional at the raw fill price,
+  booked as cash. Rebalance costs are paid out of the freed spot cash, inside
+  the sleeve. The liquidation fee is reported under `fees`.
+- **Rebalance** *(my call)*. At the fill, `δ` is solved so that the perp
+  wallet equity after the trade and its costs equals `q'·Pp / L`. There is no
+  trade when:
+  - `δ ≤ 0` (the wallet recovered before the fill);
+  - the perp fill is at or above the liquidation price (that day's high check
+    then liquidates).
+
+  The trigger is re-evaluated at every close.
+- **Liquidation** *(my call)*.
+  - **Price:** CD7's liquidation price `(W + q·P0) / (q(1 + mmr))`, which is
+    ≤ the day high. That is the reading of §3.3's "that price".
+  - **Fee:** charged in full, even when it exceeds the remaining wallet (with
+    mmr < 1% the wallet ends slightly negative and is settled by the spot
+    sale). This is conservative: Binance caps an isolated loss at the margin.
+  - **Funding that day:** booked as if the position were held all day, because
+    the time of the high is unknown.
+  - **Entry day:** the whole day's high is used.
+  - **Spot sale:** at the next fill, which needs only the spot leg; reason
+    `liquidation`.
+  - **Re-entry:** the pair stays out until a decision is off.
+- **Postponement.** A trade whose needed legs lack a fill candle that day is
+  postponed (counted) and re-decided the next day from that day's decision.
+- **Tables.**
+  - `daily` adds `day_ms` and `cash` to §3.1's columns.
+  - `daily_pair.state` is the input decision applied that day, and
+    `perp_qty` is signed (short < 0).
+  - `n_on` is the number of hedged sleeves at the close.
+  - `events` columns are `date, pair, kind, leg, detail, value`. Kinds:
+    `postponed`, `late_fill`, `funding_px_fallback`, `rebalance`,
+    `liquidation`, `capped_entry`, `delisting`.
+  - `basis_pnl` is the legs' price P&L, so `ΔE = funding − fees − slippage +
+    basis_pnl` (tested).
+- **Two implementations, shared formulas** *(my call)*. `run_path` (plain
+  loop, reads the PairFrames row by row) and `run_batch` (aligned arrays,
+  `(paths, pairs)` masks) share only the money kernels. Sums over pairs and
+  funding events run in the same order in both. On 50 random synthetic paths
+  that exercise every rule they agree to 1e-12 of the starting equity, and
+  in practice bit for bit.
+
+**Real data (in-sample, 2026-10-24; structure only).** From 2020-06-30 all
+ten pairs have:
+- no NaN `funding_px`;
+- three 8 h events every day;
+- no late or missing 00:15 fill on either leg;
+- no filled day.
+
+So the late-fill, postponement and fallback rules are exercised only on
+synthetic data in-sample. With the primary states there are 1,279 return
+days and `n_live` is 10 throughout, with no delisting, cash ≥ 0, and the
+equity identity holding to 1e-9 of the starting equity. One path runs in
+about 0.17 s and 1,000 random paths through `run_batch` in about 11 s.
+`run_batch` equals `run_path` on the primary and five random real paths.
