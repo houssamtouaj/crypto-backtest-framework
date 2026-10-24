@@ -513,6 +513,27 @@ def _carry_holdout(args: argparse.Namespace) -> int:
     return 0 if done["status"] == "ok" else 1
 
 
+def _carry_forward(args: argparse.Namespace) -> int:
+    from perpbt.carry.forward import ForwardRefused, fetch_tails, run_forward
+
+    _log_to_stderr()
+    cfg = _load_data_config(args.data_config, "carry forward")
+    if cfg is None:
+        return 2
+    try:
+        out = run_forward(args.prereg, cfg, runs_dir=args.runs_dir, review=args.review,
+                          allow_code_change=args.allow_code_change, reason=args.reason,
+                          fetch=None if args.no_fetch else fetch_tails)
+    except ForwardRefused as e:
+        print(f"perpbt carry forward: refused: {e}", file=sys.stderr)
+        return 1
+    except (DownloadError, ChecksumError, ValueError) as e:
+        print(f"perpbt carry forward: {e}", file=sys.stderr)
+        return 1
+    print(f"perpbt carry forward: the {args.review}-month review is written to {out.as_posix()}")
+    return 0
+
+
 def _add_code_change_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--allow-code-change", action="store_true",
                    help="run although the carry code version differs from the lock (needs --reason)")
@@ -672,6 +693,16 @@ def build_parser() -> argparse.ArgumentParser:
     chold.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     _add_code_change_args(chold)
     chold.set_defaults(handler=_carry_holdout)
+    cfwd = carry_sub.add_parser("forward", help="a forward review of the primary: 12 (descriptive, 365 days) or 36 "
+                                                "(V1/V2, 1,095 days) months after the code lock")
+    cfwd.add_argument("--review", type=int, choices=(12, 36), required=True, help="which review")
+    cfwd.add_argument("--no-fetch", action="store_true", help="skip fetching both legs' tails first")
+    cfwd.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cfwd.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                      help="DataConfig for both stores (default: %(default)s)")
+    cfwd.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(cfwd)
+    cfwd.set_defaults(handler=_carry_forward)
 
     return parser
 

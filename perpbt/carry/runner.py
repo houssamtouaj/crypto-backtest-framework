@@ -325,13 +325,16 @@ class CarryRun:
             "finished_ms": finished_ms, "reason": self.reason if reason is None else reason, "error": error,
         }
 
-    def run(self, variant: Variant) -> Path:
-        """Run and write ``variant``; a failure is recorded (``failed`` with the traceback) and re-raised."""
+    def run(self, variant: Variant, evaluate: Callable | None = None) -> Path:
+        """Run and write ``variant``; a failure is recorded (``failed`` with the traceback) and re-raised.
+
+        ``evaluate(prereg, variant, period, frames) -> (tables, document)`` is ``evaluate_variant`` by default (the
+        forward 12-month review passes its descriptive one)."""
         out = self.folder(variant)
         started = now_ms()
         self.registry.append(self.row(variant, "started", started_ms=started))
         try:
-            tables, doc = evaluate_variant(self.prereg, variant, self.period, self.frames)
+            tables, doc = (evaluate or evaluate_variant)(self.prereg, variant, self.period, self.frames)
             text = stats_json(doc)
             out.mkdir(parents=True, exist_ok=True)
             for name in OUTPUT_FILES:  # nothing stale survives a rerun
