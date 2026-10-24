@@ -158,6 +158,25 @@ def test_fill_px_late():
     assert set(pf.fill_px_late) == set(pf.fill_late_ms) == set(LEGS)
 
 
+def test_funding_px_prev():
+    # the price of a funding event whose own candle is missing: the close of the last perp candle before it
+    perp = walk(3, seed=1, start_ms=T0_MS + 8 * H_MS)  # first candle 08:00 on day 0 (the XLM listing shape)
+    perp = keep(perp, perp.ts != T0_MS + DAY_MS + 8 * H_MS)  # day 1's 08:00 candle missing
+    ts = np.array([T0_MS, T0_MS + 8 * H_MS, T0_MS + DAY_MS, T0_MS + DAY_MS + 8 * H_MS], dtype=np.int64)
+    pf = build_pairframe(perp, funding(ts), walk(4, seed=2), first_day=FIRST)
+    prev = pf.funding_px_prev
+    assert np.isnan(prev[0]) and np.isnan(pf.perp.funding_px[0])  # before the first candle: no price at all
+    i8 = int(np.searchsorted(perp.ts, T0_MS + 8 * H_MS))
+    assert np.isnan(prev[1]) and pf.perp.funding_px[1] == perp.o[i8]  # the event at the first candle's open
+    i24 = int(np.searchsorted(perp.ts, T0_MS + DAY_MS))
+    assert prev[2] == perp.c[i24 - 1]
+    assert np.isnan(pf.perp.funding_px[3])
+    assert prev[3] == perp.c[int(np.searchsorted(perp.ts, T0_MS + DAY_MS + 8 * H_MS)) - 1]
+    assert len(prev) == len(pf.perp.funding_ts)
+    with pytest.raises(ValueError):
+        prev[0] = 0.0
+
+
 def test_arrays_read_only():
     pf = build_pairframe(walk(3, seed=1), funding(every_8h(3)), walk(3, seed=2), first_day=FIRST)
     for arr in (pf.day_ms, pf.basis, pf.filled, pf.fill_ok[15], pf.fill_px_late["spot"][15],
