@@ -155,4 +155,5 @@ def test_allow_holdout_true_appears_only_in_holdout_py():
     """Phase 8 §8.3: the grep the step-5 review runs, over code tokens."""
     root = Path(__file__).resolve().parents[1] / "perpbt"
     hits = [p.relative_to(root).as_posix() for p in sorted(root.rglob("*.py")) if _passes_allow_holdout_true(p)]
-    assert hits == ["experiments/holdout.py"], json.dumps(hits)
+    # carry spec Phase 5 §5.4: widened by exactly the carry holdout and forward runners
+    assert hits == ["carry/forward.py", "carry/holdout.py", "experiments/holdout.py"], json.dumps(hits)

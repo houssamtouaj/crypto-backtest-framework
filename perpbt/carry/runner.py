@@ -44,7 +44,8 @@ from perpbt.carry.prereg import MARKET, CarryPrereg, carry_code_version, check_f
 from perpbt.carry.signals import compute_signals
 from perpbt.carry.verdict import PERIODS, Seeds, evaluate_row, stats_document, stats_json
 from perpbt.config import ConfigError, DataConfig, _check_iso_date, config_hash, to_dict
-from perpbt.data.store import date_ms
+from perpbt.data.fetch import DELISTED_AFTER_DAYS
+from perpbt.data.store import DAY_MS, date_ms
 from perpbt.experiments.registry_log import Registry, now_ms
 from perpbt.version import git_commit
 
@@ -63,6 +64,7 @@ OUTPUT_FILES = (*(f"{t}.parquet" for t in TABLES), REPRICE_FILE, TIMING_FILE, VA
 KINDS = ("run", "holdout", "forward")
 STATUSES = ("started", "ok", "failed", "skipped", "output_neutral")
 RUN_MARKET = "um+spot"
+_STEP_15M_MS = 900_000
 REGISTRY_KEYS = (
     "variant_id", "name", "kind", "period", "period_start", "period_end", "market", "status", "code_version",
     "git_commit", "prereg_hash", "batch", "started_ms", "finished_ms", "reason", "error",
@@ -196,6 +198,29 @@ def skip_reason(frames: Mapping[str, PairFrame], variant: Variant, period: Perio
     if last < date_ms(period.end):
         return f"{variant.scope}: its frame ends {_iso(last)}, before the period end {period.end}"
     return None
+
+
+class DataNotCaughtUp(RuntimeError):
+    """A pair's stored data ends shortly before the period end: a stale fetch, not a delisting."""
+
+
+def check_caught_up(frames: Mapping[str, PairFrame], end: str) -> None:
+    """DataNotCaughtUp unless every pair either reaches ``end``'s last 15m candle or ends more than
+    ``data.fetch.DELISTED_AFTER_DAYS`` days before ``end`` (a delisting, closed by the executor).
+
+    A pair that ends within those days would otherwise read as a delisting; fetch both legs' tails first.
+    """
+    end_ms = date_ms(end)
+    for pair, pf in frames.items():
+        last = int(pf.day_ms[-1])
+        if last < end_ms - DELISTED_AFTER_DAYS * DAY_MS:
+            continue
+        if last < end_ms:
+            raise DataNotCaughtUp(f"{pair}: its data ends {_iso(last)}, within {DELISTED_AFTER_DAYS} days before "
+                                  f"{end}; fetch both legs' tails first (perpbt data fetch)")
+        if last == end_ms and pf.last_common_ms < end_ms + DAY_MS - _STEP_15M_MS:
+            raise DataNotCaughtUp(f"{pair}: {end} is a partial day (last common candle "
+                                  f"{pd.Timestamp(pf.last_common_ms, unit='ms')}); fetch both legs' tails first")
 
 
 # --- one variant -----------------------------------------------------------------------------------------------

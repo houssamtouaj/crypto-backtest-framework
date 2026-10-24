@@ -493,6 +493,26 @@ def _carry_run(args: argparse.Namespace) -> int:
     return _carry_done("run", done)
 
 
+def _carry_holdout(args: argparse.Namespace) -> int:
+    from perpbt.carry.holdout import HoldoutRefused, run_holdout
+
+    _log_to_stderr()
+    cfg = _load_data_config(args.data_config, "carry holdout")
+    if cfg is None:
+        return 2
+    try:
+        done = run_holdout(args.prereg, cfg, runs_dir=args.runs_dir, allow_code_change=args.allow_code_change,
+                           reason=args.reason)
+    except HoldoutRefused as e:
+        print(f"perpbt carry holdout: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"perpbt carry holdout: {done['status']}; {len(done['variant_ids'])} variants, failed "
+          f"{len(done['failed'])}, skipped {len(done['skipped'])}; DONE written")
+    for name in done["failed"]:
+        print(f"  failed: {name} (traceback in the registry)", file=sys.stderr)
+    return 0 if done["status"] == "ok" else 1
+
+
 def _add_code_change_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--allow-code-change", action="store_true",
                    help="run although the carry code version differs from the lock (needs --reason)")
@@ -645,6 +665,13 @@ def build_parser() -> argparse.ArgumentParser:
     crun.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     _add_code_change_args(crun)
     crun.set_defaults(handler=_carry_run)
+    chold = carry_sub.add_parser("holdout", help="the one-shot holdout run (2024-01-01..2026-10-20); writes DONE")
+    chold.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    chold.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                       help="DataConfig for both stores (default: %(default)s)")
+    chold.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(chold)
+    chold.set_defaults(handler=_carry_holdout)
 
     return parser
 
