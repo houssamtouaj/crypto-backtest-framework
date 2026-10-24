@@ -13,11 +13,15 @@
 | Period | Dates | Status | Verdict | p (V1) | p (V2) | Excess over the hurdle | 95% CI (excess) | V2 reading | Annualised net return | Report |
 |---|---|---|---|---|---|---|---|---|---|---|
 | in-sample | 2020-07-01 to 2023-12-31 | run | positive below the hurdle | 0.0001 | 0.0571 | 2.97% | -0.64% to 6.94% | not proven: the CI contains 0 | 7.85% | [report](b3116cf36f604d135e7bea2ecc11ba600ba293f4ae750987a932ce8e7b1af9b6/report.md) |
-| holdout | 2024-01-01 to 2026-10-20 | not run yet | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| holdout | 2024-01-01 to 2026-10-20 | DONE (ok) | positive below the hurdle | 0.0001 | 0.63 | -0.45% | -3.52% to 3.78% | not proven: the CI contains 0 | 4.43% | [report](holdout/129507f6aa1867c6fa9b12a665588dabc95b4bea28a17f8cc703bc018283b9f3/report.md) |
 | forward, 12-month review | from the forward start | not run yet | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | forward, 36-month review | from the forward start | not run yet | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 
 - **Verdict (in-sample): positive below the hurdle.** V1 (net Sharpe above 0) passes, p = 0.0001; V2 (annualised net return above the 5%/yr hurdle) fails, p = 0.0571. Annualised net return 7.85% (95% CI 4.24% to 11.82%); excess over the hurdle 2.97% (95% CI -0.64% to 6.94%): not proven: the CI contains 0.
+
+- **Verdict (holdout): positive below the hurdle.** V1 (net Sharpe above 0) passes, p = 0.0001; V2 (annualised net return above the 5%/yr hurdle) fails, p = 0.63. Annualised net return 4.43% (95% CI 1.36% to 8.66%); excess over the hurdle -0.45% (95% CI -3.52% to 3.78%): not proven: the CI contains 0.
+
+  **Caveat: this holdout is not fully unseen** (overview §4). No carry return, basis series or per-pair funding statistic had been computed on it in this repo, but the trend screen loaded these perp prices, the first strategy charged BTCUSDT and ETHUSDT funding over the whole window (its reports show mean funding per trade), and general market knowledge covers it. The 36-month forward test is the only fully unseen one.
 
 The 36-month forward review is the only fully unseen test; the holdout is not fully unseen (overview §4).
 
@@ -35,6 +39,17 @@ The six pre-registered exploratory rows on the portfolio: reported, no say in th
 | lookback_3d | positive below the hurdle | 0.0001 | 0.2 | 1.36% | -1.57% to 4.31% | not proven: the CI contains 0 | 6.24% | [report](f71895edacf6943afa4fafcf926aab765bc9e187ce822e9dcd0a3dfcc065ad8d/report.md) |
 | lookback_14d | positive below the hurdle | 0.0001 | 0.0645 | 2.86% | -0.70% to 6.82% | not proven: the CI contains 0 | 7.74% | [report](596af74623742cc809dbb4e4dbe2cb21f300c9e5052fa89548bf2d1663a82bd9/report.md) |
 | lev_1 | positive below the hurdle | 0.0001 | 0.0572 | 2.86% | -0.57% to 6.78% | not proven: the CI contains 0 | 7.74% | [report](0c86ff24e59b56257aec91ff68b96badfe6e012cdfc72f57c9d747c2191e0bb3/report.md) |
+
+**holdout**
+
+| Row | Would read | p (V1) | p (V2) | Excess over the hurdle | 95% CI (excess) | V2 reading | Annualised net return | Report |
+|---|---|---|---|---|---|---|---|---|
+| always_on | positive below the hurdle | 0.0001 | 0.592 | -0.32% | -3.16% to 3.99% | not proven: the CI contains 0 | 4.56% | [report](holdout/b6b325a0728751efcad5ce303bebe3f9e03bd25b8ceaf35d1d968c434dc62126/report.md) |
+| entry_5 | positive below the hurdle | 0.0001 | 0.568 | -0.18% | -3.54% to 4.51% | not proven: the CI contains 0 | 4.70% | [report](holdout/b0d714d8476b9152c37b25b0191ffa2e086688818162a2d7a71f509a8621c367/report.md) |
+| entry_20 | positive below the hurdle | 0.0001 | 0.806 | -1.37% | -4.00% to 2.16% | not proven: the CI contains 0 | 3.50% | [report](holdout/62b36ca4f9f1460b7793dac7d19377c4ca55e963f666c4d5a8b87d18e909f6b8/report.md) |
+| lookback_3d | positive below the hurdle | 0.0001 | 0.588 | -0.36% | -3.90% to 4.70% | not proven: the CI contains 0 | 4.52% | [report](holdout/5723dd22aa691926adb772e9281a6d605f495cdd66149ccf4c8c192631c34521/report.md) |
+| lookback_14d | positive below the hurdle | 0.0001 | 0.66 | -0.66% | -3.56% to 3.40% | not proven: the CI contains 0 | 4.22% | [report](holdout/1a06df0a2fe759bb36887312c0b1daf381df8b95dae4ce5afac0db75c31d5df3/report.md) |
+| lev_1 | positive below the hurdle | 0.0001 | 0.998 | -2.61% | -3.87% to -1.06% | proven below the hurdle: the CI lies entirely below 0 | 2.27% | [report](holdout/8dfcc0dd8786fd2512a9c4b0c41feb6144286df2d18cddc3efb5e3e30c201f04/report.md) |
 
 ## Unmodelled risks
 

@@ -16,8 +16,8 @@ record (the output-neutral check of Phase 5 §5.9) and a rerun of that step only
   `configs/carry/prereg.yaml` and `prereg.lock`.
 - [x] 3. `perpbt carry run --primary`, then `--exploratory` (foreground, one at a time), then `perpbt carry report`;
   commit the registry, `results.parquet`, every `stats.json`, the reports, figures and `runs/carry/summary.md`.
-- [ ] 4. Report the in-sample verdict to the user.
-- [ ] 5. **Ask the user**; `perpbt carry holdout` (once); `perpbt carry report`; commit `runs/carry/holdout/`
+- [x] 4. Report the in-sample verdict to the user.
+- [x] 5. **Ask the user**; `perpbt carry holdout` (once); `perpbt carry report`; commit `runs/carry/holdout/`
   (stats.json, reports, figures, `DONE`), the registry, `results.parquet` and the summary.
 - [ ] 6. Report the holdout verdict (with the "not fully unseen" caveat); spec §7.1 run notes; **ask** before the
   `--no-ff` merge into dev and before the dev → main pull request.
@@ -33,3 +33,5 @@ same count).
 Step 2: code locked on the user's go (code_version 7ce43816…, git ab95921; forward start 2026-10-25).
 Step 3: primary 11 ok (35 s), exploratory 66 ok (2 min 36 s), report 7 + summary (26 s); in-sample verdict positive
 below the hurdle (V1 p 0.0001, V2 p 0.0571); spec §7.1.
+Step 5: holdout run once on the user's go (DONE ok, 70 run, 7 skipped, 0 failed; 2 min 23 s); report 14 + summary;
+holdout verdict positive below the hurdle (V1 p 0.0001, V2 p 0.63); spec §7.1.

@@ -77,3 +77,26 @@ through 2029-10-23.
   matches a 90% two-sided interval. The labels follow overview §3 (passes first); nothing was changed.
 - Per pair alone (descriptive): five pass both (BTC, ETH, LINK, LTC, EOS), four are positive below the hurdle, TRXUSDT
   has no edge (−2.91%/yr; liquidations).
+
+**Step 5 — holdout (2026-10-24, on the user's go; run once).** `perpbt carry holdout` (2 min 23 s): `DONE` status
+`ok`, batch `d82e876e65cc`, 70 variants run, 0 failed, 7 skipped (EOSUSDT alone, delisted 2025-05-21), code version
+equal to the lock (no output-neutral check needed), no prior attempts. `perpbt carry report` (46 s): 14 reports and
+the summary; the in-sample reports and figures came out byte-identical. Committed: `runs/carry/holdout/` (70
+`stats.json`, 7 reports, 4.4 MB of figures, `DONE`), the registry, `results.parquet`, the summary.
+
+- **Verdict (holdout 2024-01-01..2026-10-20): positive below the hurdle.** V1 passes (net Sharpe 1.45, CI 0.94..6.55,
+  p 0.0001); V2 fails (annualised net return 4.43%, CI 1.36..8.66%; excess −0.45%, CI −3.52..3.78%, p 0.63): not
+  proven. Not fully unseen (overview §4); the 36-month forward review is the only fully unseen test.
+- Hurdles: passes at 0% only. Filter value against `always_on`: −0.09 (p 0.964); `always_on` returned 4.56%. Random
+  timing: return rank 1, Sharpe rank 535 of 1,000. DSR 0.560.
+- Per year: 2024 11.36% (share on 71.8%), 2025 0.87% (38.1%), 2026 to 10-20 0.19% (12.3%): funding fell away after 2024.
+- **Where the return came from.** Funding 8.45%, basis +5.99%, fees 1.44%, slippage 0.56% (sums over 1,024 days).
+  607.6 of the 626.3 USDT of basis P&L fell on the five liquidation episodes (BCH 2024-03-02, XLM 2024-11-16, LINK and
+  XRP 2024-12-02, TRX 2024-12-03), mostly the spot leg held unhedged from the liquidation at the day high to the next
+  00:15 fill while the coin kept rising (TRX +475 USDT on 2024-12-03, the best day +4.25%; BCH +235). Funding net of
+  costs was about 2.3%/yr. The rule is CD7 as registered; this is a reading of the run tables, not a new test.
+- Margin events: 36 rebalances (0.15%), 5 liquidations (0.58%). Daily skew 21.1, kurtosis 535.
+- **Exploratory rows (descriptive):** all six positive below the hurdle on V1; V2 not proven for five (excess −1.37%
+  .. −0.18%); `lev_1` proven below the hurdle (2.27%/yr, excess CI −3.87..−1.06%), having no liquidation windfall.
+  Per pair alone: LINKUSDT and XRPUSDT proven below the hurdle, TRXUSDT no edge (V1 p 0.062, despite +14.9%/yr from
+  the 2024-12-03 episode), the rest positive below the hurdle.
