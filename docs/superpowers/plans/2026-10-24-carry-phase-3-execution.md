@@ -127,3 +127,4 @@ Final review: fresh reviewer (opus) — "merge with fixes"; 0 Critical, 2 Import
 - Final: fixed (Minor 6) §3.8 rebalance-gate note states the post-fill funding edge case.
 - Final: fixed (Minor 7) run_batch refuses an unpriced funding event with a holding, as run_path.
 The review-fix tests also run run_batch on one path.
+After the review fixes: full suite 1308 passed (12 min 7 s, slow included).
