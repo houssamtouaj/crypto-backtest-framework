@@ -1,13 +1,24 @@
 """The carry diagnostics (carry spec Phase 4 §4.4); synthetic frames and hand-built tables only."""
 import math
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from perpbt.carry.diagnostics import annual_stats, decomposition, margin_events
-from perpbt.carry.executor import COUNTS, DAILY_COLUMNS, EVENT_COLUMNS, FILL_COLUMNS, PAIR_COLUMNS, PathResult, run_path
-from perpbt.stats.bootstrap import sharpe
+from perpbt.carry.diagnostics import (
+    annual_stats, decomposition, draw_offsets, dsr_block, filter_value, live_window, margin_events, path_returns,
+    random_timing, rank_summary, reprice, reprice_specs, row_names, shifted_states,
+)
+from perpbt.carry.executor import (
+    COUNTS, DAILY_COLUMNS, EVENT_COLUMNS, FILL_COLUMNS, PAIR_COLUMNS, PathResult, run_batch, run_path,
+)
+from perpbt.carry.prereg import RepriceConfig, load_prereg
+from perpbt.carry.screen import v2_stats
+from perpbt.config import from_dict
+from perpbt.stats.bootstrap import paired_sharpe_diff, sharpe
+from perpbt.stats.dsr import dsr_from_trials, sr_moments
+from perpbt.stats.seeds import rng_for
 from tests.carry.execframes import pairframe, spec, states
 from tests.carry.test_executor import E0, messy_frames, random_states
 
@@ -182,3 +193,171 @@ def test_always_off_has_nothing():
     a = annual_stats(r.daily, equity0=E0, v1={"sharpe": None, "sharpe_ci": [None, None]})
     assert a["ann_return"] == 0 and a["max_drawdown"] == 0 and a["sharpe"] is None
     assert math.isnan(sharpe(r.daily["ret"].to_numpy()))
+
+
+# --- random timing --------------------------------------------------------------------------------------------
+
+def test_draw_offsets_range_and_seed():
+    k = draw_offsets(200, 60, 5000, rng_for(1, "h", "p"))
+    assert k.dtype == np.int64 and k.min() == 60 and k.max() == 140  # both ends reachable
+    np.testing.assert_array_equal(k, draw_offsets(200, 60, 5000, rng_for(1, "h", "p")))
+    assert draw_offsets(120, 60, 3, rng_for(1, "h", "p")).tolist() == [60, 60, 60]
+    with pytest.raises(ValueError):
+        draw_offsets(119, 60, 3, rng_for(1, "h", "p"))
+    with pytest.raises(ValueError):
+        draw_offsets(200, 60, 0, rng_for(1, "h", "p"))
+
+
+def test_live_window():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)  # return days 2020-01-02 .. 2020-02-09: decisions 2020-01-01 .. 2020-02-08
+    assert live_window(frames["AUSDT"], cfg) == (0, 39)
+    assert live_window(frames["BUSDT"], cfg) == (0, 31)  # 32 days: the last has no next day
+    assert live_window(frames["CUSDT"], cfg) == (0, 36)  # first day 2020-01-04
+
+
+def test_shifted_states_hand_case():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)
+    rng = np.random.default_rng(1)
+    st = {pair: rng.random(len(pf)) < 0.4 for pair, pf in frames.items()}
+    offsets = np.array([3, 17, 35])
+    out = shifted_states(frames, st, cfg, offsets)
+    for pair, pf in frames.items():
+        j0, n_i = live_window(pf, cfg)
+        assert out[pair].shape == (3, len(pf)) and out[pair].dtype == bool
+        for p, k in enumerate(offsets):
+            want = [st[pair][j0 + (t + k) % n_i] for t in range(n_i)]  # one offset shared, mod each pair's n_i
+            assert out[pair][p, j0:j0 + n_i].tolist() == want
+            assert not out[pair][p, j0 + n_i:].any()
+            assert out[pair][p, j0:j0 + n_i].sum() == st[pair][j0:j0 + n_i].sum()  # time on kept
+    zero = shifted_states(frames, st, cfg, np.array([0]))
+    for pair, pf in frames.items():
+        j0, n_i = live_window(pf, cfg)
+        assert zero[pair][0, j0:j0 + n_i].tolist() == st[pair][j0:j0 + n_i].tolist()
+
+
+def test_path_returns_equal_run_path():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)
+    st = random_states(frames, np.random.default_rng(2))
+    offsets = np.array([0, 5, 9, 20])
+    shifted = shifted_states(frames, st, cfg, offsets)
+    batch = run_batch(frames, shifted, cfg)
+    ret = path_returns(batch.equity, cfg.equity0)
+    for p in range(len(offsets)):
+        path = run_path(frames, {pair: shifted[pair][p] for pair in frames}, cfg)
+        np.testing.assert_allclose(ret[p], path.daily["ret"].to_numpy(), rtol=0, atol=1e-12)
+    # offset 0 is the original path (inside the live windows, the only rows the executor reads)
+    np.testing.assert_allclose(ret[0], run_path(frames, st, cfg).daily["ret"].to_numpy(), rtol=0, atol=1e-12)
+
+
+def test_rank_summary():
+    s = rank_summary(np.array([1.0, 2.0, 3.0, 4.0, np.nan]), 3.0)
+    assert s["n_finite"] == 4 and s["rank"] == 2 and s["share_at_least"] == pytest.approx(3 / 5)
+    assert s["mean"] == 2.5 and s["std"] == pytest.approx(np.std([1, 2, 3, 4], ddof=1))
+    assert s["p50"] == 2.5 and s["primary"] == 3.0
+    best = rank_summary(np.array([1.0, 2.0]), 5.0)
+    assert best["rank"] == 1 and best["share_at_least"] == pytest.approx(1 / 3)
+    none = rank_summary(np.array([1.0, 2.0]), None)
+    assert none["rank"] is None and none["share_at_least"] is None
+
+
+def test_random_timing_on_messy_frames():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)
+    st = random_states(frames, np.random.default_rng(4))
+    primary = run_path(frames, st, cfg).daily["ret"].to_numpy()
+    summary, table = random_timing(frames, st, cfg, runs=40, margin=5, rng=rng_for(3, "h", "insample/random_timing"),
+                                   primary_ret=primary)
+    offsets = draw_offsets(39, 5, 40, rng_for(3, "h", "insample/random_timing"))
+    assert table["offset"].tolist() == offsets.tolist() and table["path"].tolist() == list(range(40))
+    assert list(table.columns) == ["path", "offset", "ann_return", "sharpe", "entries", "rebalances", "liquidations"]
+    shifted = shifted_states(frames, st, cfg, offsets[:2])
+    for p in range(2):
+        path = run_path(frames, {pair: shifted[pair][p] for pair in frames}, cfg)
+        assert table["ann_return"][p] == pytest.approx(365 * path.daily["ret"].mean(), rel=1e-12, abs=1e-15)
+        assert table["entries"][p] == path.counts["entries"]
+    assert summary["runs"] == 40 and summary["n_days"] == 39 and summary["shift_margin_days"] == 5
+    assert summary["ann_return"]["primary"] == pytest.approx(365 * primary.mean(), rel=1e-15)
+    assert summary["ann_return"] == rank_summary(table["ann_return"].to_numpy(), 365 * float(primary.mean()))
+    again, table2 = random_timing(frames, st, cfg, runs=40, margin=5, rng=rng_for(3, "h", "insample/random_timing"),
+                                  primary_ret=primary)
+    assert again == summary and table2.to_csv() == table.to_csv()
+    with pytest.raises(ValueError):
+        random_timing(frames, st, cfg, runs=4, margin=5, rng=rng_for(3, "h", "x"), primary_ret=primary[:-1])
+
+
+# --- re-pricing -----------------------------------------------------------------------------------------------
+
+GRID = from_dict(RepriceConfig, {"slippage": [0.0, 0.0002, 0.0005, 0.001], "spot_taker": [0.00075, 0.001]})
+
+
+def test_reprice_specs_change_only_the_costs():
+    cfg = spec(end=MESSY_END, mmr=0.02)
+    cells = reprice_specs(cfg, GRID)
+    assert [(s, t) for s, t, _ in cells] == [(s, t) for s in GRID.slippage for t in GRID.spot_taker]
+    for s, t, c in cells:
+        assert c.costs.spot_taker == t and c.costs.slippage == {"default": s}
+        assert c.costs.perp_taker == cfg.costs.perp_taker
+        assert (c.sleeve, c.margin, c.rebalance, c.start, c.end, c.equity0) == (
+            cfg.sleeve, cfg.margin, cfg.rebalance, cfg.start, cfg.end, cfg.equity0)
+    assert cfg.costs.slippage == {"default": 0.0005}  # the base is untouched
+
+
+def test_reprice_cells():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)  # slippage 0.0005 every pair, spot taker 0.001: one cell of the grid
+    st = random_states(frames, np.random.default_rng(6))
+    cells = reprice(frames, st, cfg, GRID, hurdle=0.05, alpha=0.05, B=500, block_len=10,
+                    rng_v2=lambda: rng_for(1, "h", "insample/primary/reprice/v2"))
+    assert len(cells) == 8
+    base = run_path(frames, st, cfg).daily["ret"].to_numpy()
+    (same,) = [c for c in cells if (c["slippage"], c["spot_taker"]) == (0.0005, 0.001)]
+    assert same["ann_return"] == 365 * float(base.mean())
+    assert same["v2"] == v2_stats(base, hurdle=0.05, alpha=0.05, B=500, block_len=10,
+                                  rng=rng_for(1, "h", "insample/primary/reprice/v2"))
+    for t in GRID.spot_taker:
+        ann = [c["ann_return"] for c in cells if c["spot_taker"] == t]
+        assert ann == sorted(ann, reverse=True) and ann[0] > ann[-1]  # more slippage, less return
+    assert cells[0]["slippage_cost"] == 0.0 and cells[-1]["fees"] > 0
+
+
+# --- filter value, DSR ----------------------------------------------------------------------------------------
+
+def test_filter_value_is_the_paired_sharpe_difference():
+    frames = messy_frames()
+    cfg = spec(end=MESSY_END)
+    a = run_path(frames, random_states(frames, np.random.default_rng(7)), cfg).daily
+    b = run_path(frames, {p: np.ones(len(pf), dtype=bool) for p, pf in frames.items()}, cfg).daily
+    out = filter_value(a, b, B=300, block_len=10, rng=rng_for(1, "h", "insample/filter_value"))
+    ref = paired_sharpe_diff(a["ret"].to_numpy(), b["ret"].to_numpy(), 300, rng_for(1, "h", "insample/filter_value"),
+                             10)
+    assert out == {"rows": ["primary", "always_on"], "sharpe_primary": ref["sharpe_a"],
+                   "sharpe_always_on": ref["sharpe_b"], "diff": ref["diff"], "diff_ci": [ref["ci_lo"], ref["ci_hi"]],
+                   "p": ref["p"]}
+    with pytest.raises(ValueError):
+        filter_value(a, b.iloc[1:], B=10, block_len=10, rng=rng_for(1, "h", "x"))
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_row_names_are_the_seven_rows():
+    prereg = load_prereg(ROOT / "configs" / "carry" / "prereg.yaml")
+    assert row_names(prereg) == ("primary", "always_on", "entry_5", "entry_20", "lookback_3d", "lookback_14d", "lev_1")
+
+
+def test_dsr_block():
+    rows = ("primary", "always_on", "entry_5", "entry_20", "lookback_3d", "lookback_14d", "lev_1")
+    rng = np.random.default_rng(12)
+    rets = {row: rng.normal(2e-4 * k, 1e-3, 300) for k, row in enumerate(rows)}
+    out = dsr_block(rets, rows)
+    m = sr_moments(rets["primary"])
+    ref = dsr_from_trials(m, [sr_moments(rets[r])["sr"] for r in rows])
+    assert out["N"] == 7 and out["dsr"] == ref["dsr"] and out["sr_star"] == ref["sr_star"] and out["V"] == ref["V"]
+    assert out["sr"] == m["sr"] and list(out["trial_sr"]) == list(rows) and out["rows"] == list(rows)
+    with pytest.raises(ValueError):
+        dsr_block({r: v for r, v in rets.items() if r != "lev_1"}, rows)
+    with pytest.raises(ValueError):
+        dsr_block(rets, rows[1:])
