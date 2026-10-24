@@ -36,7 +36,7 @@ The day (§3.3, return day ``t = d + 1``):
    of its last common candle with costs and leaves ``N_live`` from the next decision. A frame ending on the
    period's last day is the window's end, not a delisting.
 6. Mark both legs at the day close; ``ret = E_t / E_d − 1``. ``basis_pnl`` is the legs' price P&L, so
-   ``ΔE = funding − fees − slippage + basis_pnl``.
+   ``ΔE = funding − fees − slippage + basis_pnl``; ``daily_pair`` carries each pair's share of the four.
 """
 from __future__ import annotations
 
@@ -60,7 +60,10 @@ COUNTS = (
 DAILY_COLUMNS = (
     "date", "day_ms", "equity", "ret", "cash", "funding", "fees", "slippage", "basis_pnl", "n_on", "n_live",
 )
-PAIR_COLUMNS = ("date", "pair", "state", "spot_qty", "perp_qty", "perp_wallet", "sleeve_value", "funding")
+PAIR_COLUMNS = (  # fees, slippage and basis_pnl per pair sum to the daily columns (carry Phase 4 §4.4)
+    "date", "pair", "state", "spot_qty", "perp_qty", "perp_wallet", "sleeve_value", "funding", "fees", "slippage",
+    "basis_pnl",
+)
 FILL_COLUMNS = ("date", "pair", "leg", "qty", "price", "reason", "fee", "slippage")
 EVENT_COLUMNS = ("date", "pair", "kind", "leg", "detail", "value")
 _MIN_MS = 60_000
@@ -491,7 +494,7 @@ def run_path(frames: dict[str, PairFrame], state: dict[str, np.ndarray], cfg: Ex
             v = _value(qs[i], q[i], w[i], p0[i], F[i]["sc"][jt], F[i]["pc"][jt])
             equity = equity + v
             for c, val in zip(PAIR_COLUMNS, (date, pairs[i], on_today[i], qs[i], -q[i] if q[i] else 0.0, w[i], v,
-                                             fund[i])):
+                                             fund[i], fee[i], slp[i], pnl[i])):
                 prow[c].append(val)
         tot = {"funding": 0.0, "fees": 0.0, "slippage": 0.0, "basis_pnl": 0.0}
         for i in range(n):
