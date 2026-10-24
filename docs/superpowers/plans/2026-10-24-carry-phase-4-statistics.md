@@ -93,3 +93,9 @@
 ## Progress log
 
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-4-statistics.md
+Task 1: complete (885faa9; test_verdict 15 passed; block_bootstrap_mean hand case and seed determinism added to tests/test_bootstrap.py).
+Task 2: complete (bc26aed; daily_pair + fees, slippage, basis_pnl; Phase 3 executor tests unchanged and green).
+Task 3: complete (0b85a5b; test_diagnostics 19 passed).
+Task 4: complete (842571d). Added `row_diagnostics` / `primary_diagnostics` (my call: the seed purposes live in code, not only in the docstring). End-to-end synthetic stats.json with the real prereg's settings: same seed same bytes, other seed differs, purposes pinned (≈ 4 s). Slow real-data: 1,000 shifted primaries through run_batch ≈ 5 s; 8 re-pricing runs < 1 s; no statistic computed.
+Mutations (each caught): shift mod n instead of n_i → 6 failures; exclusive upper offset → 1; decomposition scaled by the same day's equity → 2; rank counting ties → 1; liquidation cost of the liquidation day only → 2; re-pricing keeping per-pair slippage → 1 (after tightening the test; it passed before).
+Task 5: spec §4.7 notes written.
