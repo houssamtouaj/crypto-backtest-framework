@@ -132,3 +132,10 @@ Task 4: complete (21d695d; tests/carry/test_screen.py 12 passed). Mutation: fund
 Task 5: complete (bffcdee; tests/carry/test_screen_cli.py 13 passed; full suite 1258 passed in 5 min 22 s). `perpbt carry prereg validate` → prereg_hash a44eee47….
 Task 6: complete (7d6f956; stopped before the freeze; user said go).
 Task 7: freeze 5799eb5 (prereg_hash a44eee47…, lock git 7d6f956), tag carry-prereg-v1; screen run once (0a9a888): 1279 days, 10 pairs; primary ann. net return +10.69% [+6.13, +16.07], excess +5.81% [+1.25, +11.20], p(V2) 0.0045 (above_hurdle), Sharpe 8.62, p(V1) 0.0001, share on 0.642, 152 switches; always_on +10.12% [+5.41, +15.57], excess +5.24%, p(V2) 0.0136, Sharpe 7.61; p_screen 0.0045 → GO.
+Final review: fresh reviewer (opus) — "merge"; 0 Critical, 0 Important, 10 Minor; independent loop reproduces the screen to 1e-16; no defect would have changed the decision.
+- Final: fixed (Minor 1-2) tests catch a one-day look-ahead in align and the wrong funding day (funding step, causality perturbation, varying funding, align == index); mutation: align index+1 → 2 failures, funding [j] → 1 failure.
+- Final: fixed (Minor 3-4) CLI refuses cleanly on ValueError/KeyError/FileExistsError; summary.md opened with "x" and checked before screen.json.
+- Final: fixed (Minor 5) Phase 1 §1.2 and overview CD2 point to the time-weighted f̄.
+- Final: fixed (Minor 6) F_{d+1} = perp.funding (daily_funding removed; screen.json reproduces byte for byte).
+- Final: fixed (Minor 7) per-pair mmr/slippage keys must be universe members (hash unchanged a44eee47…).
+- Final: Minor 8 recorded as a Phase 5 pointer (ccxt tail interval stamping); Minor 9 added (slow test_real_screen.py); Minor 10 noted in §2.6 (yaml 1707ad3, lock 5799eb5, yaml unchanged between).

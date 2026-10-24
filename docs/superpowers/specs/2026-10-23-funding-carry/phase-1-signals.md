@@ -40,6 +40,8 @@ after `d + h`.
 to 4 h funding is annualised correctly; the mean is over rates normalised
 to per-day first: `Σ rate_e × 24/interval_h_e / n_events`). NaN until `W`
 full days of events exist.
+*Superseded in Phase 2 (§2.6): `f̄` is time-weighted, `Σ rate_e × 24 /
+Σ interval_h_e × 365`; identical in steady state and on every in-sample day.*
 
 ## 1.3 On/off state
 

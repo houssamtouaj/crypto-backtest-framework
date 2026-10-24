@@ -7,7 +7,7 @@ import pytest
 from perpbt.carry.config import CarrySignalConfig
 from perpbt.carry.frames import build_pairframe
 from perpbt.carry.screen import (
-    ScreenInputs, daily_funding, daily_hurdle, portfolio_returns, run_screen, screen_inputs, sleeve_returns,
+    ScreenInputs, daily_hurdle, portfolio_returns, run_screen, screen_inputs, sleeve_returns,
     v2_stats, write_screen,
 )
 from perpbt.carry.signals import compute_signals
@@ -89,23 +89,30 @@ FIRST = "2020-01-01"
 NDAYS = 500
 
 
-def pairframe(pair: str, annual_funding: float, *, seed: int, days: int = NDAYS, basis: float = 0.0):
-    """One 15m candle per day at 23:45 (perp = spot × (1 + basis noise)), funding every 8 h at a constant rate."""
+def pairframe(pair: str, annual_funding, *, seed: int, days: int = NDAYS, basis: float = 0.0, reseed_after=None):
+    """One 15m candle per day at 23:45 (perp = spot × (1 + basis noise)), funding every 8 h.
+
+    ``annual_funding`` is a constant or a per-day array of annualised rates. ``reseed_after = (k, seed)`` redraws
+    every price after day ``k`` (a perturbation that days ``<= k`` cannot see).
+    """
     rng = np.random.default_rng(seed)
     c = 100.0 * np.exp(np.cumsum(rng.normal(0.0, 0.03, days)))
+    if reseed_after is not None:
+        k, s2 = reseed_after
+        c[k + 1:] = c[k] * np.exp(np.cumsum(np.random.default_rng(s2).normal(0.0, 0.03, days - k - 1)))
     ts = date_ms(FIRST) + DAY_MS * np.arange(days, dtype=np.int64) + DAY_MS - 900_000
     pc = c * (1.0 + basis * rng.normal(size=days))
     one = np.ones(days)
     perp = Candles(pair, "15m", ts, pc, pc, pc, pc, one)
     spot = Candles(pair, "15m", ts, c, c, c, c, one)
     fts = date_ms(FIRST) + 8 * 3_600_000 * np.arange(3 * days, dtype=np.int64)
-    rate = np.full(len(fts), annual_funding / 365 / 3)
+    rate = np.repeat(np.broadcast_to(np.asarray(annual_funding, dtype=np.float64), (days,)), 3) / 365 / 3
     return build_pairframe(perp, Funding(pair, fts, rate, np.full(len(fts), 8, dtype=np.int8)), spot,
                            first_day=FIRST)
 
 
 def test_screen_inputs_alignment():
-    a = pairframe("AAAUSDT", 0.3, seed=1)
+    a = pairframe("AAAUSDT", 0.001 * np.arange(NDAYS), seed=1)  # every day's funding differs
     b = pairframe("BBBUSDT", 0.3, seed=2, days=200)  # ends early: leaves after its last day
     inp = screen_inputs({"AAAUSDT": a, "BBBUSDT": b}, start="2020-03-01", end="2021-01-31")
     d0 = (date_ms("2020-02-29") - date_ms(FIRST)) // DAY_MS
@@ -115,19 +122,58 @@ def test_screen_inputs_alignment():
     np.testing.assert_allclose(inp.r_spot[0, 5], a.spot.c[d0 + 6] / a.spot.c[d0 + 5] - 1)
     k = a.perp.events(d0 + 1)
     np.testing.assert_allclose(inp.funding[0, 0], a.perp.funding_rate[k].sum())
-    assert inp.funding[0, 0] == pytest.approx(0.3 / 365)
+    assert inp.funding[0, 0] == pytest.approx(0.001 * (d0 + 1) / 365)  # day d+1's, not day d's
+    np.testing.assert_allclose(inp.funding[0], 0.001 * (d0 + 1 + np.arange(inp.live.shape[1])) / 365, rtol=1e-12)
+    rows = inp.align({"AAAUSDT": np.arange(len(a)), "BBBUSDT": np.arange(len(b))}, fill=-1)
+    np.testing.assert_array_equal(rows, inp.index)  # align picks the decision day's own row
     last_b = 200 - 2 - d0  # decision on b's second-to-last day earns its last day
     assert inp.live[1, : last_b + 1].all() and not inp.live[1, last_b + 1:].any()
     assert np.isnan(inp.r_perp[1, last_b + 1:]).all()
     np.testing.assert_array_equal(inp.align({"AAAUSDT": np.arange(len(a)), "BBBUSDT": np.arange(len(b))})[1, -1], 0)
 
 
-def test_daily_funding_sums_each_days_events():
-    a = pairframe("AAAUSDT", 0.3, seed=1, days=10)
-    f = daily_funding(a)
-    assert f.shape == (10,)
+def test_perp_funding_sums_each_days_events():
+    # the screen's F_{d+1} is perp.funding: the DayFrame's per-day sum of the same events
+    a = pairframe("AAAUSDT", 0.01 * np.arange(10), seed=1, days=10)
     for k in range(10):
-        assert f[k] == pytest.approx(a.perp.funding_rate[a.perp.events(k)].sum())
+        assert a.perp.funding[k] == pytest.approx(a.perp.funding_rate[a.perp.events(k)].sum(), abs=1e-18)
+
+
+def test_funding_step_first_decision_entry_and_first_funding():
+    # funding steps from 0 to 50%/yr on day S; with W = 7 the time-weighted f̄ is (days high in window) / 7 × 50%,
+    # first above 10% on day S + 1 (2/7 × 50% = 14.3%); that decision earns day S + 2 and pays the entry there
+    S = 100
+    annual = np.where(np.arange(NDAYS) >= S, 0.5, 0.0)
+    pf = pairframe("AAAUSDT", annual, seed=3, basis=1e-3)
+    inp = screen_inputs({"AAAUSDT": pf}, start="2020-03-01", end="2020-12-31")
+    on = inp.align({"AAAUSDT": compute_signals(pf, PRIMARY).on})
+    first = int(np.argmax(on[0]))
+    assert on[0].any() and inp.index[0, first] == S + 1 and not on[0, :first].any()
+    s = sleeve_returns(on, inp, leverage=2.0, cost=np.array([0.002]))
+    j = S + 1
+    r = pf.spot.c[j + 1] / pf.spot.c[j] - pf.perp.c[j + 1] / pf.perp.c[j] + 0.5 / 365
+    assert s[0, first] == pytest.approx(X * r - X * 0.002, abs=1e-15)
+    assert (s[0, :first] == 0).all()
+
+
+def test_decisions_and_returns_causal():
+    # redrawing every price and funding after day K leaves the states of decision rows <= K and the returns of
+    # rows <= K - 1 (which earn days <= K) unchanged
+    K = 200
+    annual = 0.3 * (1 + np.sin(np.arange(NDAYS) / 9.0))
+    later = annual.copy()
+    later[K + 1:] = 0.7 - annual[K + 1:]
+    base = pairframe("AAAUSDT", annual, seed=4, basis=1e-3)
+    moved = pairframe("AAAUSDT", later, seed=4, basis=1e-3, reseed_after=(K, 99))
+    out = []
+    for pf in (base, moved):
+        inp = screen_inputs({"AAAUSDT": pf}, start="2020-03-01", end="2021-03-31")
+        on = inp.align({"AAAUSDT": compute_signals(pf, PRIMARY).on})
+        out.append((inp.index[0], on[0], sleeve_returns(on, inp, leverage=2.0, cost=np.array([0.002]))[0]))
+    (idx, on0, s0), (_, on1, s1) = out
+    np.testing.assert_array_equal(on0[idx <= K], on1[idx <= K])
+    np.testing.assert_array_equal(s0[idx <= K - 1], s1[idx <= K - 1])
+    assert not np.array_equal(s0[idx >= K], s1[idx >= K])  # the perturbation does reach later rows
 
 
 def _screen(frames, B=2000):
@@ -185,6 +231,18 @@ def test_non_finite_refuses():
     with pytest.raises(ValueError, match="not finite"):
         run_screen(bad, states, leverage={"primary": 2.0, "always_on": 2.0}, cost=np.zeros(1), hurdle=0.05,
                    alpha=0.05, B=50, block_len=30, rng=lambda p: rng_for(1, "h", p), stop_if_p_at_least=0.1)
+
+
+def test_write_screen_refuses_existing_summary_on_stop(tmp_path):
+    (tmp_path / "carry").mkdir()
+    (tmp_path / "carry" / "summary.md").write_text("earlier", encoding="utf-8")
+    frames = {p: pairframe(p, 0.02, seed=i, basis=1e-4) for i, p in enumerate(("AAAUSDT", "BBBUSDT"))}
+    result = {**_screen(frames, B=100), "period": ["2020-03-01", "2021-03-31"], "pairs": ["AAAUSDT", "BBBUSDT"],
+              "prereg_hash": "h", "computed_on": "2026-10-24", "git_commit": "abc"}
+    assert result["decision"] == "stop"
+    with pytest.raises(FileExistsError):
+        write_screen(result, tmp_path)
+    assert not (tmp_path / "carry" / "screen.json").exists()
 
 
 def test_write_screen_refuses_nan_and_leaves_no_file(tmp_path):

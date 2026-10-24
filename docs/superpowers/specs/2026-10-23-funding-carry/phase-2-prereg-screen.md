@@ -165,3 +165,34 @@ was tuned on a return.
   when `runs/carry/screen.json` exists (also opened with `"x"`); the JSON is
   serialised before the file is opened. On stop it also writes
   `runs/carry/summary.md`; `.gitignore` admits both.
+
+**Freeze and screen (2026-10-23).** The prereg was frozen at 7d6f956
+(lock committed in 5799eb5, tag `carry-prereg-v1`; `prereg.yaml` itself was
+committed earlier, in 1707ad3, and did not change in between). The screen
+ran once (0a9a888): primary annualised net return +10.69% [+6.13, +16.07],
+excess over the hurdle +5.81% [+1.25, +11.20], **p_screen 0.0045 → go**;
+Sharpe 8.62 (p 0.0001), share of live pair-days on 0.642, 152 switches;
+`always_on` +10.12%, p(V2) 0.0136. The Sharpe is high because the model has
+no fill delay, margin or liquidation and the hedged daily returns have an
+annualised vol of about 1.2%.
+
+**Review fixes (after the screen; none changes the hash or the result).**
+A fresh reviewer reproduced the screen independently (to 1e-16) and found
+no defect that would have changed the decision. Fixed: tests now catch a
+one-day look-ahead in the decision alignment and the wrong day's funding
+(both mutations passed every test before); `F_{d+1}` reads `perp.funding`
+(bit-identical to the removed duplicate sum); a non-finite statistic or an
+existing output is a clean `refused` (exit 1) instead of a traceback;
+`summary.md` is opened with `"x"` and checked before `screen.json` is
+written; per-pair `mmr` and `slippage` keys must be universe members (a
+misspelt pair fell back to `default` silently); a slow test reruns the
+screen in memory and compares it byte for byte with the committed
+`runs/carry/screen.json`, so Phases 3–5 cannot move the frozen result
+unnoticed.
+
+**Pointer for Phase 5.** `data/fetch.ccxt_fetch` stamps the manifest's
+`last_interval_h` on every event of the funding tail it fetches. The
+time-weighted `f̄` and Phase 3's per-event funding use each event's
+interval, so a funding-interval change inside a ccxt-fetched forward tail
+would be weighted wrongly; check or fix this before the forward runs. The
+in-sample data has only 8 h events.

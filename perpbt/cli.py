@@ -422,11 +422,15 @@ def _carry_screen(args: argparse.Namespace) -> int:
     except (ConfigError, FileNotFoundError) as e:
         print(f"perpbt carry screen: {e}", file=sys.stderr)
         return 2
-    except HoldoutAccessError as e:
+    except (HoldoutAccessError, ValueError, KeyError) as e:  # past the in-sample end; a non-finite statistic
         print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
         return 1
     result = {**result, "computed_on": datetime.now(timezone.utc).date().isoformat(), "git_commit": git_commit()}
-    paths = write_screen(result, args.runs_dir)
+    try:
+        paths = write_screen(result, args.runs_dir)
+    except (FileExistsError, ValueError) as e:
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
     print(f"{result['n_days']} days ({result['period'][0]}..{result['period'][1]}), {result['n_pairs']} pairs; "
           f"hurdle {result['hurdle_annual']:.0%}/yr")
     for name, row in result["rows"].items():

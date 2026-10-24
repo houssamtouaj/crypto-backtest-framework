@@ -45,6 +45,8 @@ def make_env(tmp_path: Path, *, annual: float, last_day: dict[str, str] | None =
     (tmp_path / "universe.json").write_text(json.dumps(universe), encoding="utf-8")
     raw = read_yaml_unique(ROOT / "configs" / "carry" / "prereg.yaml")
     raw["universe"] = {"um": copy.deepcopy(universe["um"])}
+    raw["margin"]["mmr"] = {"default": 0.01, "AAAUSDT": 0.004}  # per-pair keys must be universe members
+    raw["costs"]["slippage"] = {"default": 0.0005, "AAAUSDT": 0.0002}
     raw["screen"]["bootstrap_n"] = 300
     (tmp_path / "prereg.yaml").write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     return tmp_path
@@ -172,3 +174,15 @@ def test_screen_refuses_unlisted_member(env):
     del cfg["listing"]["CCCUSDT"]
     (env / "data.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     assert main(args(env, "carry", "screen")) == 2
+
+
+def test_screen_refuses_non_finite_statistic_cleanly(env, monkeypatch, capsys):
+    assert main(args(env, "carry", "prereg", "freeze")) == 0
+
+    def bad(*a, **k):
+        raise ValueError("V2 statistic not finite: excess nan")
+
+    monkeypatch.setattr("perpbt.carry.screen.screen_from_store", bad)
+    assert main(args(env, "carry", "screen")) == 1
+    assert "refused" in capsys.readouterr().err
+    assert not (env / "runs" / "carry" / "screen.json").exists()

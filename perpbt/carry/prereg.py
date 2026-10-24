@@ -243,11 +243,21 @@ def _verdict(raw: Any) -> dict[str, Any]:
     return {key: list(raw[key]) if key == "reported_for" else raw[key] for key in VERDICT_KEYS}
 
 
+def _check_pair_tables(prereg: CarryPrereg) -> None:
+    """Per-pair ``mmr`` and ``slippage`` keys are ``default`` or a universe member (a misspelt pair would fall
+    back to ``default`` silently)."""
+    members = set(prereg.universe[MARKET]["members"])
+    for where, table in (("margin.mmr", prereg.margin.mmr), ("costs.slippage", prereg.costs.slippage)):
+        unknown = sorted(k for k in table if k != "default" and k not in members)
+        if unknown:
+            raise ConfigError(f"{where}: {unknown} are not universe.{MARKET} members")
+
+
 def parse_prereg(raw: Any) -> CarryPrereg:
     raw = _exact_keys(raw, TOP_KEYS, "prereg")
     signal = from_dict(CarrySignalConfig, _mapping(raw["signal"], "signal"))
     sleeve = from_dict(SleeveConfig, _mapping(raw["sleeve"], "sleeve"))
-    return CarryPrereg(
+    prereg = CarryPrereg(
         registered_on=_iso(raw["registered_on"], "registered_on"),
         universe=_universe(raw["universe"]),
         periods=_periods(raw["periods"]),
@@ -263,6 +273,8 @@ def parse_prereg(raw: Any) -> CarryPrereg:
         screen=from_dict(ScreenConfig, _mapping(raw["screen"], "screen")),
         verdict_rule=_verdict(raw["verdict_rule"]),
     )
+    _check_pair_tables(prereg)
+    return prereg
 
 
 def load_prereg(path: str | Path) -> CarryPrereg:

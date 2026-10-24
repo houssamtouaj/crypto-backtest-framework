@@ -122,6 +122,8 @@ def test_forward_start_excluded_from_hash(raw):
     lambda d: d["universe"].update(spot={"rule": "x", "members": ["BTCUSDT"]}),
     lambda d: d["universe"]["um"]["members"].append("BTCUSDT"),
     lambda d: d["sleeve"].update(perp_leverage=0),
+    lambda d: d["margin"]["mmr"].update(BTCUSD=0.004),
+    lambda d: d["costs"]["slippage"].update(SOLUSDT=0.0002),
     lambda d: d["rebalance"].update(fill_offset_min=30),
     lambda d: d["stats"].update(alpha=1.5),
     lambda d: d["stats"].update(block_len_days=0),

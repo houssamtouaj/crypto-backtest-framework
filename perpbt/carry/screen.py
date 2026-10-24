@@ -7,7 +7,8 @@ sleeve that is on at day ``d``'s close earns on day ``d+1``
 
 with ``r`` the close-to-close price return of each leg (the perp's from
 ``perp.c``, never ``DayFrame.ret``) and ``F_{d+1}`` the sum of the perp's
-funding rates on day ``d+1`` (the short receives positive rates). On a day
+funding rates on day ``d+1`` (``perp.funding``, the DayFrame's per-day sum;
+the short receives positive rates). On a day
 where the state differs from the previous decision's (every pair starts off),
 ``x × (spot_taker + perp_taker + 2 × slippage_pair)`` is subtracted. No fill
 delay, margin, rebalancing or liquidation. The portfolio return is the mean
@@ -67,14 +68,6 @@ class ScreenInputs:
         return out
 
 
-def daily_funding(pf: PairFrame) -> np.ndarray:
-    """Sum of the perp's funding rates per PairFrame day (0 on a day without events)."""
-    ptr = pf.perp.funding_ptr
-    out = np.zeros(len(pf))
-    np.add.at(out, np.repeat(np.arange(len(pf)), np.diff(ptr)), pf.perp.funding_rate)
-    return out
-
-
 def screen_inputs(frames: dict[str, PairFrame], *, start: str, end: str) -> ScreenInputs:
     """Align every pair on the decision days ``start − 1 .. end − 1`` (ISO dates, returns on ``start .. end``)."""
     first, last = date_ms(start) - DAY_MS, date_ms(end) - DAY_MS
@@ -94,7 +87,7 @@ def screen_inputs(frames: dict[str, PairFrame], *, start: str, end: str) -> Scre
         index[i, ok] = j
         r_spot[i, ok] = pf.spot.c[j + 1] / pf.spot.c[j] - 1.0
         r_perp[i, ok] = pf.perp.c[j + 1] / pf.perp.c[j] - 1.0
-        funding[i, ok] = daily_funding(pf)[j + 1]
+        funding[i, ok] = pf.perp.funding[j + 1]
         live[i, ok] = True
     return ScreenInputs(pairs, day_ms, index, r_spot, r_perp, funding, live)
 
@@ -306,16 +299,24 @@ def _summary_md(result: dict) -> str:
 
 
 def write_screen(result: dict, runs_dir: str | Path) -> list[Path]:
-    """Write ``runs/carry/screen.json`` once (and ``summary.md`` on stop); refuses to overwrite."""
-    text = json.dumps(result, indent=2, allow_nan=False) + "\n"  # serialise first: a failure leaves no file
+    """Write ``runs/carry/screen.json`` once (and ``summary.md`` on stop); refuses to overwrite either.
+
+    Everything is serialised and both paths are checked before the first file is opened, so a refusal or a
+    failure leaves no half-written result.
+    """
+    text = json.dumps(result, indent=2, allow_nan=False) + "\n"
     summary = _summary_md(result) if result["decision"] == "stop" else None
     path = screen_path(runs_dir)
+    out = path.parent / "summary.md"
+    for p in (path, out) if summary is not None else (path,):
+        if p.exists():
+            raise FileExistsError(f"{p} exists; the screen runs once")
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "x", encoding="utf-8", newline="\n") as f:
         f.write(text)
     written = [path]
     if summary is not None:
-        out = path.parent / "summary.md"
-        out.write_text(summary, encoding="utf-8", newline="\n")
+        with open(out, "x", encoding="utf-8", newline="\n") as f:
+            f.write(summary)
         written.append(out)
     return written
