@@ -129,3 +129,4 @@ Task 5: complete (492d7d0; holdout, grep test widened).
 Task 6: complete (378f321; forward reviews).
 Task 7: complete (fae9e02; dry run, real-config test, .gitignore, spec §5.9). Full suite 1411 passed (51 min under machine load; re-timed 4:49 + 39 s).
 Final review: fresh reviewer (opus): "merge with fixes"; 0 Critical, 2 Important, 7 Minor; all fixed (spec §5.9 "Review fixes"), each with a test that failed first.
+After the review fixes: full suite 1425 passed (6 min 23 s, slow included).
