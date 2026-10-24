@@ -517,3 +517,257 @@ def _table(cols: dict[str, list], names: tuple[str, ...], *, ints=(), bools=()) 
     def dtype(c):
         return object if c in _TEXT else np.int64 if c in ints else bool if c in bools else np.float64
     return pd.DataFrame({c: np.asarray(cols[c], dtype=dtype(c)) for c in names})
+
+
+# --- the batched form ------------------------------------------------------------------------------------------
+
+@dataclass(frozen=True, eq=False)
+class _Aligned:
+    """Every pair on the return days, ``(pairs, days)``; NaN / False / -1 where the pair is not live.
+
+    ``mark_*`` are the decision day's closes, ``c_*`` / ``h_perp`` the return day's; ``ps`` / ``pp`` and
+    ``ms_*`` the late-fill prices and times; ``ev_*`` the return day's funding events padded to ``K`` per day
+    (``ev_px`` already falls back to ``funding_px_prev``, ``ev_fb`` marks where it did).
+    """
+
+    live: np.ndarray
+    jd: np.ndarray
+    ps: np.ndarray
+    pp: np.ndarray
+    ms_s: np.ndarray
+    ms_p: np.ndarray
+    mark_s: np.ndarray
+    mark_p: np.ndarray
+    c_spot: np.ndarray
+    c_perp: np.ndarray
+    h_perp: np.ndarray
+    delist: np.ndarray
+    ev_ts: np.ndarray
+    ev_rate: np.ndarray
+    ev_px: np.ndarray
+    ev_fb: np.ndarray
+
+
+def _align(frames: dict[str, PairFrame], cfg: ExecSpec, days: np.ndarray) -> _Aligned:
+    pairs = tuple(frames)
+    n, T = len(pairs), len(days)
+    h = cfg.rebalance.fill_offset_min
+    live, jd = np.zeros((n, T), dtype=bool), np.full((n, T), -1, dtype=np.int64)
+    ps, pp, ms_s, ms_p, mark_s, mark_p, c_spot, c_perp, h_perp = (np.full((n, T), np.nan) for _ in range(9))
+    delist = np.zeros((n, T), dtype=bool)
+    per_day = []
+    for i, pair in enumerate(pairs):
+        pf = frames[pair]
+        j = (days - DAY_MS - pf.day_ms[0]) // DAY_MS
+        ok = (j >= 0) & (j + 1 < len(pf))
+        jj = j[ok]
+        jt = jj + 1
+        live[i], jd[i, ok] = ok, jj
+        ps[i, ok], pp[i, ok] = pf.fill_px_late["spot"][h][jt], pf.fill_px_late["perp"][h][jt]
+        ms_s[i, ok], ms_p[i, ok] = pf.fill_late_ms["spot"][h][jt], pf.fill_late_ms["perp"][h][jt]
+        mark_s[i, ok], mark_p[i, ok] = pf.spot.c[jj], pf.perp.c[jj]
+        c_spot[i, ok], c_perp[i, ok], h_perp[i, ok] = pf.spot.c[jt], pf.perp.c[jt], pf.perp.h[jt]
+        delist[i, ok] = (jt == len(pf) - 1) & (days[ok] < days[-1])
+        per_day.append(pf.perp.funding_ptr[jt + 1] - pf.perp.funding_ptr[jt])
+    K = max([1] + [int(c.max()) for c in per_day if len(c)])
+    ev_ts = np.full((n, T, K), np.inf)
+    ev_rate, ev_px = np.zeros((n, T, K)), np.zeros((n, T, K))
+    ev_fb = np.zeros((n, T, K), dtype=bool)
+    for i, pair in enumerate(pairs):
+        pf = frames[pair]
+        cols = np.flatnonzero(live[i])
+        start = pf.perp.funding_ptr[jd[i, cols] + 1]
+        for k in range(K):
+            sel = per_day[i] > k
+            idx = start[sel] + k
+            raw = pf.perp.funding_px[idx]
+            fb = np.isnan(raw)
+            ev_ts[i, cols[sel], k] = pf.perp.funding_ts[idx]
+            ev_rate[i, cols[sel], k] = pf.perp.funding_rate[idx]
+            ev_px[i, cols[sel], k] = np.where(fb, pf.funding_px_prev[idx], raw)
+            ev_fb[i, cols[sel], k] = fb
+    return _Aligned(live, jd, ps, pp, ms_s, ms_p, mark_s, mark_p, c_spot, c_perp, h_perp, delist, ev_ts, ev_rate,
+                    ev_px, ev_fb)
+
+
+def run_batch(frames: dict[str, PairFrame], state_batch: dict[str, np.ndarray], cfg: ExecSpec) -> BatchResult:
+    """``P`` on/off paths at once (``state_batch[pair]`` bool ``(P, len(frame))``); equals ``run_path`` per path.
+
+    The same steps as ``run_path`` on ``(paths, pairs)`` arrays with masks; sums over pairs and funding events
+    run in the same order, so the two evaluate the same floating-point expressions.
+    """
+    P = _check(frames, state_batch, cfg, ndim=2)
+    pairs = tuple(frames)
+    n = len(pairs)
+    h = cfg.rebalance.fill_offset_min
+    x, lev, fs, fp, slip, mmr = _pair_costs(cfg, pairs)
+    slip, mmr = np.array(slip), np.array(mmr)
+    liq_fee, below = cfg.margin.liquidation_fee, cfg.margin.rebalance_below
+    days = _return_days(cfg)
+    T = len(days)
+    A = _align(frames, cfg, days)
+    on_all = np.zeros((P, n, T), dtype=bool)
+    for i, pair in enumerate(pairs):
+        cols = np.flatnonzero(A.live[i])
+        on_all[:, i, cols] = np.asarray(state_batch[pair])[:, A.jd[i, cols]]
+    K = A.ev_ts.shape[2]
+
+    def zeros():
+        return np.zeros((P, n))
+
+    qs, q, w, p0 = zeros(), zeros(), zeros(), zeros()
+    blocked, pend = np.zeros((P, n), dtype=bool), np.zeros((P, n), dtype=bool)
+    cash = np.full(P, float(cfg.equity0))
+    equity = cash.copy()
+    out = {c: np.zeros((P, T)) for c in ("equity", "ret", "cash", "funding", "fees", "slippage", "basis_pnl")}
+    n_on = np.zeros((P, T), dtype=np.int64)
+    counts = {c: np.zeros(P, dtype=np.int64) for c in COUNTS}
+    n_live_all = A.live.sum(axis=0).astype(np.int64)
+
+    with np.errstate(divide="ignore", invalid="ignore"):  # unmasked lanes (flat pairs, missing fills) give inf/NaN
+        for k in range(T):
+            lv = A.live[:, k]
+            n_live = int(n_live_all[k])
+            e_d = equity
+            target = e_d / n_live if n_live else np.zeros(P)
+            late_at = int(days[k]) + h * _MIN_MS
+            ps, pp = A.ps[:, k], A.pp[:, k]
+            mark_s = np.broadcast_to(A.mark_s[:, k], (P, n)).copy()
+            mark_p = np.broadcast_to(A.mark_p[:, k], (P, n)).copy()
+
+            # 2. the decision against the holding
+            on = on_all[:, :, k]
+            blocked = blocked & (on | ~lv)
+            want = on & ~blocked
+            orphan = (qs > 0) & (q == 0)
+            hedged = q > 0
+            flat = ~orphan & ~hedged
+            s_ok = ~np.isnan(ps)
+            b_ok = s_ok & ~np.isnan(pp)
+            sell_w, exit_w, reb_w, ent_w = orphan & lv, hedged & ~want, hedged & want & pend, flat & want
+            sell, ex, rebp, ent = sell_w & s_ok, exit_w & b_ok, reb_w & b_ok, ent_w & b_ok
+            counts["postponed"] += ((sell_w & ~s_ok) | ((exit_w | reb_w | ent_w) & ~b_ok)).sum(axis=1)
+            perp_trade = ex | rebp | ent
+
+            # 1. funding before the perp leg's fill, on the old quantity
+            ts, rate, px, fb = A.ev_ts[:, k], A.ev_rate[:, k], A.ev_px[:, k], A.ev_fb[:, k]
+            pre = perp_trade[:, :, None] & (ts < A.ms_p[:, k][:, None])[None]
+            held = (q != 0)[:, :, None]
+            amt = np.where(held, rate[None] * q[:, :, None] * px[None], 0.0)
+            f_pre = zeros()
+            for e in range(K):
+                f_pre = f_pre + np.where(pre[:, :, e], amt[:, :, e], 0.0)
+            counts["funding_px_fallbacks"] += (pre & fb[None] & held).sum(axis=(1, 2))
+            w = w + f_pre
+
+            # 3a. exits and post-liquidation spot sales
+            a_m = sell | ex
+            qp_c, pp_c = np.where(ex, q, 0.0), np.where(ex, pp, 0.0)
+            pnl = np.where(a_m, qs * (ps - mark_s), 0.0)
+            mark_s = np.where(a_m, ps, mark_s)
+            pnl = pnl - np.where(ex, qp_c * (pp - mark_p), 0.0)
+            mark_p = np.where(ex, pp, mark_p)
+            got, fe, sl = _close(qs, qp_c, w, p0, ps, pp_c, fs, fp, slip)
+            for i in range(n):
+                cash = cash + np.where(a_m[:, i], got[:, i], 0.0)
+            fee, slp = np.where(a_m, fe, 0.0), np.where(a_m, sl, 0.0)
+            late_s, late_p = A.ms_s[:, k] > late_at, A.ms_p[:, k] > late_at
+            counts["late_fills"] += (a_m & late_s).sum(axis=1) + (ex & late_p).sum(axis=1)
+            counts["exits"] += ex.sum(axis=1)
+            qs, q, w = np.where(a_m, 0.0, qs), np.where(a_m, 0.0, q), np.where(a_m, 0.0, w)
+
+            # 3b. rebalances
+            pl = _liq_price(q, w, p0, mmr)
+            dq = _rebalance_size(q, w, p0, ps, pp, lev, fs, fp, slip)
+            reb = rebp & (pp < pl) & (dq > 0)
+            pnl = pnl + np.where(reb, qs * (ps - mark_s), 0.0)
+            pnl = pnl - np.where(reb, q * (pp - mark_p), 0.0)
+            mark_s, mark_p = np.where(reb, ps, mark_s), np.where(reb, pp, mark_p)
+            w_new, fe, sl = _rebalance(dq, w, p0, ps, pp, fs, fp, slip)
+            w, q, qs = np.where(reb, w_new, w), np.where(reb, q - dq, q), np.where(reb, qs - dq, qs)
+            fee, slp = fee + np.where(reb, fe, 0.0), slp + np.where(reb, sl, 0.0)
+            counts["rebalances"] += reb.sum(axis=1)
+            counts["late_fills"] += (reb & late_s).sum(axis=1) + (reb & late_p).sum(axis=1)
+
+            # 3c. entries
+            total = np.zeros(P)
+            for i in range(n):
+                total = total + np.where(ent[:, i], target, 0.0)
+            capped = total > cash
+            lam = np.where(capped, cash / np.where(capped, total, 1.0), 1.0)
+            spend = np.where(capped[:, None], lam[:, None] * target[:, None], target[:, None])
+            counts["capped_entries"] += (ent & capped[:, None]).sum(axis=1)
+            traded = ent & (spend > 0)
+            a = _sleeve_amount(spend, ps, pp, x, lev, fs, fp, slip)
+            qq, ww, fe, sl = _entry(a, ps, pp, x, lev, fs, fp, slip)
+            for i in range(n):
+                t_i = traded[:, i]
+                cash = cash - np.where(t_i, a[:, i], 0.0) - np.where(t_i, fe[:, i], 0.0) - np.where(t_i, sl[:, i], 0.0)
+            cash = np.where(ent.any(axis=1), np.maximum(cash, 0.0), cash)
+            q, qs = np.where(traded, qq, q), np.where(traded, qq, qs)
+            w, p0 = np.where(traded, ww, w), np.where(traded, pp, p0)
+            mark_s, mark_p = np.where(traded, ps, mark_s), np.where(traded, pp, mark_p)
+            fee, slp = fee + np.where(traded, fe, 0.0), slp + np.where(traded, sl, 0.0)
+            counts["entries"] += traded.sum(axis=1)
+            counts["late_fills"] += (traded & late_s).sum(axis=1) + (traded & late_p).sum(axis=1)
+
+            # 1. funding at or after the perp leg's fill, on the new quantity
+            held = (q != 0)[:, :, None]
+            amt = np.where(held, rate[None] * q[:, :, None] * px[None], 0.0)
+            f_post = zeros()
+            for e in range(K):
+                f_post = f_post + np.where(pre[:, :, e], 0.0, amt[:, :, e])
+            counts["funding_px_fallbacks"] += (~pre & fb[None] & held).sum(axis=(1, 2))
+            w = w + f_post
+            fund = f_pre + f_post
+
+            # 4. margin
+            hedged = q > 0
+            c_s, c_p = A.c_spot[:, k], A.c_perp[:, k]
+            liq = hedged & _liquidates(q, w, p0, A.h_perp[:, k], mmr)
+            pl = _liq_price(q, w, p0, mmr)
+            fe = liq_fee * q * pl
+            pnl = pnl - np.where(liq, q * (pl - mark_p), 0.0)
+            mark_p = np.where(liq, pl, mark_p)
+            w = np.where(liq, w + q * (p0 - pl) - fe, w)
+            fee = fee + np.where(liq, fe, 0.0)
+            pend = hedged & ~liq & _needs_rebalance(q, w, p0, c_p, lev, below)
+            q = np.where(liq, 0.0, q)
+            blocked = blocked | liq
+            counts["liquidations"] += liq.sum(axis=1)
+
+            # 6. mark at the close
+            pnl = pnl + np.where(lv, qs * (c_s - mark_s), 0.0)
+            pnl = pnl - np.where(lv, q * (c_p - mark_p), 0.0)
+
+            # 5. delisting
+            dl = A.delist[:, k]
+            if dl.any():
+                got, fe, sl = _close(qs, q, w, p0, c_s, c_p, fs, fp, slip)
+                for i in np.flatnonzero(dl):
+                    cash = cash + got[:, i]
+                fee, slp = fee + np.where(dl, fe, 0.0), slp + np.where(dl, sl, 0.0)
+                qs, q, w = np.where(dl, 0.0, qs), np.where(dl, 0.0, q), np.where(dl, 0.0, w)
+                blocked, pend = blocked & ~dl, pend & ~dl
+                counts["delists"] += int(dl.sum())
+
+            val = _value(qs, q, w, p0, c_s, c_p)
+            equity = cash
+            for i in np.flatnonzero(lv):
+                equity = equity + val[:, i]
+            tot = {c: np.zeros(P) for c in ("funding", "fees", "slippage", "basis_pnl")}
+            for i in range(n):
+                tot["funding"] = tot["funding"] + fund[:, i]
+                tot["fees"] = tot["fees"] + fee[:, i]
+                tot["slippage"] = tot["slippage"] + slp[:, i]
+                tot["basis_pnl"] = tot["basis_pnl"] + pnl[:, i]
+            out["equity"][:, k], out["ret"][:, k], out["cash"][:, k] = equity, equity / e_d - 1.0, cash
+            for c, v in tot.items():
+                out[c][:, k] = v
+            n_on[:, k] = (q > 0).sum(axis=1)
+
+    return BatchResult(
+        day_ms=days, n_live=n_live_all, equity=out["equity"], ret=out["ret"], cash=out["cash"],
+        funding=out["funding"], fees=out["fees"], slippage=out["slippage"], basis_pnl=out["basis_pnl"], n_on=n_on,
+        counts=counts,
+    )
