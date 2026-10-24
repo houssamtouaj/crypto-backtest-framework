@@ -1,0 +1,75 @@
+# Reviewed corrections to the Yahoo data and accepted cross-check differences
+# (ETF spec Phase 0 §0.9; perpbt/etf/corrections.py). Each entry was checked by
+# hand against the Nasdaq bar and the neighbouring days of both sources, on the
+# 2026-10-24 download. The fetch applies `prices` and `dividends` before
+# validation, and refuses a fix whose `was` (Yahoo's value it replaces) no
+# longer matches; rule 6 lists `accepted` differences instead of failing on
+# them, and fails on an accepted difference that no longer occurs.
+prices:
+  - ticker: SPY
+    date: "2016-11-07"
+    open: 211.45
+    low: 211.30
+    was: {open: 208.55, low: 208.55}
+    reason: >-
+      Yahoo's open and low are 208.55, the previous close (a stale print); SPY gapped up about 1.4%
+      that Monday. Nasdaq's open and low; high and close agree in both sources.
+  - ticker: SPY
+    date: "2017-05-17"
+    open: 238.10
+    high: 238.64
+    was: {open: 240.08, high: 240.08}
+    reason: >-
+      Yahoo's open and high are 240.08, the previous close (a stale print); SPY gapped down that day.
+      Nasdaq's open and high; low and close agree in both sources.
+dividends:
+  - ticker: QQQ
+    date: "2010-06-25"
+    amount: 0
+    was: 0.089
+    reason: >-
+      A duplicate: Yahoo lists 0.089 on 2010-06-18 (the third Friday of June, QQQ's usual ex-date) and the same
+      0.089 again a week later. No QQQ quarter has two equal dividends; Nasdaq's history starts in 2012, so no
+      source confirms the second. Removed (the review of 2026-10-24 found it; +0.2% total return otherwise).
+  - ticker: QQQ
+    date: "2020-09-21"
+    amount: 0.38824
+    was: 0
+    reason: >-
+      Yahoo lacks QQQ's September 2020 quarterly dividend (its 2020 has March, June and December only);
+      Nasdaq's dividend history has it at 0.38824 per share, and every other dividend Nasdaq lists for
+      QQQ agrees with Yahoo's.
+accepted:
+  - ticker: QQQ
+    date: "2012-09-21"
+    check: dividend
+    reason: >-
+      Nasdaq's history has no QQQ dividend between 2012-06-15 and 2013-03-15; QQQ paid quarterly then.
+      Yahoo's 0.200 is kept.
+  - ticker: QQQ
+    date: "2012-12-21"
+    check: dividend
+    reason: >-
+      As 2012-09-21: missing from Nasdaq's history. Yahoo's 0.367 (the December 2012 distribution) is kept.
+  - ticker: IWM
+    date: "2017-12-05"
+    check: open
+    reason: >-
+      Opens 151.40 (Yahoo) and 152.95 (Nasdaq), 1.0% apart; neither bar is stale (the previous close is
+      152.45) and high, low and close agree. No third source; Yahoo, the primary source, is kept.
+  - ticker: IWM
+    date: "2017-12-07"
+    check: open
+    reason: >-
+      Opens 151.31 (Yahoo) and 150.32 (Nasdaq), 0.65% apart; neither bar is stale (the previous close is
+      150.22) and high, low and close agree. No third source; Yahoo is kept.
+  - ticker: GLD
+    date: "2026-04-20"
+    check: open
+    reason: >-
+      Nasdaq's bar is stale: open, high, low and close all 445.93 (the previous close) with no volume.
+      Yahoo's bar (443.13 / 443.42 / 440.05 / 442.09, volume 8.47M) is kept.
+  - ticker: GLD
+    date: "2026-04-20"
+    check: close
+    reason: As the open on this day; Nasdaq's bar is stale.

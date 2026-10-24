@@ -1,2 +1,4 @@
 * text=auto
 *.py text eol=lf
+# the ETF manifest is pinned by its sha256 (ETF prereg data.manifest_sha256): keep its bytes as written
+data/etf/manifest.json text eol=lf

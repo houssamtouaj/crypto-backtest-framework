@@ -55,7 +55,7 @@ def test_round_trip():
     pe = p.periods
     assert (pe.warmup_start, pe.warmup_end, pe.insample_start, pe.insample_end, pe.holdout_start, pe.holdout_end) \
         == ("2020-01-01", "2020-06-30", "2020-07-01", "2023-12-31", "2024-01-01", "2026-10-20")
-    assert pe.forward_start is None and pe.forward_reviews == (12, 36)
+    assert pe.forward_start == "2026-10-25" and pe.forward_reviews == (12, 36)  # set by the 2026-10-24 code lock
     assert p.universe["um"]["members"][0] == "BTCUSDT" and len(p.universe["um"]["members"]) == 10
     assert p.reprice.slippage == (0.0, 0.0002, 0.0005, 0.001) and p.reprice.spot_taker == (0.00075, 0.001)
     assert p.hurdle.annual == 0.05 and p.hurdle.descriptive == (0.0, 0.03, 0.05, 0.08)

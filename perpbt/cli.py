@@ -4,7 +4,7 @@ Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
 Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
 ``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout``,
-``carry forward`` and ``carry report``. Exit codes: 0 success, 1 a download, checksum,
+``carry forward`` and ``carry report``; the ETF strategy ``etf fetch`` and ``etf validate``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -41,6 +41,7 @@ DEFAULT_TREND_DATA = "configs/trend/data.yaml"
 DEFAULT_CARRY_DATA = "configs/carry/data.yaml"
 DEFAULT_BASIS_OUT = "runs/carry/basis_check.json"
 DEFAULT_CARRY_PREREG = "configs/carry/prereg.yaml"
+DEFAULT_ETF_DATA = "configs/etf/data.yaml"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -563,6 +564,54 @@ def _carry_report(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- etf -----------------------------------------------------------------------------------------
+
+
+def _etf_fetch(args: argparse.Namespace) -> int:
+    from perpbt.etf.fetch import run_fetch
+    from perpbt.etf.sources import SourceError
+    from perpbt.etf.store import StoreRefused
+    from perpbt.etf.validate import format_table
+
+    try:
+        out = run_fetch(args.config, refetch=args.refetch)
+    except (OSError, ConfigError) as e:
+        print(f"perpbt etf fetch: cannot load {args.config}: {e}", file=sys.stderr)
+        return 2
+    except StoreRefused as e:
+        print(f"perpbt etf fetch: refused: {e}", file=sys.stderr)
+        return 1
+    except (SourceError, ValueError) as e:  # ValueError: a corrections fix that does not apply (stale, unknown day)
+        print(f"perpbt etf fetch: {e}", file=sys.stderr)
+        return 1
+    print(format_table(out.results), flush=True)
+    if not out.ok:
+        print("perpbt etf fetch: validation failed; nothing written", file=sys.stderr)
+        return 1
+    print(f"perpbt etf fetch: download_date {out.download_date}, holdout_end {out.holdout_end}, "
+          f"cross-check basis {_fmt(out.basis)}; {len(out.manifest['files'])} files and the manifest written")
+    return 0
+
+
+def _etf_validate(args: argparse.Namespace) -> int:
+    from perpbt.etf.config import load_data_config
+    from perpbt.etf.store import EtfStore, StoreRefused
+    from perpbt.etf.validate import format_table, validate_store
+
+    try:
+        cfg = load_data_config(args.config)
+    except (OSError, ConfigError) as e:
+        print(f"perpbt etf validate: cannot load {args.config}: {e}", file=sys.stderr)
+        return 2
+    try:
+        results, _ = validate_store(EtfStore(cfg.data_dir), cfg)
+    except (StoreRefused, OSError) as e:
+        print(f"perpbt etf validate: {e}", file=sys.stderr)
+        return 1
+    print(format_table(results))
+    return 0 if all(r.ok for r in results) else 1
+
+
 def _add_code_change_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--allow-code-change", action="store_true",
                    help="run although the carry code version differs from the lock (needs --reason)")
@@ -737,6 +786,18 @@ def build_parser() -> argparse.ArgumentParser:
     creport.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
     creport.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     creport.set_defaults(handler=_carry_report)
+
+    etf = sub.add_parser("etf", help="the ETF trend strategy (SPY, QQQ, IWM, GLD)")
+    etf_sub = etf.add_subparsers(dest="etf_command", metavar="SUBCOMMAND", required=True)
+    efetch = etf_sub.add_parser("fetch", help="download Yahoo, FRED and Nasdaq, validate, write data/etf and the "
+                                              "fetch dates in the data config")
+    efetch.add_argument("--config", default=DEFAULT_ETF_DATA, help="EtfDataConfig YAML (default: %(default)s)")
+    efetch.add_argument("--refetch", action="store_true",
+                        help="replace a store of another download date (it moves to data/etf/_old/<date>/)")
+    efetch.set_defaults(handler=_etf_fetch)
+    evalidate = etf_sub.add_parser("validate", help="re-run the data rules on the stored snapshot")
+    evalidate.add_argument("--config", default=DEFAULT_ETF_DATA, help="EtfDataConfig YAML (default: %(default)s)")
+    evalidate.set_defaults(handler=_etf_validate)
 
     return parser
 
