@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "LINKUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "c129e50294e2679afb662b569ada713b1375c495919b7d99ab02663d6df13553",
       "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "658303d0a99c5e09c4946f2674d376ff7f86a97885732d1ded75f83d47bb343b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "a14d2bb0db0c25f683405dd4a56686594505f11f4c233558a2c3fd5f01158303",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "LINKUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "8623b6151b61640f95a9f742af568c101d1940b5c3f3edb6e7db1f15beacb268",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "LINKUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

@@ -5,10 +5,16 @@
       "purpose": "tail",
       "rows": 48,
       "start_ms": 1792713600000
+    },
+    {
+      "end_ms": 1792863000000,
+      "purpose": "tail",
+      "rows": 70,
+      "start_ms": 1792800000000
     }
   ],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "BCHUSDT-15m-2020-01.zip",
@@ -627,14 +633,20 @@
       "rows": 96,
       "sha256": "2633322043088a47387c40fbf8c6f72d3868a717a3026a80d2e461562950677d",
       "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "b3bef089fb1439a4b38bcd54f9b56a27a9cb69146f491af0967fd29df954513e",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
   "gaps": [],
-  "last_open_ms": 1792755900000,
+  "last_open_ms": 1792862100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BCHUSDT",
-  "rows": 238800,
+  "rows": 238918,
   "tf": "15m"
 }

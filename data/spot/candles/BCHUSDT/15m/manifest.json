@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "BCHUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "5a894fcbfc4aa91488be6d13aab63db6a33e61e26e4b39010270a75bf38c0a79",
       "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "f641503bdc391aeac74291113764d9091d07e0bc2b93115d50cc8f065658b8db",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "feaba88db41e92dffdb8e8dbf9b280cedd08f27a65ccc6cfd0bacc78e8f944c8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "BCHUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "5eb35b6b4efea0722b93bccf573b600f422a4e4d9c495d46896f213e9d7e3a2f",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BCHUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

@@ -17,10 +17,16 @@
       "purpose": "tail",
       "rows": 50,
       "start_ms": 1792713600000
+    },
+    {
+      "end_ms": 1792863000000,
+      "purpose": "tail",
+      "rows": 70,
+      "start_ms": 1792800000000
     }
   ],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "TRXUSDT-15m-2020-01.zip",
@@ -639,14 +645,20 @@
       "rows": 96,
       "sha256": "1ab8cd2a80e59710b2b1aa6e05557296b97d2cf78fc86cfb1212bf7da0fc6294",
       "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "8f16ebe1c988d5f9773e601d6c3c57512e93464527493efded23ff3b548c5627",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1579075200000,
   "gaps": [],
-  "last_open_ms": 1792757700000,
+  "last_open_ms": 1792862100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "TRXUSDT",
-  "rows": 237426,
+  "rows": 237542,
   "tf": "15m"
 }

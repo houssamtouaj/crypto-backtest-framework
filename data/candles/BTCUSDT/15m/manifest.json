@@ -29,6 +29,12 @@
       "purpose": "tail",
       "rows": 48,
       "start_ms": 1792713600000
+    },
+    {
+      "end_ms": 1792863000000,
+      "purpose": "tail",
+      "rows": 70,
+      "start_ms": 1792800000000
     }
   ],
   "consistency_1m_15m": {
@@ -43,7 +49,7 @@
     "mismatching_candles": 18,
     "months_checked": 82
   },
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "BTCUSDT-15m-2020-01.zip",
@@ -818,14 +824,20 @@
       "rows": 96,
       "sha256": "47b6a2fe72053c565653e07a2e13272ad5c56f6beca31fca597bf192a97c1318",
       "source": "bulk_daily"
+    },
+    {
+      "name": "BTCUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "f6207b34bc3e1cfc711f08e53be509b33d2031e3bc3d404ae09436657b471d1c",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1572566400000,
   "gaps": [],
-  "last_open_ms": 1792755900000,
+  "last_open_ms": 1792862100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "BTCUSDT",
-  "rows": 244656,
+  "rows": 244774,
   "tf": "15m"
 }

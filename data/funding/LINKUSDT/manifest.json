@@ -6,9 +6,15 @@
       "purpose": "tail",
       "rows": 68,
       "start_ms": 1790784060000
+    },
+    {
+      "end_ms": 1792863828434,
+      "purpose": "tail",
+      "rows": 4,
+      "start_ms": 1792742460000
     }
   ],
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "LINKUSDT-fundingRate-2020-01.zip",
@@ -499,12 +505,12 @@
   ],
   "first_funding_ms": 1579248000000,
   "intervals": {
-    "8": 7414
+    "8": 7418
   },
-  "last_funding_ms": 1792742400000,
+  "last_funding_ms": 1792857600000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "LINKUSDT",
-  "rows": 7414
+  "rows": 7418
 }

@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "XRPUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "50a4705d2d33ae711ca265a8a5ef581cbf2ca70747609054c9b151b5c687fae7",
       "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "534a0e3659834acbd2f4b708e209560893102ddf145afda760022fbf77840c52",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "23ced3a4fa4747660876a089c3c7c9a0dc969097ce6f981fff39e6d95c9469e6",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "0a774e242b2679186a50b0c2bb7b9af7f8dd7964515e8546f0ae413119cae867",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "XRPUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

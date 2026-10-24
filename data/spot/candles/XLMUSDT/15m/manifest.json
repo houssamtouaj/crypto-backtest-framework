@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "XLMUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "10bd1fb67b20d0b1af2c06ae76fc7c167c2cd15ce9b28368e46523975945baa5",
       "source": "bulk_daily"
+    },
+    {
+      "name": "XLMUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "3f7a9ab47ad67d31407f58b5ac2de947730d810b18563b60d963a890866e304b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XLMUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "cc1f16fbdb8bb362a582d893ac7652fb97903a391f91f7a6465bbf980223a62f",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XLMUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "eb9a5cb30a26a297552ef3cdc30ca61b14abb211d5ca420be0c47b54db94d047",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "XLMUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "ETCUSDT-15m-2020-01.zip",
@@ -608,6 +608,24 @@
       "rows": 96,
       "sha256": "17c66d380040f6f10ff62a71d0021f5de8f6548bc11d90d675c97dc0cc298871",
       "source": "bulk_daily"
+    },
+    {
+      "name": "ETCUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "5dcab4e920054d18bc3ebb96beab5c2948f53294fcc207d084bb8d7f67a719e4",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETCUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "c6789e7225f9ca5ad150748047119a5e7cb71231482048d99ac692f3d7951aba",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "ETCUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "f0389c8e1204796442daad122d5766c3449c80f0c60f7367e4da1f294bd8fb2d",
+      "source": "bulk_daily"
     }
   ],
   "first_open_ms": 1577836800000,
@@ -688,10 +706,10 @@
       "start_ms": 1679661900000
     }
   ],
-  "last_open_ms": 1792539900000,
+  "last_open_ms": 1792799100000,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "ETCUSDT",
-  "rows": 238408,
+  "rows": 238696,
   "tf": "15m"
 }

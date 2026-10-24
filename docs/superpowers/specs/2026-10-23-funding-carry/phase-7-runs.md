@@ -26,3 +26,22 @@ cannot be undone stops for the user first.
 No step is re-run with changes after its result is seen. If a step fails
 for a technical reason, fix the code, record it in the registry (the
 output-neutral check of Phase 5 §5.3 applies), and rerun that step only.
+
+## 7.1 Run notes (Phase 7, from 2026-10-24)
+
+Recorded as each step ran. *(my call)* marks a call taken on the user's standing instruction to take the recommended
+option; one-shot steps (the code lock, the holdout) and merges ran only on the user's go.
+
+**Step 1 — data tails (2026-10-24, 17:45 UTC; last complete UTC day 2026-10-23).**
+- `perpbt data fetch --config configs/carry/data.yaml --market um --tfs 15m --ccxt-tail` (28 s): the 2026-10-23 daily
+  zip and a ccxt tail of 70 candles and 4 funding events per active perp (to 2026-10-24 17:15 / 16:00);
+  EOSUSDT skipped as delisted (its stored series ends more than 7 days ago). Then `--market spot --tfs 15m` (39 s):
+  the 2026-10-21..23 daily zips per pair (the spot store already reached 2026-10-20 23:45 from the trend holdout
+  fetch); EOSUSDT's later files are not published.
+- `perpbt data validate` both markets: perps 0 gaps, every funding interval 8 h, no bad intervals; spot the same
+  exchange-wide gaps as at Phase 0 (15 from 2020), none from 2024 on.
+- Manifest-only check (no data loaded, no returns): every member's perp and spot 15m reach 2026-10-20 23:45 and its
+  funding reaches the day's last event (16:00), except EOSUSDT, whose common last day is 2025-05-21 (perp last
+  candle 09:00, spot 2025-05-26 02:45) = `runner.KNOWN_DELISTINGS`. No other early end; nothing added to the list.
+- Noted: EOSUSDT's funding archive continues to 2026-09-30 16:00, after its perp's last candle; the PairFrame cuts
+  both legs at the last common candle and drops the perp's later funding events (Phase 1), so they enter no run.
