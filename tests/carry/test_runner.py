@@ -2,20 +2,22 @@
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from perpbt.carry.prereg import load_prereg
 from perpbt.carry.runner import (
-    PORTFOLIO, REGISTRY_KEYS, CarryRun, Period, Variant, holdout_period, insample_period, load_frames, skip_reason,
-    variants,
+    PORTFOLIO, REGISTRY_KEYS, SIGNAL_COLUMNS, CarryRun, Period, Variant, holdout_period, insample_period, load_frames,
+    skip_reason, variants,
 )
+from perpbt.carry.signals import compute_signals
 from perpbt.experiments.registry_log import Registry
 from tests.carry.runenv import PAIRS, data_config, make_env
 
 ROOT = Path(__file__).resolve().parents[2]
-FILES = ("daily.parquet", "daily_pair.parquet", "fills.parquet", "events.parquet", "reprice.parquet", "variant.json",
-         "stats.json")
+FILES = ("daily.parquet", "daily_pair.parquet", "fills.parquet", "events.parquet", "signals.parquet", "reprice.parquet",
+         "variant.json", "stats.json")
 
 
 @pytest.fixture(scope="module")
@@ -125,6 +127,25 @@ def test_per_pair_variant(prereg, frames, tmp_path):
     assert stats["row"] == "primary/AAAUSDT" and list(stats["diagnostics"]) == ["annual", "decomposition", "margin",
                                                                                  "reprice"]
     assert set(pd.read_parquet(out / "daily_pair.parquet")["pair"]) == {"AAAUSDT"}
+    assert set(pd.read_parquet(out / "signals.parquet")["pair"]) == {"AAAUSDT"}
+
+
+def test_signals_table_is_the_frames_signal_and_basis_on_the_period_days(prereg, frames, tmp_path):
+    run = make_run(prereg, frames, tmp_path)
+    v = by_name(variants(prereg, ["entry_20"]), "entry_20")
+    sig = pd.read_parquet(run.run(v) / "signals.parquet")
+    assert tuple(sig.columns) == SIGNAL_COLUMNS and sig["on"].dtype == bool
+    for pair in PAIRS:
+        rows = sig[sig["pair"] == pair]
+        pf = frames[pair]
+        days = pd.to_datetime(pf.day_ms, unit="ms").strftime("%Y-%m-%d")
+        sel = (days >= "2020-07-01") & (days <= "2023-12-31")
+        assert rows["date"].tolist() == list(days[sel])
+        s = compute_signals(pf, v.signal)
+        assert np.array_equal(rows["fbar"].to_numpy(), s.fbar[sel], equal_nan=True)
+        assert np.array_equal(rows["on"].to_numpy(), s.on[sel])
+        assert np.array_equal(rows["basis"].to_numpy(), pf.basis[sel], equal_nan=True)
+    assert sig[sig["pair"] == "CCCUSDT"]["date"].iloc[-1] == "2023-12-20"  # a frame ending early stops there
 
 
 def test_registry_rows_started_then_ok(prereg, frames, tmp_path):

@@ -11,7 +11,8 @@ the code version is not part of it (it is in the registry rows), so the locked i
 row's diagnostics (``row_diagnostics``) and, for the portfolio primary, ``primary_diagnostics`` (filter value,
 random timing, DSR; it re-runs the seven rows on the portfolio). It writes ``<out_root>/<variant_id>/``:
 ``daily``, ``daily_pair``, ``fills``, ``events``, ``reprice``, ``random_timing`` (portfolio primary only)
-``.parquet``, ``variant.json`` and, last, ``stats.json``. Nothing time- or commit-dependent goes into the folder, so
+``.parquet``, ``variant.json`` and, last, ``stats.json``. ``signals`` holds each pair's trailing funding, decision
+state and basis on the period's days (``signal_table``), for the report's figures (Phase 6). Nothing time- or commit-dependent goes into the folder, so
 a rerun is byte-identical. The registry (``runs/carry/registry.jsonl``, ``experiments.registry_log.Registry``) gets
 a ``started`` row, then ``ok`` or ``failed`` (with the traceback); ``skip`` records a per-pair variant whose pair
 is not live through the period (``skip_reason``). Rows: ``REGISTRY_KEYS``; ``kind`` ``run | holdout | forward``;
@@ -41,7 +42,7 @@ from perpbt.carry.diagnostics import primary_diagnostics, row_diagnostics, row_n
 from perpbt.carry.executor import exec_spec, run_path
 from perpbt.carry.frames import PairFrame, load_pairframe
 from perpbt.carry.prereg import MARKET, CarryPrereg, carry_code_version, check_frozen, lock_path, read_lock
-from perpbt.carry.signals import compute_signals
+from perpbt.carry.signals import CarrySignals, compute_signals
 from perpbt.carry.verdict import PERIODS, Seeds, evaluate_row, stats_document, stats_json
 from perpbt.config import ConfigError, DataConfig, _check_iso_date, config_hash, to_dict
 from perpbt.data.store import DAY_MS, date_ms
@@ -56,7 +57,7 @@ HOLDOUT_DIR = "holdout"
 FORWARD_DIR = "forward"
 STATS_FILE = "stats.json"
 VARIANT_FILE = "variant.json"
-TABLES = ("daily", "daily_pair", "fills", "events")
+TABLES = ("daily", "daily_pair", "fills", "events", "signals")
 REPRICE_FILE = "reprice.parquet"
 TIMING_FILE = "random_timing.parquet"
 OUTPUT_FILES = (*(f"{t}.parquet" for t in TABLES), REPRICE_FILE, TIMING_FILE, VARIANT_FILE, STATS_FILE)
@@ -69,6 +70,7 @@ REGISTRY_KEYS = (
     "variant_id", "name", "kind", "period", "period_start", "period_end", "market", "status", "code_version",
     "git_commit", "prereg_hash", "batch", "started_ms", "finished_ms", "reason", "error",
 )
+SIGNAL_COLUMNS = ("date", "pair", "fbar", "on", "basis")
 REPRICE_COLUMNS = (
     "slippage", "spot_taker", "perp_taker", "ann_return", "sharpe", "ann_excess", "ann_excess_ci_lo",
     "ann_excess_ci_hi", "p", "passes", "reading", "fees", "slippage_cost", "entries",
@@ -249,6 +251,25 @@ def states(frames: Mapping[str, PairFrame], signal: CarrySignalConfig) -> dict[s
     return {pair: np.asarray(compute_signals(pf, signal).on) for pair, pf in frames.items()}
 
 
+def signal_table(frames: Mapping[str, PairFrame], signals: Mapping[str, CarrySignals], period: Period) -> pd.DataFrame:
+    """``signals.parquet``: per pair (in ``frames`` order) and frame day in ``period.start .. period.end``, the ISO
+    date, the annualised trailing funding ``fbar`` (NaN kept), the decision ``on`` at that day's close and the basis
+    ``perp.c / spot.c − 1`` at the close (``PairFrame.basis``). Read by the report's funding and basis figures."""
+    lo, hi = date_ms(period.start), date_ms(period.end)
+    parts = []
+    for pair, pf in frames.items():
+        sel = (pf.day_ms >= lo) & (pf.day_ms <= hi)
+        s = signals[pair]
+        parts.append(pd.DataFrame({
+            "date": pd.to_datetime(pf.day_ms[sel], unit="ms").strftime("%Y-%m-%d").to_numpy(dtype=object),
+            "pair": np.full(int(sel.sum()), pair, dtype=object), "fbar": np.asarray(s.fbar, dtype=np.float64)[sel],
+            "on": np.asarray(s.on, dtype=bool)[sel], "basis": np.asarray(pf.basis, dtype=np.float64)[sel]}))
+    if not parts:
+        return pd.DataFrame({"date": np.array([], dtype=object), "pair": np.array([], dtype=object),
+                             "fbar": np.array([]), "on": np.array([], dtype=bool), "basis": np.array([])})
+    return pd.concat(parts, ignore_index=True)[list(SIGNAL_COLUMNS)]
+
+
 def reprice_table(cells: Sequence[Mapping]) -> pd.DataFrame:
     """``reprice.parquet``: one row per re-pricing cell (``diagnostics.reprice``), V2 flattened.
 
@@ -279,14 +300,15 @@ def evaluate_variant(prereg: CarryPrereg, variant: Variant, period: Period,
     """The variant's tables (``TABLES``, ``reprice``, and ``random_timing`` for the portfolio primary) and its
     ``stats.json`` document."""
     fr = {pair: frames[pair] for pair in variant.pairs}
-    state = states(fr, variant.signal)
+    signals = {pair: compute_signals(pf, variant.signal) for pair, pf in fr.items()}
+    state = {pair: np.asarray(s.on) for pair, s in signals.items()}
     cfg = exec_spec(prereg, sleeve=variant.sleeve, start=period.start, end=period.end)
     result = run_path(fr, state, cfg)
     seeds = Seeds.of(prereg, period.name)
     verdict = evaluate_row(result.daily["ret"].to_numpy(), prereg, seeds, variant.name)
     diag = row_diagnostics(result, fr, state, cfg, prereg, seeds, variant.name, v1=verdict["v1"])
     tables = {"daily": result.daily, "daily_pair": result.daily_pair, "fills": result.fills, "events": result.events,
-              "reprice": reprice_table(diag["reprice"])}
+              "signals": signal_table(fr, signals, period), "reprice": reprice_table(diag["reprice"])}
     if variant.is_primary_portfolio:
         results = {}
         for row, (signal, sleeve) in row_configs(prereg).items():

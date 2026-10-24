@@ -3,8 +3,8 @@
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
 Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
-``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout`` and
-``carry forward``. Exit codes: 0 success, 1 a download, checksum,
+``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout``,
+``carry forward`` and ``carry report``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -543,6 +543,26 @@ def _carry_forward(args: argparse.Namespace) -> int:
     return 0
 
 
+def _carry_report(args: argparse.Namespace) -> int:
+    # imported here so the other commands do not load matplotlib
+    from perpbt.report.carry.report import ReportRefused
+    from perpbt.report.carry.summary import report_all
+
+    try:
+        out = report_all(args.prereg, args.runs_dir)
+    except ReportRefused as e:
+        print(f"perpbt carry report: refused: {e}", file=sys.stderr)
+        return 1
+    for p in out["reports"]:
+        print(p.as_posix())
+    if out["summary"] is None:
+        print("perpbt carry report: the screen stopped the project; runs/carry/summary.md is the screen's and was "
+              "left as it is")
+    print(f"perpbt carry report: {len(out['reports'])} reports; summary "
+          f"{'unchanged (screen stop)' if out['summary'] is None else out['summary'].as_posix()}")
+    return 0
+
+
 def _add_code_change_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--allow-code-change", action="store_true",
                    help="run although the carry code version differs from the lock (needs --reason)")
@@ -712,6 +732,11 @@ def build_parser() -> argparse.ArgumentParser:
     cfwd.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     _add_code_change_args(cfwd)
     cfwd.set_defaults(handler=_carry_forward)
+    creport = carry_sub.add_parser("report", help="write every portfolio run's report.md (with figures) and "
+                                                  "runs/carry/summary.md from what exists under runs/carry/")
+    creport.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    creport.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    creport.set_defaults(handler=_carry_report)
 
     return parser
 
