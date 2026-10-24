@@ -17,7 +17,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+from matplotlib.dates import DateFormatter, MonthLocator
+from matplotlib.ticker import FixedLocator, FuncFormatter, MaxNLocator, NullLocator
 
 from perpbt.report import figures as fg
 from perpbt.report.figures import BUYHOLD, FOURTH, INK, INK2, MUTED, STRATEGY, THIRD, placeholder
@@ -99,10 +100,20 @@ def _panels(n: int, title: str):
     return fig, axes
 
 
+def _date_ticks(ax, span: pd.Timedelta) -> None:
+    """Month ticks by the span's length (narrow panels): every 6, 3 or 2 months, labelled ``YYYY-MM``."""
+    step = 6 if span.days > 900 else 3 if span.days > 400 else 2
+    ax.xaxis.set_major_locator(MonthLocator(bymonth=range(1, 13, step)))
+    ax.xaxis.set_major_formatter(DateFormatter("%Y-%m"))
+
+
 def _shade(ax, dates: pd.DatetimeIndex, on: np.ndarray) -> None:
+    """Shade the ``on`` days over the full height, after the data is drawn (the y limits are kept)."""
     if len(dates) and on.any():
+        lim = ax.get_ylim()
         ax.fill_between(dates, 0, 1, where=on, step="post", transform=ax.get_xaxis_transform(), color=ON_SHADE,
                         lw=0, zorder=0)
+        ax.set_ylim(lim)
 
 
 def _per_pair(signals, daily_pair, path, *, title: str, column: str, ylabel: str, lines=()) -> Path:
@@ -113,11 +124,12 @@ def _per_pair(signals, daily_pair, path, *, title: str, column: str, ylabel: str
         rows = signals[signals["pair"] == pair]
         d = fg._dates(rows["date"])
         hedged = _hedged(daily_pair, pair).reindex(rows["date"].to_numpy(), fill_value=False).to_numpy(dtype=bool)
-        _shade(ax, d, hedged)
         for y, style in lines:
             ax.axhline(y, color=INK2, lw=0.9, ls=style)
         ax.plot(d, 100.0 * rows[column].to_numpy(dtype=np.float64), color=STRATEGY, lw=0.9)
+        _shade(ax, d, hedged)
         ax.set_xlim(span[0], span[1])
+        _date_ticks(ax, span[1] - span[0])
         ax.set_title(pair, fontsize=9)
         ax.set_ylabel(ylabel, fontsize=8)
     return fg._save(fig, path)
@@ -171,7 +183,7 @@ def decomposition(per_year: Sequence[Mapping] | None, path) -> Path:
     ax.set_xticks(x, years)
     ax.set_ylabel("% of equity (sum of daily)")
     ax.set_title("Return by source", fontsize=10)
-    ax.legend(frameon=False, fontsize=8, ncols=5, loc="upper right")
+    ax.legend(frameon=False, fontsize=8, ncols=5, loc="upper center", bbox_to_anchor=(0.5, -0.08))
     ax = axes[1]
     w = 0.36
     for k, (key, color, label) in enumerate((("rebalance_cost", BUYHOLD, "rebalances"),
@@ -180,6 +192,7 @@ def decomposition(per_year: Sequence[Mapping] | None, path) -> Path:
         ax.bar(x + (k - 0.5) * w, v, width=w, color=color, label=label)
     ax.axhline(0.0, color=MUTED, lw=0.8)
     ax.set_xticks(x, years)
+    ax.set_ylabel("% of equity (sum of daily)")
     ax.set_title("Of the costs: rebalances and liquidations", fontsize=10)
     ax.legend(frameon=False, fontsize=8)
     fig.suptitle("Return decomposition per year", color=INK, fontsize=11)
@@ -196,12 +209,12 @@ def v2_bootstrap(replicates: np.ndarray | None, v2: Mapping | None, path) -> Pat
         return placeholder(path, title, "the replicates could not be reproduced from the run folder")
     reps = 100.0 * fg._finite(replicates)
     fig, (ax,) = fg._figure()
-    ax.hist(reps, bins=60, color=MUTED, alpha=0.8, label=f"replicates ({len(reps)})")
+    ax.hist(reps, bins=60, color=MUTED, zorder=2, label=f"replicates ({len(reps)})")
     ax.axvline(0.0, color=INK, lw=1.2, label="0 (the hurdle)")
     lo, hi = (100.0 * float(c) for c in v2["ann_excess_ci"])
     for c in (lo, hi):
         ax.axvline(c, color=BUYHOLD, lw=1.2, ls="--")
-    ax.axvspan(lo, hi, color=BUYHOLD, alpha=0.08, lw=0, label=f"95% CI {lo:.2f} to {hi:.2f}")
+    ax.axvspan(lo, hi, color=BUYHOLD, alpha=0.08, lw=0, zorder=0, label=f"95% CI {lo:.2f} to {hi:.2f}")
     obs = 100.0 * float(v2["ann_excess"])
     ax.axvline(obs, color=STRATEGY, lw=2.0, label=f"observed {obs:.2f}")
     ax.set_xlabel(f"annualised excess over the {100 * float(v2['hurdle_annual']):g}%/yr hurdle (% / yr)")
@@ -226,6 +239,7 @@ def random_timing(table: pd.DataFrame | None, rt: Mapping | None, path) -> Path:
         if p is not None:
             ax.axvline(scale * float(p), color=STRATEGY, lw=2.0, label=f"primary (rank {rt[key]['rank']})")
         ax.set_xlabel(label)
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         ax.legend(frameon=False, fontsize=8, loc="upper left")
     axes[0].set_ylabel("paths")
     fig.suptitle(title, color=INK, fontsize=11)
