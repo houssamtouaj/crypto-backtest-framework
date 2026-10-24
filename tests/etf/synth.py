@@ -118,6 +118,16 @@ def walk_inputs(n: int = 300, seed: int = 7) -> tuple[list[str], pd.DataFrame, p
     return days, load_rows(days, c, o=o, div=div), rates
 
 
+def write_store(root, data: EtfData, *, download_date: str = "2026-10-24", holdout_end: str = "2026-10-23"):
+    """``data`` written as an ``EtfStore`` at ``root`` (test provenance), for the Phase 2 snapshot and screen tests."""
+    from perpbt.etf.store import EtfStore, FileSource
+
+    store = EtfStore(root)
+    prov = {rel: FileSource("test", f"test://{rel}", {}, f"{download_date}T00:00:00Z", "a" * 64) for rel in data.files()}
+    store.write(data, prov, download_date=download_date, holdout_end=holdout_end)
+    return store
+
+
 def replace(data: EtfData, **frames) -> EtfData:
     """``data`` with some of its mappings or frames replaced."""
     parts = {"prices": dict(data.prices), "actions": dict(data.actions), "rates": data.rates,

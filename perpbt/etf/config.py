@@ -1,4 +1,5 @@
-"""ETF configuration types (ETF spec overview §6; Phase 0 §0.1 the data config; Phase 1 §1.5 the sizing).
+"""ETF configuration types (ETF spec overview §6; Phase 0 §0.1 the data config; Phase 1 §1.5 the sizing;
+Phase 2 §2.1 the remaining prereg blocks: rebalance, costs, cash, reprice).
 
 Frozen dataclasses on the first strategy's ``_Config`` base: fields are
 coerced to their annotation, validated, and hash through
@@ -12,17 +13,26 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from perpbt.config import ConfigError, _check_iso_date, _check_positive, _Config, from_dict, read_yaml_unique
+from perpbt.config import (
+    ConfigError, _check_iso_date, _check_literal, _check_non_negative, _check_positive, _Config, from_dict,
+    read_yaml_unique,
+)
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.etf.store import ETF_HOLDOUT_START
 
 RATE_SOURCES = ("fred",)
 CROSS_CHECK_SOURCES = ("nasdaq",)
 ANNUALISE_DAYS = 252  # US trading days a year (overview §7)
+CASH_DAY_COUNT = 360  # T-bill money-market convention (Phase 1 §1.3)
+FREQUENCIES = ("daily", "weekly")
+WEEKDAYS = ("friday",)  # the week's last trading day (Phase 2 §2.1); Phase 3 handles a Friday holiday
+FILLS = ("next_open", "next_close")
+MAX_COST = 0.1  # a cost per side at or above 10% is a typo, not a scenario
 _TICKER = re.compile(r"^[A-Z]{1,5}$")
 
-__all__ = ["ANNUALISE_DAYS", "CrossCheckSource", "EtfDataConfig", "EtfSizingConfig", "RatesSource",
-           "load_data_config"]
+__all__ = ["ANNUALISE_DAYS", "CASH_DAY_COUNT", "CrossCheckSource", "EtfCashConfig", "EtfCostConfig",
+           "EtfDataConfig", "EtfRebalanceConfig", "EtfRepriceConfig", "EtfSizingConfig", "FILLS", "FREQUENCIES",
+           "RatesSource", "WEEKDAYS", "load_data_config"]
 
 
 @dataclass(frozen=True)
@@ -130,6 +140,87 @@ class EtfSizingConfig(_Config):
             raise ConfigError(f"EtfSizingConfig.max_weight: must be in (0, 1], got {self.max_weight!r}")
         if self.annualise_days != ANNUALISE_DAYS:
             raise ConfigError(f"EtfSizingConfig.annualise_days: must be {ANNUALISE_DAYS}, got {self.annualise_days}")
+
+
+@dataclass(frozen=True)
+class EtfRebalanceConfig(_Config):
+    """The prereg ``rebalance`` block (Phase 2 §2.1): when positions trade and at which price (Phase 3)."""
+
+    frequency: str  # "daily" | "weekly"
+    weekday: str | None  # weekly only: "friday", the week's last trading day decides
+    drift_band: float  # relative: trade when |w_held − w*| > drift_band × w*
+    fill: str  # "next_open" | "next_close": the trading day after the decision
+
+    def _validate(self) -> None:
+        _check_literal(self.frequency, FREQUENCIES, "EtfRebalanceConfig.frequency")
+        if self.frequency == "daily" and self.weekday is not None:
+            raise ConfigError(f"EtfRebalanceConfig.weekday: must be null for daily rebalancing, got {self.weekday!r}")
+        if self.frequency == "weekly":
+            if self.weekday is None:
+                raise ConfigError("EtfRebalanceConfig.weekday: weekly rebalancing needs a decision weekday")
+            _check_literal(self.weekday, WEEKDAYS, "EtfRebalanceConfig.weekday")
+        if not math.isfinite(self.drift_band):
+            raise ConfigError(f"EtfRebalanceConfig.drift_band: must be finite, got {self.drift_band!r}")
+        _check_non_negative(self.drift_band, "EtfRebalanceConfig.drift_band")
+        _check_literal(self.fill, FILLS, "EtfRebalanceConfig.fill")
+
+
+def _check_cost(x: float, where: str) -> None:
+    if not (math.isfinite(x) and 0 <= x < MAX_COST):
+        raise ConfigError(f"{where}: must be in [0, {MAX_COST}), got {x!r}")
+
+
+@dataclass(frozen=True)
+class EtfCostConfig(_Config):
+    """The prereg ``costs`` block: commission and slippage, fractions of traded value per side."""
+
+    commission: float
+    slippage: dict[str, float]  # ticker -> fraction; "default" for the others
+
+    def _validate(self) -> None:
+        _check_cost(self.commission, "EtfCostConfig.commission")
+        if "default" not in self.slippage:
+            raise ConfigError("EtfCostConfig.slippage: needs a 'default' entry")
+        for key, value in self.slippage.items():
+            if key != "default" and not _TICKER.fullmatch(key):
+                raise ConfigError(f"EtfCostConfig.slippage: expected upper-case tickers or 'default', got {key!r}")
+            _check_cost(value, f"EtfCostConfig.slippage[{key!r}]")
+
+    def slippage_for(self, ticker: str) -> float:
+        return self.slippage.get(ticker, self.slippage["default"])
+
+
+@dataclass(frozen=True)
+class EtfCashConfig(_Config):
+    """The prereg ``cash`` block: idle cash earns this FRED series, accrued per calendar day over ``day_count``."""
+
+    series: str  # "DTB3"; must be data.yaml's rates.series
+    day_count: int  # 360: what frame.cash_returns computes
+
+    def _validate(self) -> None:
+        if not re.fullmatch(r"[A-Z0-9]+", self.series):
+            raise ConfigError(f"EtfCashConfig.series: expected a FRED series id, got {self.series!r}")
+        if self.day_count != CASH_DAY_COUNT:
+            raise ConfigError(f"EtfCashConfig.day_count: must be {CASH_DAY_COUNT} (frame.cash_returns), "
+                              f"got {self.day_count}")
+
+
+@dataclass(frozen=True)
+class EtfRepriceConfig(_Config):
+    """The prereg ``reprice`` grid: slippage × commission, each per side (Phase 4)."""
+
+    slippage: tuple[float, ...]
+    commission: tuple[float, ...]
+
+    def _validate(self) -> None:
+        for name in ("slippage", "commission"):
+            values = getattr(self, name)
+            if not values:
+                raise ConfigError(f"EtfRepriceConfig.{name}: must not be empty")
+            if len(set(values)) != len(values):
+                raise ConfigError(f"EtfRepriceConfig.{name}: duplicates in {list(values)}")
+            for k, x in enumerate(values):
+                _check_cost(x, f"EtfRepriceConfig.{name}[{k}]")
 
 
 def load_data_config(path: str | Path) -> EtfDataConfig:
