@@ -12,7 +12,7 @@ record (the output-neutral check of Phase 5 §5.9) and a rerun of that step only
 - [x] 1. Fetch both legs' 15m tails (perps with `--ccxt-tail`, funding included; spot from the archive) for the ten
   members with `configs/carry/data.yaml`; `data validate` both markets; a manifest-only check that every member
   reaches 2026-10-20 in full or is a known delisting (`runner.KNOWN_DELISTINGS`); commit the manifests.
-- [ ] 2. Full test suite once (max timeout), then **ask the user**; `perpbt carry lock-code`; commit
+- [x] 2. Full test suite once (max timeout), then **ask the user**; `perpbt carry lock-code`; commit
   `configs/carry/prereg.yaml` and `prereg.lock`.
 - [ ] 3. `perpbt carry run --primary`, then `--exploratory` (foreground, one at a time), then `perpbt carry report`;
   commit the registry, `results.parquet`, every `stats.json`, the reports, figures and `runs/carry/summary.md`.
@@ -28,3 +28,6 @@ record (the output-neutral check of Phase 5 §5.9) and a rerun of that step only
 
 Step 1: fetched and validated both legs (perps 28 s, spot 39 s); manifest-only check: 9 members full through
 2026-10-20, EOSUSDT the known delisting (2025-05-21); spec §7.1.
+Step 2 (before the lock): full suite 1489 passed, 2 known warnings (15 min 22 s; slower than Phase 6's 6 min 17 s,
+same count).
+Step 2: code locked on the user's go (code_version 7ce43816…, git ab95921; forward start 2026-10-25).

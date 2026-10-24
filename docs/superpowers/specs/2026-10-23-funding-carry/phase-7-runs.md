@@ -45,3 +45,9 @@ option; one-shot steps (the code lock, the holdout) and merges ran only on the u
   candle 09:00, spot 2025-05-26 02:45) = `runner.KNOWN_DELISTINGS`. No other early end; nothing added to the list.
 - Noted: EOSUSDT's funding archive continues to 2026-09-30 16:00, after its perp's last candle; the PairFrame cuts
   both legs at the last common candle and drops the perp's later funding events (Phase 1), so they enter no run.
+
+**Step 2 — code lock (2026-10-24, on the user's go).** Full suite before it: 1489 passed (15 min 22 s).
+`perpbt carry lock-code`: carry code version `7ce43816563f41f4f2aa7318d46e382e027e7a547652ac4d6b748454fa80f240`,
+locked on 2026-10-24 at git ab95921; `periods.forward.start` = 2026-10-25; the prereg hash is unchanged
+(`a44eee47…b242`, `carry prereg validate`). The 12-month review needs data through 2027-10-24, the 36-month one
+through 2029-10-23.
