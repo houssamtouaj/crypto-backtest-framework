@@ -134,3 +134,34 @@ def test_transient_exchange_errors_are_retried_and_ccxt_errors_become_download_e
     with pytest.raises(DownloadError, match="nope"):
         fetch_ohlcv_range(broken, "BTCUSDT", "15m", T0, T0 + STEP)
     assert len(broken.calls) == 1  # not transient: no retry
+
+
+def _events(times_h):
+    return [{"timestamp": T0 + t * H + 2, "fundingRate": 1e-4} for t in times_h]
+
+
+def test_funding_range_stamps_the_gap_before_each_event():
+    # carry Phase 5 (the Phase 2 pointer): an interval change inside a ccxt tail is stamped per event, as the
+    # bulk archive does (an event's interval is the hours since the previous one)
+    ex = FakeExchange(funding=_events([0, 8, 16, 20, 24, 28]))
+    frame = fetch_funding_range(ex, "BTCUSDT", T0 + H, T0 + 30 * H, interval_h=8, prev_ms=T0)
+    assert frame["interval_h"].tolist() == [8, 8, 4, 4, 4]
+    assert frame["interval_h"].dtype == np.int8
+
+
+def test_funding_range_first_event_takes_its_gap_from_prev_ms():
+    ex = FakeExchange(funding=_events([4, 8]))
+    frame = fetch_funding_range(ex, "BTCUSDT", T0 + H, T0 + 9 * H, interval_h=8, prev_ms=T0)
+    assert frame["interval_h"].tolist() == [4, 4]
+
+
+def test_funding_range_without_prev_ms_uses_the_given_interval_first():
+    ex = FakeExchange(funding=_events([0, 4, 8]))
+    frame = fetch_funding_range(ex, "BTCUSDT", T0, T0 + 9 * H, interval_h=8)
+    assert frame["interval_h"].tolist() == [8, 4, 4]
+
+
+def test_funding_range_missing_event_keeps_the_previous_interval():
+    ex = FakeExchange(funding=_events([8, 16, 32, 40]))  # the 24:00 event is missing: a 16 h gap
+    frame = fetch_funding_range(ex, "BTCUSDT", T0 + H, T0 + 41 * H, interval_h=8, prev_ms=T0)
+    assert frame["interval_h"].tolist() == [8, 8, 8, 8]

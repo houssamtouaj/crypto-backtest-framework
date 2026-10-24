@@ -1,0 +1,715 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-24",
+  "files": [
+    {
+      "name": "TRXUSDT-15m-2020-01.zip",
+      "rows": 2976,
+      "sha256": "5cdb85e70bc22db9fadf44eb1ae9087249619167ddb4e144dff20a6470367655",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-02.zip",
+      "rows": 2757,
+      "sha256": "16a6c7fddc8d094729303780867c67ae85aacdd5df23b15b0def48fb080c6135",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-03.zip",
+      "rows": 2968,
+      "sha256": "58a60e0cd8e0eb54b3cffc62603c89ec5797a42361a60c03943f6263f274481b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-04.zip",
+      "rows": 2870,
+      "sha256": "7c386b47817d70f81719b7870c415f14fafdac1ce32678a704c02fe1f41a4f4e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "eaea8e75129ebff1c0ffbfa202a22a899b98157543524900dff168fb24923621",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-06.zip",
+      "rows": 2866,
+      "sha256": "9d44a6ebae75db4da5f9fa033a0f592669f2822454526d2d7dffd3a4252fba27",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "2a21e7e90c6c429a1dc7a81fa0f0a33b90d37e64472bb0619912eb7ae16abd9b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "7e675be64b68f15966b18acd688f7c93aa989e516139a3215d6b8ebc2b7fce6d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "e43c0ab849c9ca43cdf2c3f29728389a13ff804d53bc1422a26fe098b95c4baa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "3b989a10e8f561baccc5f52d07e0135ba5c6c623dd58d699ffc3bc816da820ae",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-11.zip",
+      "rows": 2876,
+      "sha256": "770def360e1017a25b30eb923663181076370a5e3e373506c48aae8319f32edf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2020-12.zip",
+      "rows": 2957,
+      "sha256": "11a7c1afee706928e866515c717ae1053855b95fa04f1aae8946c803d93b2432",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "1fd7045346f137e3b7e3b102a64f945438520ef0c9757e8b179af570b9b77191",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-02.zip",
+      "rows": 2683,
+      "sha256": "3e85aef26c6fe3cff234288cd1d3d5efc39b0caad9558c699171d4e9ec139602",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-03.zip",
+      "rows": 2970,
+      "sha256": "9e83b27e5228eb7cc1a78522d13d66ee6a28bc65fd7e360bd7a1b9339cb77f50",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-04.zip",
+      "rows": 2852,
+      "sha256": "e2e0e43700c8d8dd6d7a5072704706bb05b147836589fc5b59c34da7e024f993",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "5b73593dfb3237c858b1b98992ad22cba8d611a689757c2f1cadac1cd888a3f4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "f6d86251b8ca814bfd96064bd67fabbe99df8b08a85547306c0d445c256e27f0",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "3fd1ed99c6f3f9ac7a950444b225d12568298543fd249c7226554262285f208e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-08.zip",
+      "rows": 2958,
+      "sha256": "83c28e2f04d598221184748fbb068334ed37a181444e9d355702159abc907aaf",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-09.zip",
+      "rows": 2872,
+      "sha256": "2e84834257b1f6ccb28d82cbb09b562c13b5303531cccda6bed69df7f23267ef",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "ade972c953e605e2af72eddd182edb97ae4e631e7ebd2fa0d2a1222434a93a3a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "1a7c78143d79f8e3dd220533d4ad8a7cdb5b703ce325d28d06c111bb15cc12d8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "3123d1fd425d81975bfeeb6d9d3a7529834bdad9f0d9c0c2510e599c3897adfb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "00612ac4f08761845f4cc894e8ed7efe5df4efb5363d0780c8ead0f93827107b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-02.zip",
+      "rows": 2688,
+      "sha256": "746201eb463e771b26b4389c3dbb2270ad5f2edf630adcb3e71683e5a0476c4a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "bc0dcf09d0eabc365f46bb3bf622904a7e8c449876fc365201ff614a40749aae",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-04.zip",
+      "rows": 2880,
+      "sha256": "6f257c84904ff65b118312879b6a2371f205276719d65c4856690f31defd687f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "a8ed5ab2096ed519cc6fb03cb68cbb759d4239077233933650582c448083667c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "21e49577dfa9d828a4066368484e213dea337d08e24ad1abcd478741522d58ed",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "5da419d96c6c983ec9295714758cca90d4acc82bdcd2f81a86cabe5d434f3fa5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "261cf3af96c2db1ad626130ae4872cc32790f60ebd5694362a06f334a7bc741b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "1ee07f6adbbe819bf31d2dcc94608941680b143a7cb10344e07eb98ae2681df5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "5ebc10c4f749eb827fcd426296ce8e151f4fc8e71120da60990d33c45f8eb9a5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "4fc8543c382246b45d2012568edfcd1421593458deec9096e610214e46eda1c8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "7df07a792450804a88d44f1786051e58dab51db297313bb5616372aacf709a13",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "e65fd5748144553466a9f319850c73e21c1f20d7d9c17bd78fdf117da9f4b699",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "c6d569e6a59d60acddc10fd69e27f24a742cdf660765284cdff41c852a5b1f70",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-03.zip",
+      "rows": 2971,
+      "sha256": "9367832544a224861b9f009a561d1b2084cc556feaa7c864befc2502d2481daa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "89a13326130f78390606c20db6b6ebf3eac644e881fa4b55406967a59803cc41",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "e4e80784d43fb330efdccf9fd28cb6a4ebbf1a3dba7b491a50e3e30fd0717f61",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "71c02c49a42dfb9dfe2a0e388012c8b5a11eff47df18865486cb2c7fd4b0ce14",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "26bfd59307158a64a59f918e113397f126fa7ff5e7a930b0d265bb590b000a7b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "a3ebc6440fc63a1216e4a5a820aeda48801dbbdb42b4730e336ac5f653509da1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "af5820e15a7b00205a4e63c7dd2652c0aa3fa7269097c2a350b55c88fddcdbc4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "74a339d889cae8373bf5bf8eacfba3873d7d9363cedec404c56caad700239728",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "517a5f8eab04b40c1971cd826b360497d3e77fb7a653185caa0a8d80212a8284",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "d0d040d23e9fbe9c353f0fc4e9bbd70c0f14566af8c4d2a3ad79f61f2dc8bfc2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "7902c3d411450b77ae6f1291fc89a217a20f9ab0762b998b6328a0df0da69856",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "7bdadd92f63045cc11261fbc587776544222774e050b285fd242b0c2a0195738",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "314a7f8c15db17e74a14c99dd41676b9c570315511cf3a0161842ae7e6160eb9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "21cf16a59e9b6b023888bc4ede876c017d61863dee46bc1d105573784e618977",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "134997783af5fb7e5dec826eb07b5cc86f8a4e3967232bc746f5a670acde4124",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "8be03b3d3255a775f7120dc5ce5424d727e0ddb025ce8df5a09b279d273fe713",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "fbd3ce096406b861bde6544576ac0e23769244ecb2d48f968d1cdcf4377b54b8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "1b48e7ce63abc7b5203f122679f42615d8044f0768ec6b4e95e0d64469b4a33a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "33d3e3286fb102879e067bb0f5230442244d0621c4487ba7c985c6c2d666e330",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "d906378cc16470686727537d6df10f37744914d549bba4661e91b7d3901c1efa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "4744d4e4659a38a2c8edf617fdd767ba9e8401ee72ed0b88ffd297b3d031afde",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "bc08d03fb1034fdb5d1074af3b2b2865561b6be1362780e72df3d9d670726ee6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "c4ffcc497c70707618b67d4f074493c3f613ac9a81884a8d190b42e3ab387b06",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "c8d5f5371534d75fe5a6d033cbed6ee30ffb41ad094b59fdb346137fa7768af4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "79ec8a0b9b10b1ff225b3bdcdb40c6859a075dbd82528a7bc5c51fe1322f97e1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "4177d113c75488e05db2edb4e8a0fc64de732bfee6fc7504c8130f72765d3cb9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-05.zip",
+      "rows": 2976,
+      "sha256": "2e7dffbbab4f33674b9dfd5ac3f608ee1261709ac9d7fdfbe02d4494b72456a8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-06.zip",
+      "rows": 2880,
+      "sha256": "e06fa0c3f371c2ff62afeb8a0f4d93214bd49fc15945c018cd2efa5e3aa48e21",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-07.zip",
+      "rows": 2976,
+      "sha256": "c00c59c90ae5b208fc82e6a62dbcc2d97f85246d890c90f4718a7ac3ac6fbe1b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-08.zip",
+      "rows": 2976,
+      "sha256": "8fae911ac191b2c4627ed0625d627497ecf30a95bf5c42ad515216eb71bfb467",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-09.zip",
+      "rows": 2880,
+      "sha256": "5f70cd4c1b54c729fa172b04964de11c01b41cb2cca446dd0835f10da6fabdc8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-10.zip",
+      "rows": 2976,
+      "sha256": "5bf588065155e69582174f4e7f2f0f5fd98cdca04851199eae9a8afb322e6283",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-11.zip",
+      "rows": 2880,
+      "sha256": "049b65f18ce70e87102dfd1c9259fc519daa0ba866f53982fb57925a2b91c42e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2025-12.zip",
+      "rows": 2976,
+      "sha256": "a9489217c4bf7d91a2333019791ed8194f761c8640366aea292288604f239049",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-01.zip",
+      "rows": 2976,
+      "sha256": "7ee93532ab706306a48a3a5f806789e2882d305c636eaaa47396f187e7ea3302",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-02.zip",
+      "rows": 2688,
+      "sha256": "6ff3bff87db61376c9a50c61eac83c7b0c801f629877060543c201e61ebc7dd3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-03.zip",
+      "rows": 2976,
+      "sha256": "d60226db170f509256cb37039488517adf87056039fd116eac228f7b82c8d93d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-04.zip",
+      "rows": 2880,
+      "sha256": "1a84fa56f897aff6511f1b976c383fe6e47e56d1634337db818c74da5493273f",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-05.zip",
+      "rows": 2976,
+      "sha256": "898acb7dfe5724a2d92ca56da5d13ed91bcedf78861b3f69524a79058750ebcd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-06.zip",
+      "rows": 2880,
+      "sha256": "a3143281f41368bb9b4faa2061807f899aceaf3614364e4ced7b909de9d213ec",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-07.zip",
+      "rows": 2976,
+      "sha256": "ce67bfc8ad9cb6dbcd156a4774f3260b974b16f265a690ad78a0e5cb37ede6f1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-08.zip",
+      "rows": 2976,
+      "sha256": "0b8f4a6769f62e14b366fb6e0e61109b8f9461c41677f0a714512d28c4f8abcb",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "db9a43ea309955d37f012a4dee9a3f399b6de71d47e368c2f6cde02bd70695b5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "ea1735e63a4919cf436baae33a3af67de0d86f3c7eeac843dd0772b446e669b5",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "e031dda5b701c9dadab5d9824147e67db34ef2cb3a5e5d12089eebec38f6a71f",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "684e659c93d537c7e2bfd4f645b7fa8ec5a3c594fd9cf0cc0ffc26e485dcaf70",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "eb99eee16a179f8045ffaf950383b2e6da0825d2043c410b3e9350b515d10b66",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "7cb8a2896d0b549f22f6bc7711e617ee22b877b4b66d19ef2b57e42eea90ec64",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "f1a2675ea5daa5722af90809ec677caaeae37fa56faedc5238a85eb49bfb0f05",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "5760f6cfc72ae7b80e007876e2b5494ac418451d189093324fbb440a64368cdf",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "717b11fa8e0a34b3af0f2bc6b83feebde929d6410f026ea7217651d4ae66c1cd",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "908f5c0abe0f19bdbd4708894afa81cb383c86e25b80adc7c63747016b19fb9c",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "ea373d18fc57ba4a1ca0590e343c3db93f217f7c41eb1c702b9c76b30f45f5b1",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "0d3ae3279915204f6e28787163d88dc03ba6c7509534ed2eee4c4ebdcd0c7cb2",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "ceb0ff88f45247f4f1f2fdccdc99e12eca0bb5182e7d6803f571a29e095c06e1",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "755b7ef233c471f748beb6df361dc7486a23b524c5c262fe019d3aba11647eaa",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "db47806266f2cd3ba6cdf9120169c98fb44398cebedc02d3817d9f030dc5d52b",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "ab5f5402713550d933d51826bc6030c1e3ce1dc0c9866c4b7151da2c7e62d550",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "f9f69830d0d5ad9feeaf757e7691793908a01eae8a1d6238d26b49dfccc7d447",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "8509ec60525b68f61ce0b901301a69caa7e0060c1761cc7d779572e01f7cae72",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "9e8712884bd9ee68ef113ccee3045d2cab7a59e1f06ac89fcf0521de3a22dea8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "ce2e82153197c206877ddd23b91c613c18989e8b0fd7eab6c6eb34e8d0942425",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "507ec66567ab707cc01c443fc54a0e197a57ac50c885beaafb522d465932b5d9",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "a6a4982f2732aa14f1cf5d2a16d505ee4dd30438aa74457ef6e7e044ada2f9df",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "703c8749bea9770fefec193f03ea6a8917e622fdf41c49e6b688f30e53ecf643",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "TRXUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "99983af0203eb10981513373bfe8924df9673b75553b3f67600dc28f5c38f2fd",
+      "source": "bulk_daily"
+    }
+  ],
+  "first_open_ms": 1577836800000,
+  "gaps": [
+    {
+      "end_ms": 1581217200000,
+      "missing": 4,
+      "start_ms": 1581213600000
+    },
+    {
+      "end_ms": 1582133400000,
+      "missing": 23,
+      "start_ms": 1582112700000
+    },
+    {
+      "end_ms": 1583321400000,
+      "missing": 8,
+      "start_ms": 1583314200000
+    },
+    {
+      "end_ms": 1587789000000,
+      "missing": 10,
+      "start_ms": 1587780000000
+    },
+    {
+      "end_ms": 1593322200000,
+      "missing": 14,
+      "start_ms": 1593309600000
+    },
+    {
+      "end_ms": 1606719600000,
+      "missing": 4,
+      "start_ms": 1606716000000
+    },
+    {
+      "end_ms": 1608573600000,
+      "missing": 15,
+      "start_ms": 1608560100000
+    },
+    {
+      "end_ms": 1608865200000,
+      "missing": 4,
+      "start_ms": 1608861600000
+    },
+    {
+      "end_ms": 1613019600000,
+      "missing": 5,
+      "start_ms": 1613015100000
+    },
+    {
+      "end_ms": 1615001400000,
+      "missing": 6,
+      "start_ms": 1614996000000
+    },
+    {
+      "end_ms": 1618893000000,
+      "missing": 10,
+      "start_ms": 1618884000000
+    },
+    {
+      "end_ms": 1619340300000,
+      "missing": 18,
+      "start_ms": 1619324100000
+    },
+    {
+      "end_ms": 1628836200000,
+      "missing": 18,
+      "start_ms": 1628820000000
+    },
+    {
+      "end_ms": 1632906000000,
+      "missing": 8,
+      "start_ms": 1632898800000
+    },
+    {
+      "end_ms": 1679666400000,
+      "missing": 5,
+      "start_ms": 1679661900000
+    }
+  ],
+  "last_open_ms": 1792799100000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "TRXUSDT",
+  "rows": 238696,
+  "tf": "15m"
+}

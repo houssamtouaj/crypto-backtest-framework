@@ -155,7 +155,7 @@ def load_dayframe(
 
     Perps load 15m candles and funding; spot has no funding (empty events).
     ``allow_holdout`` goes to the stores unchanged: the spot store refuses
-    every load without it.
+    without it every load that starts before 2020-01-01 (the trend spot holdout).
     """
     first = first_day(data_cfg, pair)
     start_ms, end_ms = date_ms(first), date_ms(end) + DAY_MS

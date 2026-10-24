@@ -6,9 +6,15 @@
       "purpose": "tail",
       "rows": 68,
       "start_ms": 1790784060000
+    },
+    {
+      "end_ms": 1792863828434,
+      "purpose": "tail",
+      "rows": 4,
+      "start_ms": 1792742460000
     }
   ],
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "XLMUSDT-fundingRate-2020-01.zip",
@@ -499,12 +505,12 @@
   ],
   "first_funding_ms": 1579449600000,
   "intervals": {
-    "8": 7407
+    "8": 7411
   },
-  "last_funding_ms": 1792742400000,
+  "last_funding_ms": 1792857600000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "XLMUSDT",
-  "rows": 7407
+  "rows": 7411
 }

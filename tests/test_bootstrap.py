@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from perpbt.stats.bootstrap import (
+    block_bootstrap_mean,
     block_bootstrap_sharpe,
     block_indices,
     day_block_bootstrap,
@@ -141,3 +142,45 @@ def test_degenerate_inputs(rng):
     assert math.isnan(out["diff"]) and out["ci_lo"] is None and out["p"] is None
     reps = block_bootstrap_sharpe(np.array([0.0, 0.0, 0.0, 0.01]), 200, rng, block_len=10)  # T < block length
     assert reps.shape == (200,)
+
+
+# --- block_bootstrap_mean (carry spec Phase 4 §4.2) ------------------------------------------------
+
+
+def test_block_bootstrap_mean_matches_block_indices():
+    x = np.random.default_rng(3).normal(size=97)
+    got = block_bootstrap_mean(x, 500, rng_for(1, "v", "p"), block_len=30)
+    k = np.concatenate(list(block_indices(97, 500, rng_for(1, "v", "p"), 30)))
+    np.testing.assert_array_equal(got, x[k].mean(axis=1))
+    assert got.shape == (500,)
+
+
+def test_block_bootstrap_mean_constant_and_empty():
+    np.testing.assert_allclose(block_bootstrap_mean(np.full(40, 0.25), 50, np.random.default_rng(0), 30), 0.25)
+    assert np.isnan(block_bootstrap_mean(np.zeros(0), 7, np.random.default_rng(0), 30)).all()
+
+
+class _FixedUniforms:
+    """A stand-in generator whose ``random`` returns given uniforms (block_indices' only draw)."""
+
+    def __init__(self, u):
+        self.u = np.asarray(u, dtype=np.float64)
+
+    def random(self, shape):
+        assert self.u.shape == shape
+        return self.u
+
+
+def test_block_bootstrap_mean_hand_case():
+    # T = 4, L = 2: two blocks a replicate, starts floor(u × 3) in {0, 1, 2}
+    x = np.array([1.0, 2.0, 4.0, 8.0])
+    got = block_bootstrap_mean(x, 2, _FixedUniforms([[0.0, 0.9], [0.5, 0.5]]), block_len=2)
+    # starts (0, 2): x[0, 1, 2, 3] → 15 / 4; starts (1, 1): x[1, 2, 1, 2] → 12 / 4
+    np.testing.assert_array_equal(got, [3.75, 3.0])
+
+
+def test_block_bootstrap_mean_seed_determinism():
+    x = np.random.default_rng(9).normal(size=200)
+    a = block_bootstrap_mean(x, 300, rng_for(5, "v", "p"), block_len=30)
+    np.testing.assert_array_equal(a, block_bootstrap_mean(x, 300, rng_for(5, "v", "p"), block_len=30))
+    assert not np.array_equal(a, block_bootstrap_mean(x, 300, rng_for(5, "v", "q"), block_len=30))

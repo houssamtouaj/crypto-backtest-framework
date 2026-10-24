@@ -18,9 +18,15 @@
       "purpose": "tail",
       "rows": 5,
       "start_ms": 1792598460000
+    },
+    {
+      "end_ms": 1792863828434,
+      "purpose": "tail",
+      "rows": 4,
+      "start_ms": 1792742460000
     }
   ],
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "ETHUSDT-fundingRate-2020-01.zip",
@@ -511,12 +517,12 @@
   ],
   "first_funding_ms": 1577836800000,
   "intervals": {
-    "8": 7463
+    "8": 7467
   },
-  "last_funding_ms": 1792742400000,
+  "last_funding_ms": 1792857600000,
   "last_interval_h": 8,
   "missing": [],
   "overlap_mismatches": 0,
   "pair": "ETHUSDT",
-  "rows": 7463
+  "rows": 7467
 }

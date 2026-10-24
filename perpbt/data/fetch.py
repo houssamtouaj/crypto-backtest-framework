@@ -310,7 +310,7 @@ def fetch_tail(
     if start >= end:
         return fetched
     interval_h = manifest["last_interval_h"] or 8
-    frame = fetch_funding_range(exchange, pair, start, end, interval_h=interval_h)
+    frame = fetch_funding_range(exchange, pair, start, end, interval_h=interval_h, prev_ms=last)
     stats = fstore.write(pair, frame)
     manifest["ccxt_ranges"].append({"start_ms": start, "end_ms": end, "rows": int(len(frame)), "purpose": "tail"})
     manifest["overlap_mismatches"] += stats.mismatches

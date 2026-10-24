@@ -5,9 +5,13 @@ Layout (spec §1.2): ``<data_dir>/candles/<pair>/<tf>/<year>.parquet`` and
 ``manifest.json``. Rows from several sources merge by precedence
 (``SOURCE_RANK``). ``load`` returns read-only numpy arrays and refuses to reach
 past ``insample_end`` unless ``allow_holdout=True``, which only
-``experiments/holdout.py`` may pass. Spot candles (the trend strategy's
-holdout, ``market="spot"``) live under ``<data_dir>/spot/candles/`` and every
-spot ``load`` needs ``allow_holdout=True``, whatever the dates. ``write`` and ``read_frame`` are the
+``experiments/holdout.py`` may pass. Spot candles (``market="spot"``) live
+under ``<data_dir>/spot/candles/``. A spot ``load`` that starts before
+2020-01-01 (the trend strategy's spot holdout) needs ``allow_holdout=True``,
+whatever the config; a later spot load follows the same ``insample_end``
+guard as perps (carry spec Phase 0 §0.1), and one ending after 2024-01-01
+(the carry holdout start) needs ``allow_holdout=True`` whatever the config
+(carry Phase 0 review: the trend perp config reaches 2026-10-20). ``write`` and ``read_frame`` are the
 storage layer used by ``data fetch`` and ``data validate``; they carry no
 guard and analysis code must not call them.
 """
@@ -30,6 +34,8 @@ from perpbt.config import DataConfig
 _STEP_MS: dict[str, int] = {"1m": 60_000, "15m": 900_000}
 MARKET_DIRS: dict[str, str] = {"um": "", "spot": "spot"}  # sub-directory of data_dir per market; perps unchanged
 DAY_MS = 86_400_000
+SPOT_TREND_HOLDOUT_END_EXCLUSIVE = 1_577_836_800_000  # 2020-01-01 00:00 UTC: spot loads starting earlier are the trend holdout
+SPOT_CARRY_HOLDOUT_START = 1_704_067_200_000  # 2024-01-01 00:00 UTC: spot loads ending later reach the carry holdout
 
 SOURCE_RANK: dict[str, int] = {"bulk_monthly": 0, "bulk_daily": 1, "ccxt": 2}
 
@@ -500,11 +506,20 @@ class CandleStore(_ParquetStore):
 
         Raises HoldoutAccessError when ``end_ms`` reaches past ``insample_end``
         unless ``allow_holdout=True``; ``start_ms`` may precede ``insample_start``.
+        A spot load starting before ``SPOT_TREND_HOLDOUT_END_EXCLUSIVE``
+        (2020-01-01) is the trend spot holdout and also needs ``allow_holdout=True``,
+        as does a spot load ending after ``SPOT_CARRY_HOLDOUT_START`` (2024-01-01).
         """
         self._guard(end_ms, allow_holdout, f"CandleStore.load({pair}, {tf})")
-        if self.market == "spot" and not allow_holdout:
+        if self.market == "spot" and start_ms < SPOT_TREND_HOLDOUT_END_EXCLUSIVE and not allow_holdout:
             raise HoldoutAccessError(
-                f"CandleStore.load({pair}, {tf}): the spot store is holdout data; every load needs allow_holdout=True"
+                f"CandleStore.load({pair}, {tf}): start_ms {start_ms} is before 2020-01-01, in the trend "
+                "strategy's spot holdout; such a spot load needs allow_holdout=True"
+            )
+        if self.market == "spot" and end_ms > SPOT_CARRY_HOLDOUT_START and not allow_holdout:
+            raise HoldoutAccessError(
+                f"CandleStore.load({pair}, {tf}): end_ms {end_ms} reaches past 2024-01-01, into the carry "
+                "strategy's spot holdout; such a spot load needs allow_holdout=True whatever the config"
             )
         if start_ms >= end_ms:
             raise ValueError(f"CandleStore.load: start_ms {start_ms} must be < end_ms {end_ms}")

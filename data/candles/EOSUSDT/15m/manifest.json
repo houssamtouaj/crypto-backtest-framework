@@ -1,7 +1,7 @@
 {
   "ccxt_ranges": [],
   "consistency_1m_15m": null,
-  "download_date": "2026-10-23",
+  "download_date": "2026-10-24",
   "files": [
     {
       "name": "EOSUSDT-15m-2020-01.zip",
@@ -2407,7 +2407,7 @@
       "name": "EOSUSDT-15m-2026-09-30.zip"
     },
     {
-      "checked": "2026-10-23",
+      "checked": "2026-10-24",
       "name": "EOSUSDT-15m-2026-09.zip"
     },
     {
@@ -2491,12 +2491,16 @@
       "name": "EOSUSDT-15m-2026-10-20.zip"
     },
     {
-      "checked": "2026-10-23",
+      "checked": "2026-10-24",
       "name": "EOSUSDT-15m-2026-10-21.zip"
     },
     {
-      "checked": "2026-10-23",
+      "checked": "2026-10-24",
       "name": "EOSUSDT-15m-2026-10-22.zip"
+    },
+    {
+      "checked": "2026-10-24",
+      "name": "EOSUSDT-15m-2026-10-23.zip"
     }
   ],
   "overlap_mismatches": 0,

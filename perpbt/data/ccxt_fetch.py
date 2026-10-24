@@ -18,6 +18,7 @@ import pandas as pd
 from perpbt.config import DataConfig
 from perpbt.data.bulk import ARCHIVE_START, FUNDING_FRAME_COLUMNS, KLINE_FRAME_COLUMNS, DownloadError, round_to_minute
 from perpbt.data.store import _STEP_MS, date_ms
+from perpbt.data.validate import ALLOWED_INTERVALS
 
 OHLCV_LIMIT = 1500  # binanceusdm maximum per fetch_ohlcv call
 FUNDING_LIMIT = 1000
@@ -125,13 +126,32 @@ def fetch_ohlcv_range(
     return frame[KLINE_FRAME_COLUMNS + ["source"]]
 
 
-def fetch_funding_range(
-    exchange: Exchange, pair: str, start_ms: int, end_ms: int, *, interval_h: int, limit: int = FUNDING_LIMIT
-) -> pd.DataFrame:
-    """Funding events with ``start_ms <= funding_ms < end_ms``, ``interval_h`` stamped on every row.
+def stamp_intervals(ts: np.ndarray, *, interval_h: int, prev_ms: int | None = None) -> np.ndarray:
+    """Each event's interval: the hours since the previous event (``prev_ms`` before the first), as the bulk
+    archive stamps them; a gap that is not an allowed interval (a missing event) keeps the previous event's
+    interval, ``interval_h`` before the first."""
+    out = np.empty(len(ts), dtype=np.int8)
+    last, prev = int(interval_h), prev_ms
+    for k, t in enumerate(np.asarray(ts, dtype=np.int64).tolist()):
+        if prev is not None:
+            gap, rem = divmod(t - prev, 3_600_000)
+            if rem == 0 and gap in ALLOWED_INTERVALS:
+                last = gap
+        out[k] = last
+        prev = t
+    return out
 
-    ccxt's funding history carries no interval, so the caller passes the last
-    interval seen in the bulk data for the pair.
+
+def fetch_funding_range(
+    exchange: Exchange, pair: str, start_ms: int, end_ms: int, *, interval_h: int, prev_ms: int | None = None,
+    limit: int = FUNDING_LIMIT,
+) -> pd.DataFrame:
+    """Funding events with ``start_ms <= funding_ms < end_ms``, each stamped with its interval.
+
+    ccxt's funding history carries no interval: each event gets the hours since the previous one
+    (``stamp_intervals``; ``prev_ms`` is the last stored event's time), so an interval change inside the range
+    is weighted per event. ``interval_h`` (the last interval seen in the stored data) stands in where the gap is
+    unknown or not an allowed interval.
     """
     symbol = ccxt_symbol(pair)
     events: list[tuple[int, float]] = []
@@ -159,7 +179,7 @@ def fetch_funding_range(
         {
             "funding_ms": ts,
             "rate": rate,
-            "interval_h": np.full(n, interval_h, dtype=np.int8),
+            "interval_h": stamp_intervals(ts, interval_h=interval_h, prev_ms=prev_ms),
             "source": np.full(n, "ccxt", dtype=object),
         }
     )

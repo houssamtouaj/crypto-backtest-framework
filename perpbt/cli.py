@@ -2,7 +2,9 @@
 
 Phase 1 implements ``data fetch`` and ``data validate``; Phase 6
 ``prereg``, ``grid``, ``run``, ``baselines``, ``stats`` and ``holdout``;
-Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``. Exit codes: 0 success, 1 a download, checksum,
+Phase 7 ``report``; the trend strategy ``trend universe``, ``trend prereg`` and ``trend screen``; the carry strategy
+``carry basis``, ``carry prereg``, ``carry screen``, ``carry lock-code``, ``carry run``, ``carry holdout``,
+``carry forward`` and ``carry report``. Exit codes: 0 success, 1 a download, checksum,
 validation or run failure (or a refused holdout or family pass, or nothing
 to report), 2 a usage or config error.
 """
@@ -16,9 +18,11 @@ from collections.abc import Callable, Sequence
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from perpbt.carry.basis import basis_check
 from perpbt.config import ConfigError, DataConfig, canonical_json, load_yaml, to_dict
 from perpbt.data.bulk import MARKETS, ChecksumError, DownloadError
 from perpbt.data.fetch import TIMEFRAMES, run_fetch
+from perpbt.data.store import HoldoutAccessError
 from perpbt.data.validate import run_validate
 from perpbt.experiments import holdout as holdout_mod
 from perpbt.experiments import runner
@@ -34,6 +38,9 @@ DEFAULT_RUNS_DIR = "runs"
 DEFAULT_UNIVERSE = "configs/trend/universe.json"
 DEFAULT_TREND_PREREG = "configs/trend/prereg.yaml"
 DEFAULT_TREND_DATA = "configs/trend/data.yaml"
+DEFAULT_CARRY_DATA = "configs/carry/data.yaml"
+DEFAULT_BASIS_OUT = "runs/carry/basis_check.json"
+DEFAULT_CARRY_PREREG = "configs/carry/prereg.yaml"
 
 def _fmt(value: object) -> str:
     if isinstance(value, dict):
@@ -336,6 +343,232 @@ def _trend_screen(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- carry ---------------------------------------------------------------------------------------
+
+
+def _carry_basis(args: argparse.Namespace) -> int:
+    cfg = _load_data_config(args.config, "carry basis")
+    if cfg is None:
+        return 2
+    pairs = args.pairs or list(cfg.listing)
+    try:
+        result = basis_check(cfg, pairs)
+    except FileNotFoundError as e:
+        print(f"perpbt carry basis: {e}", file=sys.stderr)
+        return 2
+    except HoldoutAccessError as e:
+        print(f"perpbt carry basis: {e}", file=sys.stderr)
+        return 1
+    try:
+        text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    except ValueError as e:  # a zero or non-finite close
+        print(f"perpbt carry basis: non-finite basis statistic: {e}", file=sys.stderr)
+        return 1
+    print(f"window {result['window'][0]}..{result['window'][1]}; flag |median| > {result['limits']['median_abs']}"
+          f" or max |basis| > {result['limits']['max_abs']}")
+    for pair, st in result["pairs"].items():
+        if st["common"] == 0:
+            print(f"{pair}: no common slots  FLAGGED")
+            continue
+        flag = f"  FLAGGED ({', '.join(st['reasons'])})" if st["flagged"] else ""
+        print(f"{pair}: coverage {st['coverage']:.4f} (perp {st['perp_rows']}, spot {st['spot_rows']}, "
+              f"common {st['common']} of {st['slots']}); median {st['median']:+.5f}, p01 {st['p01']:+.5f}, "
+              f"p99 {st['p99']:+.5f}, max |basis| {st['max_abs']:.4f} ({st['basis_at_max_abs']:+.4f}) "
+              f"at {st['max_abs_at']}{flag}")
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8", newline="\n")
+    print(f"wrote {out.as_posix()}")
+    return 0
+
+
+def _carry_prereg(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import check_universe, freeze, load_prereg
+
+    try:
+        prereg = load_prereg(args.prereg)
+        check_universe(prereg, json.loads(Path(args.universe).read_text(encoding="utf-8")))
+    except (ConfigError, OSError, ValueError) as e:
+        print(f"perpbt carry prereg: {e}", file=sys.stderr)
+        return 2
+    if args.carry_prereg_command == "validate":
+        print(f"{Path(args.prereg).as_posix()}: valid; prereg_hash {prereg.prereg_hash()}")
+        return 0
+    try:
+        lock = freeze(args.prereg, universe_path=args.universe)
+    except FileExistsError as e:
+        print(f"perpbt carry prereg freeze: {e}", file=sys.stderr)
+        return 1
+    print(f"frozen on {lock['frozen_on']}: prereg_hash {lock['prereg_hash']} (git {lock['git_commit']})")
+    return 0
+
+
+def _carry_screen(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import check_frozen
+    from perpbt.carry.screen import screen_from_store, screen_path, write_screen
+    from perpbt.version import git_commit
+
+    _log_to_stderr()
+    try:
+        prereg = check_frozen(args.prereg)
+    except ConfigError as e:
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    out = screen_path(args.runs_dir)
+    if out.exists():
+        print(f"perpbt carry screen: refused: {out.as_posix()} exists; the screen runs once", file=sys.stderr)
+        return 1
+    try:
+        result = screen_from_store(prereg, load_yaml(args.data_config, DataConfig))
+    except (ConfigError, FileNotFoundError) as e:
+        print(f"perpbt carry screen: {e}", file=sys.stderr)
+        return 2
+    except (HoldoutAccessError, ValueError, KeyError) as e:  # past the in-sample end; a non-finite statistic
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    result = {**result, "computed_on": datetime.now(timezone.utc).date().isoformat(), "git_commit": git_commit()}
+    try:
+        paths = write_screen(result, args.runs_dir)
+    except (FileExistsError, ValueError) as e:
+        print(f"perpbt carry screen: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"{result['n_days']} days ({result['period'][0]}..{result['period'][1]}), {result['n_pairs']} pairs; "
+          f"hurdle {result['hurdle_annual']:.0%}/yr")
+    for name, row in result["rows"].items():
+        v2, v1 = row["v2"], row["v1"]
+        sr = "n/a" if v1["sharpe"] is None else f"{v1['sharpe']:.3f}"
+        p1 = "n/a" if v1["p"] is None else f"{v1['p']:.4f}"
+        print(f"{name}: annualised net return {v2['ann_return']:+.4f} "
+              f"[{v2['ann_return_ci'][0]:+.4f}, {v2['ann_return_ci'][1]:+.4f}]; excess {v2['ann_excess']:+.4f} "
+              f"[{v2['ann_excess_ci'][0]:+.4f}, {v2['ann_excess_ci'][1]:+.4f}], p(V2) {v2['p']:.4f} "
+              f"({v2['reading']}); Sharpe {sr}, p(V1) {p1}; share on {row['share_on']:.3f}, "
+              f"switches {row['switches']}")
+    print(f"p_screen {result['p_screen']:.4f} (stop if >= {result['stop_if_p_at_least']}): {result['decision']}")
+    for p in paths:
+        print(f"wrote {p.as_posix()}")
+    return 0
+
+
+def _carry_lock_code(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import LockRefused, lock_code
+
+    try:
+        lock = lock_code(args.prereg)
+    except LockRefused as e:
+        print(f"perpbt carry lock-code: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"code locked on {lock['code_locked_on']}: code_version {lock['code_version']} "
+          f"(git {lock['code_git_commit']}); periods.forward.start set in {Path(args.prereg).as_posix()}")
+    return 0
+
+
+def _carry_done(command: str, done: dict) -> int:
+    print(f"perpbt carry {command}: " + ", ".join(f"{k} {len(v)}" for k, v in done.items()))
+    for name in done.get("failed", []):
+        print(f"  failed: {name} (traceback in the registry)", file=sys.stderr)
+    return 1 if done.get("failed") else 0
+
+
+def _warn_ignored_reason(args: argparse.Namespace, command: str) -> None:
+    if args.reason and not args.allow_code_change:
+        print(f"perpbt carry {command}: warning: --reason is ignored without --allow-code-change", file=sys.stderr)
+
+
+def _carry_run(args: argparse.Namespace) -> int:
+    from perpbt.carry.prereg import load_prereg
+    from perpbt.carry.runner import CodeRefused, DataNotCaughtUp, run_insample
+
+    _log_to_stderr()
+    _warn_ignored_reason(args, "run")
+    cfg = _load_data_config(args.data_config, "carry run")
+    if cfg is None:
+        return 2
+    rows = None
+    try:
+        if args.primary:
+            rows = ["primary"]
+        elif args.exploratory:
+            rows = [e.name for e in load_prereg(args.prereg).exploratory]
+        done = run_insample(args.prereg, cfg, args.runs_dir, rows=rows, allow_code_change=args.allow_code_change,
+                            reason=args.reason)
+    except (ConfigError, CodeRefused, DataNotCaughtUp, HoldoutAccessError) as e:
+        print(f"perpbt carry run: refused: {e}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as e:  # a run-time failure (missing store files, a PairFrame build error)
+        print(f"perpbt carry run: {e}", file=sys.stderr)
+        return 1
+    return _carry_done("run", done)
+
+
+def _carry_holdout(args: argparse.Namespace) -> int:
+    from perpbt.carry.holdout import HoldoutRefused, run_holdout
+
+    _log_to_stderr()
+    _warn_ignored_reason(args, "holdout")
+    cfg = _load_data_config(args.data_config, "carry holdout")
+    if cfg is None:
+        return 2
+    try:
+        done = run_holdout(args.prereg, cfg, runs_dir=args.runs_dir, allow_code_change=args.allow_code_change,
+                           reason=args.reason)
+    except HoldoutRefused as e:
+        print(f"perpbt carry holdout: refused: {e}", file=sys.stderr)
+        return 1
+    print(f"perpbt carry holdout: {done['status']}; {len(done['variant_ids'])} variants, failed "
+          f"{len(done['failed'])}, skipped {len(done['skipped'])}; DONE written")
+    for name in done["failed"]:
+        print(f"  failed: {name} (traceback in the registry)", file=sys.stderr)
+    return 0 if done["status"] == "ok" else 1
+
+
+def _carry_forward(args: argparse.Namespace) -> int:
+    from perpbt.carry.forward import ForwardRefused, fetch_tails, run_forward
+
+    _log_to_stderr()
+    _warn_ignored_reason(args, "forward")
+    cfg = _load_data_config(args.data_config, "carry forward")
+    if cfg is None:
+        return 2
+    try:
+        out = run_forward(args.prereg, cfg, runs_dir=args.runs_dir, review=args.review,
+                          allow_code_change=args.allow_code_change, reason=args.reason,
+                          fetch=None if args.no_fetch else fetch_tails)
+    except ForwardRefused as e:
+        print(f"perpbt carry forward: refused: {e}", file=sys.stderr)
+        return 1
+    except (DownloadError, ChecksumError, ValueError) as e:
+        print(f"perpbt carry forward: {e}", file=sys.stderr)
+        return 1
+    print(f"perpbt carry forward: the {args.review}-month review is written to {out.as_posix()}")
+    return 0
+
+
+def _carry_report(args: argparse.Namespace) -> int:
+    # imported here so the other commands do not load matplotlib
+    from perpbt.report.carry.report import ReportRefused
+    from perpbt.report.carry.summary import report_all
+
+    try:
+        out = report_all(args.prereg, args.runs_dir)
+    except ReportRefused as e:
+        print(f"perpbt carry report: refused: {e}", file=sys.stderr)
+        return 1
+    for p in out["reports"]:
+        print(p.as_posix())
+    if out["summary"] is None:
+        print("perpbt carry report: the screen stopped the project; runs/carry/summary.md is the screen's and was "
+              "left as it is")
+    print(f"perpbt carry report: {len(out['reports'])} reports; summary "
+          f"{'unchanged (screen stop)' if out['summary'] is None else out['summary'].as_posix()}")
+    return 0
+
+
+def _add_code_change_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--allow-code-change", action="store_true",
+                   help="run although the carry code version differs from the lock (needs --reason)")
+    p.add_argument("--reason", help="why the code changed; recorded in the registry")
+
+
 def _add_exp_args(p: argparse.ArgumentParser, *, pool: bool = False) -> None:
     p.add_argument("--prereg", default=DEFAULT_PREREG, help="pre-registration YAML (default: %(default)s)")
     p.add_argument("--data-dir", default=DEFAULT_DATA_DIR, help="market data directory (default: %(default)s)")
@@ -450,6 +683,60 @@ def build_parser() -> argparse.ArgumentParser:
     screen.add_argument("--data-config", default=DEFAULT_TREND_DATA, help="perp DataConfig (default: %(default)s)")
     screen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
     screen.set_defaults(handler=_trend_screen)
+
+    carry = sub.add_parser("carry", help="the funding-rate carry strategy")
+    carry_sub = carry.add_subparsers(dest="carry_command", metavar="SUBCOMMAND", required=True)
+    basis = carry_sub.add_parser("basis", help="perp/spot basis sanity check over 2020-07-01..2023-12-31 (no returns)")
+    basis.add_argument("--config", default=DEFAULT_CARRY_DATA, help="DataConfig for both stores (default: %(default)s)")
+    basis.add_argument("--pairs", nargs="+", metavar="PAIR", help="pairs (default: every pair listed in the config)")
+    basis.add_argument("--out", default=DEFAULT_BASIS_OUT, help="JSON output (default: %(default)s)")
+    basis.set_defaults(handler=_carry_basis)
+    cprereg = carry_sub.add_parser("prereg", help="validate or freeze the carry pre-registration")
+    cprereg.add_argument("carry_prereg_command", choices=("validate", "freeze"))
+    cprereg.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cprereg.add_argument("--universe", default=DEFAULT_UNIVERSE, help="universe file (default: %(default)s)")
+    cprereg.set_defaults(handler=_carry_prereg)
+    cscreen = carry_sub.add_parser("screen", help="the one-shot simplified net screen (go / stop), after the freeze")
+    cscreen.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cscreen.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                         help="DataConfig for both stores (default: %(default)s)")
+    cscreen.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    cscreen.set_defaults(handler=_carry_screen)
+    clock = carry_sub.add_parser("lock-code", help="lock the carry code version once and set the forward start "
+                                                   "(immediately before the in-sample primary run)")
+    clock.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    clock.set_defaults(handler=_carry_lock_code)
+    crun = carry_sub.add_parser("run", help="the in-sample variants (all rows, each for the portfolio and each pair)")
+    which = crun.add_mutually_exclusive_group()
+    which.add_argument("--primary", action="store_true", help="only the primary row")
+    which.add_argument("--exploratory", action="store_true", help="only the six exploratory rows")
+    crun.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    crun.add_argument("--data-config", default=DEFAULT_CARRY_DATA, help="DataConfig for both stores (default: %(default)s)")
+    crun.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(crun)
+    crun.set_defaults(handler=_carry_run)
+    chold = carry_sub.add_parser("holdout", help="the one-shot holdout run (2024-01-01..2026-10-20); writes DONE")
+    chold.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    chold.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                       help="DataConfig for both stores (default: %(default)s)")
+    chold.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(chold)
+    chold.set_defaults(handler=_carry_holdout)
+    cfwd = carry_sub.add_parser("forward", help="a forward review of the primary: 12 (descriptive, 365 days) or 36 "
+                                                "(V1/V2, 1,095 days) months after the code lock")
+    cfwd.add_argument("--review", type=int, choices=(12, 36), required=True, help="which review")
+    cfwd.add_argument("--no-fetch", action="store_true", help="skip fetching both legs' tails first")
+    cfwd.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    cfwd.add_argument("--data-config", default=DEFAULT_CARRY_DATA,
+                      help="DataConfig for both stores (default: %(default)s)")
+    cfwd.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    _add_code_change_args(cfwd)
+    cfwd.set_defaults(handler=_carry_forward)
+    creport = carry_sub.add_parser("report", help="write every portfolio run's report.md (with figures) and "
+                                                  "runs/carry/summary.md from what exists under runs/carry/")
+    creport.add_argument("--prereg", default=DEFAULT_CARRY_PREREG, help="carry pre-registration (default: %(default)s)")
+    creport.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR, help="run outputs (default: %(default)s)")
+    creport.set_defaults(handler=_carry_report)
 
     return parser
 

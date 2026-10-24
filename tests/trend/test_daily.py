@@ -208,10 +208,20 @@ def test_load_dayframe_perp(data_cfg):
 
 
 def test_load_dayframe_spot_needs_allow_holdout(data_cfg):
+    # starts before 2020-01-01: the trend spot holdout (carry Phase 0 §0.1 split the spot guard there)
+    from perpbt.config import DataConfig, to_dict
+    cfg = DataConfig(**{**to_dict(data_cfg), "warmup_start": "2019-12-30", "listing": {"BTCUSDT": "2019-12-30"}})
+    cd = random_walk(3 * PER_DAY, seed=5, start_ms=date_ms("2019-12-30"), pair="BTCUSDT")
+    CandleStore(cfg, market="spot").write("BTCUSDT", "15m", _frame(cd))
+    with pytest.raises(HoldoutAccessError):
+        load_dayframe(cfg, "BTCUSDT", end="2020-01-01", market="spot")
+    f = load_dayframe(cfg, "BTCUSDT", end="2020-01-01", market="spot", allow_holdout=True)
+    assert len(f) == 3 and (f.funding == 0).all() and len(f.funding_ts) == 0
+
+
+def test_load_dayframe_spot_from_2020_needs_no_allow_holdout(data_cfg):
     cfg = _trend_cfg(data_cfg, {"BTCUSDT": "2020-01-01"})
     cd = random_walk(3 * PER_DAY, seed=5, start_ms=T0_MS, pair="BTCUSDT")
     CandleStore(cfg, market="spot").write("BTCUSDT", "15m", _frame(cd))
-    with pytest.raises(HoldoutAccessError):
-        load_dayframe(cfg, "BTCUSDT", end="2020-01-03", market="spot")
-    f = load_dayframe(cfg, "BTCUSDT", end="2020-01-03", market="spot", allow_holdout=True)
+    f = load_dayframe(cfg, "BTCUSDT", end="2020-01-03", market="spot")
     assert len(f) == 3 and (f.funding == 0).all() and len(f.funding_ts) == 0

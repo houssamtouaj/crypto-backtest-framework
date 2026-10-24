@@ -1,0 +1,715 @@
+{
+  "ccxt_ranges": [],
+  "consistency_1m_15m": null,
+  "download_date": "2026-10-24",
+  "files": [
+    {
+      "name": "XRPUSDT-15m-2020-01.zip",
+      "rows": 2976,
+      "sha256": "56596c2a535c8bb611cdfcdd3272a1c501bc6b9c42951eec05feb24f7c13c9a1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-02.zip",
+      "rows": 2757,
+      "sha256": "b41c13a2adcda4abac084f728dcc2bbbb8ea0511c5dfb447d3ffe7f856b54c44",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-03.zip",
+      "rows": 2968,
+      "sha256": "5f29d39c179b02b712d4289920ea21678cd5284f21c646ebec60d21f39afbdf5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-04.zip",
+      "rows": 2870,
+      "sha256": "0d5adbd59c3dcfabb309798825e134f635b5a35845baa1d5dfdf46dbf65978e7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-05.zip",
+      "rows": 2976,
+      "sha256": "e96322dd34fca5f35818369080d50f07ff169baf35c5052386a93092e6737642",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-06.zip",
+      "rows": 2866,
+      "sha256": "0506c6be5392af9944b14d51ff429822595f2a0c3a51305a50fa5a972f06183e",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-07.zip",
+      "rows": 2976,
+      "sha256": "787d81cecf6dd2e246f8f9507dc8c4606cf9c696250db423c323380905248684",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-08.zip",
+      "rows": 2976,
+      "sha256": "999a479eec03dc3b7fb49328e5d778e1d2b175b4a94f604bbba3b747abd20944",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-09.zip",
+      "rows": 2880,
+      "sha256": "061c55ba617ac698a11560481acff33c1a1b49a5bd90610e8ef099bb7408998b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-10.zip",
+      "rows": 2976,
+      "sha256": "6f8ba7c149f7493916505663d0cf3bf177617f4331ede5c3c078b875f1ea128b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-11.zip",
+      "rows": 2876,
+      "sha256": "e66e8071f71e77d206eea97721edc6447f15699eb4d09162aa368eef1c1be4f7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2020-12.zip",
+      "rows": 2957,
+      "sha256": "b99413f01aca9f80f26f166e0c5f70ec54a7d0f15e6e757b2d18a5ab28f727c1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-01.zip",
+      "rows": 2976,
+      "sha256": "dd65c1444209642e1464ca7352af8e4256c040685da500c0aa8198fe3a0cbf49",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-02.zip",
+      "rows": 2683,
+      "sha256": "9b05cb3fa0c25aab4795ffd974a35471560b642a95161f6c47f8ce9baaec27d1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-03.zip",
+      "rows": 2970,
+      "sha256": "bfe967fa6af8b63734dca1a96999589ede48e03de2b0faa9b748b050c2e51216",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-04.zip",
+      "rows": 2852,
+      "sha256": "f015bd5b1cd8ebd2f29d5b146e0d70d5e06224b173e1a35f64c69f77cadf76c6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-05.zip",
+      "rows": 2976,
+      "sha256": "bf7827f710e48676a4e786f5925d111d4ed26e1ab17664c83913060181719b86",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-06.zip",
+      "rows": 2880,
+      "sha256": "5a98d90aa6ef79e28b89580c457ce4c1237385992d16e8a51ca32f1bbf1db405",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-07.zip",
+      "rows": 2976,
+      "sha256": "9695e28130f066a95ddde08cf5f623e60f4fb7b26c2c012e58e9c1d32f97dcc6",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-08.zip",
+      "rows": 2958,
+      "sha256": "7342adeb6f718b212336d1e6198129d1bd7f7e5cea6c80708600e6085f0df6cc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-09.zip",
+      "rows": 2872,
+      "sha256": "bfc37b205cc01cd6c50eeae50fd7a222d24f6e80ae41201810582f6fb97c978c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-10.zip",
+      "rows": 2976,
+      "sha256": "26da82d713d4e0fd328e4eb4c45b6c8406c19b679e4bbf19e77c23e48824879d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-11.zip",
+      "rows": 2880,
+      "sha256": "3526e33316a32090984b165ca7d87d77e68d1a5c8173060a2a932625eb5d3510",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2021-12.zip",
+      "rows": 2976,
+      "sha256": "c6bd41075904aea99051c604e4ca5b3e07d77a09b54081f1e2b103a25a07aa9b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-01.zip",
+      "rows": 2976,
+      "sha256": "c96d8901035bf5829afbd4901f627b77795c55a639e31c225927d6cbd9bba19d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-02.zip",
+      "rows": 2688,
+      "sha256": "44f02601d331dbb0ab02e5ac5ef1cba29688f856bbb1f2b09be237665c562bf5",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-03.zip",
+      "rows": 2976,
+      "sha256": "56c167009bee63ddd4d79ca7a1c97f8f4ec4f4e62612a653e04dc157a867db6b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-04.zip",
+      "rows": 2880,
+      "sha256": "1434dfa13bf3868e46cec812a728b505e82d5c56e68cc3eda2f4fc80e38da302",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-05.zip",
+      "rows": 2976,
+      "sha256": "9820107b762530413013dc8aaa484077c0588fb91517a8a2509c9ff65c6758f3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-06.zip",
+      "rows": 2880,
+      "sha256": "ed5a3505beccc0369cba9a08ed930958a4f70da53acef3af07a688492529f807",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-07.zip",
+      "rows": 2976,
+      "sha256": "8f5f9989b3457c403200adbbf6d9b914381409b08e71fbc2c5615aac48deffe3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-08.zip",
+      "rows": 2976,
+      "sha256": "83741698888171ab76b13a07575518d4f0162a16033dc35e526909857a04c200",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-09.zip",
+      "rows": 2880,
+      "sha256": "213c0c57335428a5167f6c67f053d49302a321985be1acfb6eb833985fec170c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-10.zip",
+      "rows": 2976,
+      "sha256": "d90833220352fef7967cf197edd0c6c400738e59c5ae5bab9329de72d148ad86",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-11.zip",
+      "rows": 2880,
+      "sha256": "34dd8239eeed20f1d242aac69fb2b5c15182f586aa224643e9829954787b0e73",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2022-12.zip",
+      "rows": 2976,
+      "sha256": "7f3ee9cbc1fc27e66797d21adf904cc1a8d9b9d83f7cdf06273de69e3e4fc962",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-01.zip",
+      "rows": 2976,
+      "sha256": "20ae7f66f4c2b1647c58cf39e304416e60267f47a418159cc6046eb30a77cabd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-02.zip",
+      "rows": 2688,
+      "sha256": "97ca9e004a8423e8ac6d3628a011999ea00b7e4346acfcce99c1018b05f36e9a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-03.zip",
+      "rows": 2971,
+      "sha256": "045430dfe3f9cf4c5f5e381e4cfb21a5710cca2a83cb1d6ec4d5f28a1e7c66e9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-04.zip",
+      "rows": 2880,
+      "sha256": "b1bf350458216ed9d26c4be09e108a5158ab25d7b2573babd13fb6bb06df62bc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-05.zip",
+      "rows": 2976,
+      "sha256": "089d88114f3573e4c3eae521ead8a490995e67ba4c715efd7a6d169b44fb89aa",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-06.zip",
+      "rows": 2880,
+      "sha256": "ba4f5221ea1f328eba75c6bcefe97ff83ed779b3ff533513663f4f157fdc5ed7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-07.zip",
+      "rows": 2976,
+      "sha256": "46d69acb9d20bdc83a2d5e9018e6a734949255ee02c8f5cbc874f03b0954d189",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-08.zip",
+      "rows": 2976,
+      "sha256": "5790981074370056df4d5147c24fafc77ff46cf07c6e886e537854e67de6270a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-09.zip",
+      "rows": 2880,
+      "sha256": "c9667c92525c2405ca8a07085e2d5f7e195cf0a8c09daeee4f9564a4d3ec30d4",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-10.zip",
+      "rows": 2976,
+      "sha256": "fb83bc2cb75adfbe8929341e418e6796ec92790986ccc260264f920d0276cbdd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-11.zip",
+      "rows": 2880,
+      "sha256": "748f56466a86c1496f9687ea564480bc8d949bbcd6ef6890d19da79d3a5746e8",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2023-12.zip",
+      "rows": 2976,
+      "sha256": "58ef150b146ef6ee0efff01ec144ce40cf0dcdf05c847ecd12f38116c3fefc23",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-01.zip",
+      "rows": 2976,
+      "sha256": "d498ed41d5ca5a4dc2cbc269303857eaa0fe52389032022e529a7d59ce23b749",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-02.zip",
+      "rows": 2784,
+      "sha256": "21305d639baf9347f64cf38bf4facc907ca3ea3d5f362a503a71acbff8cad94d",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-03.zip",
+      "rows": 2976,
+      "sha256": "5082171f91bc9dd32b59423ded856d7b584ec8e7733bf127334b7d3f29c63553",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-04.zip",
+      "rows": 2880,
+      "sha256": "b0bcc998ad1b0c06ec0cd4b5782c52630ec49991fdf728ddeaad292e7b422dcc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-05.zip",
+      "rows": 2976,
+      "sha256": "550baaa6f4f99697b6dfb09474e230e99a98b6ca46a09f62314fc6bfdc950874",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-06.zip",
+      "rows": 2880,
+      "sha256": "99ca48bde559b3f9f13542439ae2e3cf3b39a809454d1a3928519fe0da8cc393",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-07.zip",
+      "rows": 2976,
+      "sha256": "61412e19f0a57331c90860dd05e1ed3cc21529b4bbc1c5d9816a935580a28cf3",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-08.zip",
+      "rows": 2976,
+      "sha256": "4b932b83395b54c7c557e363e4890a6d4a7c9d1ce2b428e42ad92efd444a2e6b",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-09.zip",
+      "rows": 2880,
+      "sha256": "75af145d86741de8f37d5db9892c0041eeae9147eeedb7dbd4b48c0d8a9db5a1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-10.zip",
+      "rows": 2976,
+      "sha256": "313dc7dc6a797c3d41737414a75ec654820a4716fab3d54aee75d5c8cf4d6f83",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-11.zip",
+      "rows": 2880,
+      "sha256": "6cda22ee2852fa44a659f7ced204ea2d07a0f5223fd743075f15befb0f32bc66",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2024-12.zip",
+      "rows": 2976,
+      "sha256": "81984a9d1bd26bd3fa814b15a079cfaa00d835b88bacecfbcbb172ee3cd3b333",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-01.zip",
+      "rows": 2976,
+      "sha256": "327cc306cab3d87acf54d06219a6018a800ed3ccd6740b5b7e78d319cd7d4ec2",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-02.zip",
+      "rows": 2688,
+      "sha256": "71648f3f30c4059bae961dcd8be52e1bd317b1f2f0ed399773cfb35112d1a1ba",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-03.zip",
+      "rows": 2976,
+      "sha256": "fa1e2d9f39d4707f878913a1d3ff2afa175fec20f86c63172c6f09d03392b5bc",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-04.zip",
+      "rows": 2880,
+      "sha256": "5d3bedc10db43d1b30cfec71c981dd7d4a0dd99558a09379ca1d11387a956c5a",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-05.zip",
+      "rows": 2976,
+      "sha256": "72ef14a6712c8b1aefdc371300030f1c8a5aee1c080055089453409dbac00de9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-06.zip",
+      "rows": 2880,
+      "sha256": "003776b7d73275458a7afb2c02804db9831e95fc258327762d244d73460f0524",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-07.zip",
+      "rows": 2976,
+      "sha256": "85bd09d5d32ae6f096d5574e9d8021b12d1bba65af1f24c47966a47adce0eb91",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-08.zip",
+      "rows": 2976,
+      "sha256": "446d06ef390ff95a969d075c7449091f73098d2511a9adb80ea5770fd05eb4a7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-09.zip",
+      "rows": 2880,
+      "sha256": "2f7ac6fb500a5bcbc1e1e8204098c65d9385cc5182b34a200a4ef28f2a5dc839",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-10.zip",
+      "rows": 2976,
+      "sha256": "4fe1f1462d33d17c3cdb8532bb42cb19367496af84e5e32bef0de5573eab4294",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-11.zip",
+      "rows": 2880,
+      "sha256": "2ec0708037a8707c1ad0e2219b6420e9ea6189fc220e290401f3fa3b9a2cebdd",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2025-12.zip",
+      "rows": 2976,
+      "sha256": "99dae53efb7d6870d4c751d97188ab9ad88b77c8e911e66465bdbb559062f0ca",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-01.zip",
+      "rows": 2976,
+      "sha256": "e44d632908caaf6a33be8ce0a072c32b9c00155b66771d0ef3b18a2f9e450288",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-02.zip",
+      "rows": 2688,
+      "sha256": "f6f4c12154c68f8161ea75751d19c1db69a99d766da66e80da349b09b804f719",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-03.zip",
+      "rows": 2976,
+      "sha256": "1429ff075c12fe59e514fdb72c034a054ed99de8227cb392f82e8b44f35d4f68",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-04.zip",
+      "rows": 2880,
+      "sha256": "769cc260db9e429f9c2721c49cfa3d4335cf74f54a0f696d2252110c876cd20c",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-05.zip",
+      "rows": 2976,
+      "sha256": "0435ba8114a6746726dfb02fc018e3cb8066866e661340780df3c1313b4a5086",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-06.zip",
+      "rows": 2880,
+      "sha256": "947b075b09360101c4b57d8b3a55c4b0f4ca647de156caea031e1332b8e9f7d9",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-07.zip",
+      "rows": 2976,
+      "sha256": "52e64466c6f04b1c0df7fd39517382fa863400402c5fb398322c967a98458723",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-08.zip",
+      "rows": 2976,
+      "sha256": "8166a0f5a59effd67aebe0fb7920c20ab7864907d294e1a066058bfef045ccb1",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-09.zip",
+      "rows": 2880,
+      "sha256": "d54464b71887b17a194de8fdc33371da4e38c09c2edad8002e28e6f259350eb7",
+      "source": "bulk_monthly"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-01.zip",
+      "rows": 96,
+      "sha256": "78ea7dad0be2fcb2b00b2d40dd236fe055aa0bcb1d2dc7e0decac19885ca9f03",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-02.zip",
+      "rows": 96,
+      "sha256": "3905c33d022365cd83f0574fbba243bb4fb7bfb057635b1480df3d5cd4dd9bfc",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-03.zip",
+      "rows": 96,
+      "sha256": "88b9011187864996344a3413beb0dae742a27c68b7e566aadee49f28b4e64ecf",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-04.zip",
+      "rows": 96,
+      "sha256": "180703ed5ba9ba9704c6ed74348fb12d0d2503532684bdb907dcd16df18723ac",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-05.zip",
+      "rows": 96,
+      "sha256": "7dc8d8bfdc6ba741c6e757ee8605957be294bd48c02968c422476a531dbf096a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-06.zip",
+      "rows": 96,
+      "sha256": "ddf57ff21f793749f77e02c0347a27749b084580008af5033a36119d9a3dca60",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-07.zip",
+      "rows": 96,
+      "sha256": "05561affdf08f090c90ac4398296bfd77974967643437ddc9c087109b0ba3bc8",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-08.zip",
+      "rows": 96,
+      "sha256": "e4e28f4394017ed3924658ae4a81ed92081840cea8d0944bd9c595b0d3d59fed",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-09.zip",
+      "rows": 96,
+      "sha256": "f862586c8301c9a0d564d64dc7e6ef475f7d022019a22e66d8b4b9cccc387060",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-10.zip",
+      "rows": 96,
+      "sha256": "a04dba0b27973bbe1798311a2a954091b8cae4316e6df36f2c9ff041bb2e3b98",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-11.zip",
+      "rows": 96,
+      "sha256": "6600bb0145cc5131b86d4616504883e974b6a90c4698d6953052cd27ddbd07d3",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-12.zip",
+      "rows": 96,
+      "sha256": "0b25360a31d0ed31fecca4de9913a02d5f9ae3b595b764ae887fcad9bdf2bb77",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-13.zip",
+      "rows": 96,
+      "sha256": "4f5b633e456b03082cb6680011c12c12cd249bf655c98886862177d7a5b5b40e",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-14.zip",
+      "rows": 96,
+      "sha256": "356a71c5105f4cae29ed3308263002ffa15d8b4df8251cfface23ac8e3f33a56",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-15.zip",
+      "rows": 96,
+      "sha256": "02a9127578ebb933b02f244edf42472352cf024a3507a303d27bf5259712c2e1",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-16.zip",
+      "rows": 96,
+      "sha256": "9f7a8d0402069cb4cfff78a9a95310819f16447ddb490a3eca8094c8fa786587",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-17.zip",
+      "rows": 96,
+      "sha256": "ea1245438598834c19b651d10420c203941a4046d6f9053c70d191946e18656a",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-18.zip",
+      "rows": 96,
+      "sha256": "9de96263a254a8889b9051505bfa262799daf2438abb98e4de2fab654c841b4c",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-19.zip",
+      "rows": 96,
+      "sha256": "4e408fe96f361fed62e0d4a436c968c18343b8bb7b3f2efa27260d34ea714de3",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-20.zip",
+      "rows": 96,
+      "sha256": "50a4705d2d33ae711ca265a8a5ef581cbf2ca70747609054c9b151b5c687fae7",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-21.zip",
+      "rows": 96,
+      "sha256": "534a0e3659834acbd2f4b708e209560893102ddf145afda760022fbf77840c52",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-22.zip",
+      "rows": 96,
+      "sha256": "23ced3a4fa4747660876a089c3c7c9a0dc969097ce6f981fff39e6d95c9469e6",
+      "source": "bulk_daily"
+    },
+    {
+      "name": "XRPUSDT-15m-2026-10-23.zip",
+      "rows": 96,
+      "sha256": "0a774e242b2679186a50b0c2bb7b9af7f8dd7964515e8546f0ae413119cae867",
+      "source": "bulk_daily"
+    }
+  ],
+  "first_open_ms": 1577836800000,
+  "gaps": [
+    {
+      "end_ms": 1581217200000,
+      "missing": 4,
+      "start_ms": 1581213600000
+    },
+    {
+      "end_ms": 1582133400000,
+      "missing": 23,
+      "start_ms": 1582112700000
+    },
+    {
+      "end_ms": 1583321400000,
+      "missing": 8,
+      "start_ms": 1583314200000
+    },
+    {
+      "end_ms": 1587789000000,
+      "missing": 10,
+      "start_ms": 1587780000000
+    },
+    {
+      "end_ms": 1593322200000,
+      "missing": 14,
+      "start_ms": 1593309600000
+    },
+    {
+      "end_ms": 1606719600000,
+      "missing": 4,
+      "start_ms": 1606716000000
+    },
+    {
+      "end_ms": 1608573600000,
+      "missing": 15,
+      "start_ms": 1608560100000
+    },
+    {
+      "end_ms": 1608865200000,
+      "missing": 4,
+      "start_ms": 1608861600000
+    },
+    {
+      "end_ms": 1613019600000,
+      "missing": 5,
+      "start_ms": 1613015100000
+    },
+    {
+      "end_ms": 1615001400000,
+      "missing": 6,
+      "start_ms": 1614996000000
+    },
+    {
+      "end_ms": 1618893000000,
+      "missing": 10,
+      "start_ms": 1618884000000
+    },
+    {
+      "end_ms": 1619340300000,
+      "missing": 18,
+      "start_ms": 1619324100000
+    },
+    {
+      "end_ms": 1628836200000,
+      "missing": 18,
+      "start_ms": 1628820000000
+    },
+    {
+      "end_ms": 1632906000000,
+      "missing": 8,
+      "start_ms": 1632898800000
+    },
+    {
+      "end_ms": 1679666400000,
+      "missing": 5,
+      "start_ms": 1679661900000
+    }
+  ],
+  "last_open_ms": 1792799100000,
+  "missing": [],
+  "overlap_mismatches": 0,
+  "pair": "XRPUSDT",
+  "rows": 238696,
+  "tf": "15m"
+}
