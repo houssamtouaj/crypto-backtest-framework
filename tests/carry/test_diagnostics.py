@@ -238,6 +238,35 @@ def test_shifted_states_hand_case():
         assert zero[pair][0, j0:j0 + n_i].tolist() == st[pair][j0:j0 + n_i].tolist()
 
 
+def test_shift_inside_a_window_that_starts_after_the_frame():
+    # real frames start with the warmup: the period's first decision row j0 > 0
+    frames = messy_frames()
+    cfg = spec(start="2020-01-06", end=MESSY_END)  # decisions 2020-01-05 .. 2020-02-08
+    assert live_window(frames["AUSDT"], cfg) == (4, 35)
+    assert live_window(frames["BUSDT"], cfg) == (4, 27)
+    assert live_window(frames["CUSDT"], cfg) == (1, 35)  # first day 2020-01-04
+    st = random_states(frames, np.random.default_rng(13), p_switch=0.3)
+    out = shifted_states(frames, st, cfg, np.array([0, 2, 30]))
+    for pair, pf in frames.items():
+        j0, n_i = live_window(pf, cfg)
+        for p, k in enumerate((0, 2, 30)):
+            assert out[pair][p, j0:j0 + n_i].tolist() == [st[pair][j0 + (t + k) % n_i] for t in range(n_i)]
+            assert not out[pair][p, :j0].any() and not out[pair][p, j0 + n_i:].any()
+    batch = run_batch(frames, out, cfg)
+    ret = path_returns(batch.equity, cfg.equity0)
+    np.testing.assert_allclose(ret[0], run_path(frames, st, cfg).daily["ret"].to_numpy(), rtol=0, atol=1e-12)
+    for p in (1, 2):
+        path = run_path(frames, {pair: out[pair][p] for pair in frames}, cfg)
+        np.testing.assert_allclose(ret[p], path.daily["ret"].to_numpy(), rtol=0, atol=1e-12)
+
+
+def test_shifted_states_refuses_a_non_bool_state():
+    frames = messy_frames()
+    st = {pair: np.zeros(len(pf)) for pair, pf in frames.items()}
+    with pytest.raises(ValueError, match="bool"):
+        shifted_states(frames, st, spec(end=MESSY_END), np.array([1]))
+
+
 def test_path_returns_equal_run_path():
     frames = messy_frames()
     cfg = spec(end=MESSY_END)

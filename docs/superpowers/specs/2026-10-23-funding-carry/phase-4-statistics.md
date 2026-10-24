@@ -158,3 +158,17 @@ are also in the module docstrings of `perpbt/carry/verdict.py` and
 window is the 1,279 decision days from 2020-06-30. The 1,000 shifted
 primaries keep each pair's days on; `run_batch` runs them in about 5 s;
 the eight re-pricing runs take under a second.
+
+**Review fixes (fresh reviewer, 2026-10-24: "merge"; 0 Critical, 0
+Important, 4 Minor, all fixed).**
+- A fast test now shifts a window that starts after the frame's first
+  row (`j0 > 0`, as for every real frame with its warmup). Before, only
+  the slow real-data test caught a shift that ignored `j0`.
+- `shifted_states` refuses a state that is not bool, as the executor
+  does.
+- A spot leg still held when its pair delists (a liquidation on the last
+  live day, or a sale postponed until then) is closed with reason
+  `delist`, so it is not in `liquidation_cost`. The docstrings now state
+  this. In-sample nothing delists.
+- The real-data tests assert plain bools with messages, so a failure
+  cannot print real equity or cash values.

@@ -107,7 +107,7 @@ def decomposition(result: PathResult, *, equity0: float) -> dict:
     Fractions of equity summed over days: ``funding`` received, ``basis`` (the legs' price P&L, a liquidation's
     loss to its price included), ``fees`` and ``slippage`` (every fill, the liquidation fee in ``fees``), and of
     those two ``rebalance_cost`` and ``liquidation_cost`` (fills with that reason: the buy-back and the later spot
-    sale). ``funding − fees − slippage + basis`` is the sum of the daily returns. ``days_live`` counts pair-days
+    sale; a spot leg still held when the pair delists is closed with reason ``delist`` and is not in it). ``funding − fees − slippage + basis`` is the sum of the daily returns. ``days_live`` counts pair-days
     with a frame, ``pair_days_on`` those hedged at the close, ``entries`` the perp entry fills. The total and each
     year also have ``ret_sum`` and ``ret_compounded``; each year ``n_days`` and ``share_on`` (``pair_days_on /
     days_live``); each pair ``net`` (its contribution) and ``days_on``.
@@ -148,7 +148,9 @@ def margin_events(result: PathResult, *, equity0: float) -> dict:
 
     A rebalance's cost is its fills' fees and slippage that day (``qty`` the amount each leg was reduced by). A
     liquidation's cost is the fills of reason ``liquidation`` of that pair from its date until the pair's next
-    liquidation: the perp buy-back with its fee and the later spot sale (``price`` the buy-back's). ``cost`` is
+    liquidation: the perp buy-back with its fee and the later spot sale (``price`` the buy-back's). A spot leg
+    still held when the pair delists (a liquidation on its last live day, or a sale postponed until then) is
+    closed with reason ``delist`` by the executor and is not counted here. ``cost`` is
     money, ``cost_frac`` the sum of each fill's cost over its day's previous equity.
     """
     prev = _prev_equity(result.daily, equity0)
@@ -215,9 +217,9 @@ def shifted_states(frames: Mapping[str, PairFrame], state: Mapping[str, np.ndarr
         raise ValueError(f"offsets must be 1-D, got shape {k.shape}")
     out = {}
     for pair, pf in frames.items():
-        on = np.asarray(state[pair], dtype=bool)
-        if on.shape != (len(pf),):
-            raise ValueError(f"{pair}: state must have shape ({len(pf)},), got {on.shape}")
+        on = np.asarray(state[pair])
+        if on.dtype != bool or on.shape != (len(pf),):
+            raise ValueError(f"{pair}: state must be bool of shape ({len(pf)},), got {on.dtype} {on.shape}")
         j0, n_i = live_window(pf, cfg)
         arr = np.zeros((len(k), len(pf)), dtype=bool)
         if n_i:

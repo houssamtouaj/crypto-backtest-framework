@@ -64,7 +64,11 @@ def test_random_timing_engine_runtime(real):
     t0 = time.perf_counter()
     batch = run_batch(frames, shifted_states(frames, primary, cfg, offsets), cfg)
     assert time.perf_counter() - t0 < 60.0
-    assert batch.equity.shape == (1000, N_DAYS) and np.isfinite(batch.equity).all() and (batch.cash >= 0).all()
+    # plain bools with messages: a failing assertion must not print real equity or cash values
+    assert batch.equity.shape == (1000, N_DAYS)
+    finite, solvent = bool(np.isfinite(batch.equity).all()), bool((batch.cash >= 0).all())
+    assert finite, "non-finite equity"
+    assert solvent, "negative cash"
     assert (batch.n_live == 10).all() and (batch.counts["delists"] == 0).all()
 
 
@@ -78,5 +82,7 @@ def test_reprice_cells_build_and_run(real):
         assert (c.sleeve, c.margin, c.rebalance, c.start, c.end) == (cfg.sleeve, cfg.margin, cfg.rebalance,
                                                                      cfg.start, cfg.end)
         r = run_path(frames, primary, c)
-        assert len(r.daily) == N_DAYS and (r.daily["cash"] >= 0).all()
+        solvent = bool((r.daily["cash"] >= 0).all())
+        assert len(r.daily) == N_DAYS
+        assert solvent, "negative cash"
     assert time.perf_counter() - t0 < 30.0

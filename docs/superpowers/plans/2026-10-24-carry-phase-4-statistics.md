@@ -98,4 +98,9 @@ Task 2: complete (bc26aed; daily_pair + fees, slippage, basis_pnl; Phase 3 execu
 Task 3: complete (0b85a5b; test_diagnostics 19 passed).
 Task 4: complete (842571d). Added `row_diagnostics` / `primary_diagnostics` (my call: the seed purposes live in code, not only in the docstring). End-to-end synthetic stats.json with the real prereg's settings: same seed same bytes, other seed differs, purposes pinned (≈ 4 s). Slow real-data: 1,000 shifted primaries through run_batch ≈ 5 s; 8 re-pricing runs < 1 s; no statistic computed.
 Mutations (each caught): shift mod n instead of n_i → 6 failures; exclusive upper offset → 1; decomposition scaled by the same day's equity → 2; rank counting ties → 1; liquidation cost of the liquidation day only → 2; re-pricing keeping per-pair slippage → 1 (after tightening the test; it passed before).
-Task 5: spec §4.7 notes written.
+Task 5: spec §4.7 notes written; full suite 1350 passed (6 min 42 s, slow included).
+Final review: fresh reviewer (opus): "merge"; 0 Critical, 0 Important, 4 Minor; it re-checked every constraint and ran the fast and real-data tests without printing any real value.
+- Final: fixed (Minor 1) fast test of a shift window with j0 > 0; mutation "ignore j0" → 1 fast failure (only the slow test caught it before).
+- Final: fixed (Minor 2) docstrings and §4.7: a spot leg still held at a delisting is closed with reason delist, so it is not in liquidation_cost.
+- Final: fixed (Minor 3) real-data asserts on plain bools with messages (a failure cannot print real values).
+- Final: fixed (Minor 4) shifted_states refuses a non-bool state.
