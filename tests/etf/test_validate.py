@@ -123,9 +123,31 @@ def test_dividend_counts_gld_and_capital_gains():
     iwm.loc[0, "capital_gain"] = 0.05
     results, _ = _run(replace(d, actions={**d.actions, "SPY": spy, "GLD": gld, "IWM": iwm}))
     fails = results["4"].failures
-    assert "SPY 2006: 2 dividends, expected 3..5" in fails
+    assert "SPY 2006: 2 dividends, expected 4..4" in fails
+    assert any(m.startswith("SPY 2005-12-15..2006-09-15: 274 days without a dividend") for m in fails)
     assert "GLD 2006-03-15: a dividend, but GLD pays none" in fails
     assert any(m.startswith("IWM ") and "capital gain distribution" in m for m in fails)
+
+
+def test_one_missing_dividend_and_a_late_last_dividend():
+    d = make_data()
+    spy = d.actions["SPY"]
+    one = spy[spy["day_ms"] != date_ms("2005-06-15")].reset_index(drop=True)  # a single missing quarter
+    fails = _only_failing(_run(replace(d, actions={**d.actions, "SPY": one}))[0], "4")
+    assert "SPY 2005: 3 dividends, expected 4..4" in fails
+    last = spy[spy["day_ms"] < date_ms("2006-09-01")].reset_index(drop=True)  # none since June 2006 (partial year)
+    fails = _run(replace(d, actions={**d.actions, "SPY": last}))[0]["4"].failures
+    assert any(m.startswith("SPY 2006-06-15..2007-01-31: 230 days without a dividend") for m in fails)
+
+
+def test_an_equal_dividend_a_week_later_is_a_duplicate():
+    d = make_data()
+    q = d.actions["QQQ"]
+    first = q.iloc[[1]]
+    dup = first.assign(day_ms=first["day_ms"].iloc[0] + 7 * 86_400_000)
+    q2 = pd.concat([q, dup]).sort_values("day_ms").reset_index(drop=True)
+    results, _ = _run(replace(d, actions={**d.actions, "QQQ": q2}))
+    assert any("a likely duplicate" in m for m in results["4"].failures)
 
 
 def test_unknown_ticker_has_no_dividend_expectation():
@@ -191,6 +213,22 @@ def test_cross_check_open_and_unknown_day_and_coverage():
     sparse = d.xprices["GLD"].iloc[::2].reset_index(drop=True)
     results, _ = _run(replace(d, xprices={**d.xprices, "GLD": sparse}))
     assert any(m.startswith("GLD: the cross-check has 50") for m in results["6"].failures)
+
+
+def test_cross_check_span_missing_opens_and_required_dividends():
+    d = make_data()
+    short = {**d.xprices, "SPY": d.xprices["SPY"].iloc[-100:].reset_index(drop=True)}  # a short reply: 100% coverage
+    results, _ = _run(replace(d, xprices=short))
+    assert any(m.startswith("SPY: the cross-check spans") for m in results["6"].failures)
+    early = {**d.xprices, "IWM": d.xprices["IWM"].iloc[:-3].reset_index(drop=True)}  # ends before Yahoo
+    assert any(m.startswith("IWM: the cross-check spans") for m in _run(replace(d, xprices=early))[0]["6"].failures)
+    x = d.xprices["GLD"].copy()
+    x.loc[5, "open"] = np.nan
+    assert "GLD: 1 cross-check opens are not finite" in _run(
+        replace(d, xprices={**d.xprices, "GLD": x}))[0]["6"].failures
+    for none in (None, d.xdividends["QQQ"].iloc[:0]):
+        fails = _run(replace(d, xdividends={**d.xdividends, "QQQ": none}))[0]["6"].failures
+        assert any(m.startswith("QQQ: ") and "dividend" in m for m in fails)
 
 
 def test_cross_check_dividends_both_ways():

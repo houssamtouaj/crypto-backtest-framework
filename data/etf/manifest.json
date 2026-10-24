@@ -40,10 +40,18 @@
     ],
     "dividends": [
       {
+        "amount": 0.0,
+        "date": "2010-06-25",
+        "reason": "A duplicate: Yahoo lists 0.089 on 2010-06-18 (the third Friday of June, QQQ's usual ex-date) and the same 0.089 again a week later. No QQQ quarter has two equal dividends; Nasdaq's history starts in 2012, so no source confirms the second. Removed (the review of 2026-10-24 found it; +0.2% total return otherwise).",
+        "ticker": "QQQ",
+        "was": 0.089
+      },
+      {
         "amount": 0.38824,
         "date": "2020-09-21",
         "reason": "Yahoo lacks QQQ's September 2020 quarterly dividend (its 2020 has March, June and December only); Nasdaq's dividend history has it at 0.38824 per share, and every other dividend Nasdaq lists for QQQ agrees with Yahoo's.",
-        "ticker": "QQQ"
+        "ticker": "QQQ",
+        "was": 0.0
       }
     ],
     "prices": [
@@ -54,7 +62,11 @@
         "low": 211.3,
         "open": 211.45,
         "reason": "Yahoo's open and low are 208.55, the previous close (a stale print); SPY gapped up about 1.4% that Monday. Nasdaq's open and low; high and close agree in both sources.",
-        "ticker": "SPY"
+        "ticker": "SPY",
+        "was": {
+          "low": 208.55,
+          "open": 208.55
+        }
       },
       {
         "close": null,
@@ -63,12 +75,16 @@
         "low": null,
         "open": 238.1,
         "reason": "Yahoo's open and high are 240.08, the previous close (a stale print); SPY gapped down that day. Nasdaq's open and high; low and close agree in both sources.",
-        "ticker": "SPY"
+        "ticker": "SPY",
+        "was": {
+          "high": 240.08,
+          "open": 240.08
+        }
       }
     ]
   },
   "corrections_file": "configs/etf/corrections.yaml",
-  "corrections_hash": "168f60e9cae2a60d6bc8efbc49db4db04062ec29bdec781803eebcba665265ac",
+  "corrections_hash": "2227655d29f963339b7bbe0ed024f3fd3341601fe425f50b340b6f204ac50471",
   "cross_check_basis": {
     "GLD": "raw",
     "IWM": "raw",
@@ -79,7 +95,7 @@
   "download_date": "2026-10-24",
   "files": {
     "GLD/actions.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": null,
       "last": null,
       "params": {
@@ -97,7 +113,7 @@
       "url": "yfinance Ticker.history"
     },
     "GLD/prices.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": "2004-11-18",
       "last": "2026-10-23",
       "params": {
@@ -115,7 +131,7 @@
       "url": "yfinance Ticker.history"
     },
     "IWM/actions.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": "2004-12-23",
       "last": "2026-09-15",
       "params": {
@@ -126,14 +142,14 @@
         "start": "2004-11-18",
         "ticker": "IWM"
       },
-      "raw_sha256": "b768fb9e14b8f76e12e1413dfda1daed326d4a605dcf10dda1c6758486f5dae6",
+      "raw_sha256": "45533801d8c22bfd059287ca3c055879f198b72bd2449cd82fb5328e42e08676",
       "rows": 89,
       "sha256": "2f9940b8acd72e8c26ea3126d7dee0a56168954c2bc058de08ee9da2a0f98311",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "IWM/prices.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": "2004-11-18",
       "last": "2026-10-23",
       "params": {
@@ -144,14 +160,14 @@
         "start": "2004-11-18",
         "ticker": "IWM"
       },
-      "raw_sha256": "b768fb9e14b8f76e12e1413dfda1daed326d4a605dcf10dda1c6758486f5dae6",
+      "raw_sha256": "45533801d8c22bfd059287ca3c055879f198b72bd2449cd82fb5328e42e08676",
       "rows": 5517,
-      "sha256": "568701572c83c6a9a84b80c65681998d2b575001daba5c1abec6a4ea8f8b3866",
+      "sha256": "6970dd0f72cb387c4e3afa404fe295e10680d6606031a9a5b78d46a6c7629164",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "QQQ/actions.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": "2004-12-17",
       "last": "2026-09-21",
       "params": {
@@ -162,14 +178,14 @@
         "start": "2004-11-18",
         "ticker": "QQQ"
       },
-      "raw_sha256": "780e977677e3d647213d6db3bcfedf1f4b7c1baaee32f01ae98faf91712dea14",
-      "rows": 90,
-      "sha256": "ba3cc53ae8c7350764bfe3dd1e54c3c5f1a6421726fcc232ef239e15652408f6",
+      "raw_sha256": "1581acaa6152b676835adf14d33eff24a124218a793173614580dd7e0e5c553b",
+      "rows": 89,
+      "sha256": "2f1addb6cd73605956680b9b26c787b852bf286a883a43646e265d7544421457",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "QQQ/prices.parquet": {
-      "downloaded_at": "2026-10-24T19:56:43Z",
+      "downloaded_at": "2026-10-24T20:29:46Z",
       "first": "2004-11-18",
       "last": "2026-10-23",
       "params": {
@@ -180,14 +196,14 @@
         "start": "2004-11-18",
         "ticker": "QQQ"
       },
-      "raw_sha256": "780e977677e3d647213d6db3bcfedf1f4b7c1baaee32f01ae98faf91712dea14",
+      "raw_sha256": "1581acaa6152b676835adf14d33eff24a124218a793173614580dd7e0e5c553b",
       "rows": 5517,
-      "sha256": "c812e425e1abcf685db8bf0106bbd0dc22e4796e016b64a2be11c25a10e36546",
+      "sha256": "93406dd7dc0a55978caad879cb59dac51077daaecd25a7c03e8fd419a9fbccd3",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "SPY/actions.parquet": {
-      "downloaded_at": "2026-10-24T19:56:42Z",
+      "downloaded_at": "2026-10-24T20:29:45Z",
       "first": "2004-12-17",
       "last": "2026-09-18",
       "params": {
@@ -198,14 +214,14 @@
         "start": "2004-11-18",
         "ticker": "SPY"
       },
-      "raw_sha256": "9fc6c3fc531bb538dece15e76513c7dda92cc88448aae026d75b7254238b44b5",
+      "raw_sha256": "8d39009277410b2c4f6ede05d15e995daa96a24e9c8fb94ab2ef624ec9c951f9",
       "rows": 88,
       "sha256": "c09fe56e38efdf457d8e60821f62c7dacfd6985a99183fc742ca3fa78c0beb26",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "SPY/prices.parquet": {
-      "downloaded_at": "2026-10-24T19:56:42Z",
+      "downloaded_at": "2026-10-24T20:29:45Z",
       "first": "2004-11-18",
       "last": "2026-10-23",
       "params": {
@@ -216,14 +232,14 @@
         "start": "2004-11-18",
         "ticker": "SPY"
       },
-      "raw_sha256": "9fc6c3fc531bb538dece15e76513c7dda92cc88448aae026d75b7254238b44b5",
+      "raw_sha256": "8d39009277410b2c4f6ede05d15e995daa96a24e9c8fb94ab2ef624ec9c951f9",
       "rows": 5517,
-      "sha256": "ad0e214bf614b0844e367dbc0cb6b28b23ce65f66ab283bd1e1e135efb97550c",
+      "sha256": "3fc1bdc5018827553d75c7ad6697b61c748089762da34d5d404722a2fede0ea7",
       "source": "yahoo",
       "url": "yfinance Ticker.history"
     },
     "nasdaq/GLD.parquet": {
-      "downloaded_at": "2026-10-24T19:56:56Z",
+      "downloaded_at": "2026-10-24T20:30:06Z",
       "first": "2016-10-24",
       "last": "2026-10-23",
       "params": {
@@ -238,7 +254,7 @@
       "url": "https://api.nasdaq.com/api/quote/GLD/historical?assetclass=etf&fromdate=2004-11-18&todate=2026-10-23&limit=9999"
     },
     "nasdaq/IWM.parquet": {
-      "downloaded_at": "2026-10-24T19:56:53Z",
+      "downloaded_at": "2026-10-24T20:30:03Z",
       "first": "2016-10-24",
       "last": "2026-10-23",
       "params": {
@@ -253,7 +269,7 @@
       "url": "https://api.nasdaq.com/api/quote/IWM/historical?assetclass=etf&fromdate=2004-11-18&todate=2026-10-23&limit=9999"
     },
     "nasdaq/QQQ.parquet": {
-      "downloaded_at": "2026-10-24T19:56:50Z",
+      "downloaded_at": "2026-10-24T20:29:57Z",
       "first": "2016-10-24",
       "last": "2026-10-23",
       "params": {
@@ -268,7 +284,7 @@
       "url": "https://api.nasdaq.com/api/quote/QQQ/historical?assetclass=etf&fromdate=2004-11-18&todate=2026-10-23&limit=9999"
     },
     "nasdaq/QQQ_dividends.parquet": {
-      "downloaded_at": "2026-10-24T19:56:51Z",
+      "downloaded_at": "2026-10-24T20:30:00Z",
       "first": "2012-06-15",
       "last": "2026-09-21",
       "params": {
@@ -281,7 +297,7 @@
       "url": "https://api.nasdaq.com/api/quote/QQQ/dividends?assetclass=etf"
     },
     "nasdaq/SPY.parquet": {
-      "downloaded_at": "2026-10-24T19:56:48Z",
+      "downloaded_at": "2026-10-24T20:29:52Z",
       "first": "2016-10-24",
       "last": "2026-10-23",
       "params": {
@@ -296,7 +312,7 @@
       "url": "https://api.nasdaq.com/api/quote/SPY/historical?assetclass=etf&fromdate=2004-11-18&todate=2026-10-23&limit=9999"
     },
     "rates/dtb3.parquet": {
-      "downloaded_at": "2026-10-24T19:56:44Z",
+      "downloaded_at": "2026-10-24T20:29:50Z",
       "first": "2004-11-01",
       "last": "2026-10-22",
       "params": {
@@ -386,7 +402,7 @@
             "2007": 4,
             "2008": 4,
             "2009": 4,
-            "2010": 5,
+            "2010": 4,
             "2011": 5,
             "2012": 4,
             "2013": 4,
@@ -439,15 +455,15 @@
           "share_within": 1.0
         },
         "IWM": {
-          "max": 0.00014575444752273903,
+          "max": 0.0001457529785067191,
           "share_within": 1.0
         },
         "QQQ": {
-          "max": 0.001482731289405681,
-          "share_within": 0.9998187092095722
+          "max": 0.0019628129337914135,
+          "share_within": 0.9996374184191443
         },
         "SPY": {
-          "max": 0.0003454552610506756,
+          "max": 0.0003456288388907769,
           "share_within": 1.0
         }
       },

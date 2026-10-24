@@ -13,5 +13,6 @@ holdout_start: "2018-01-01"
 holdout_end: "2026-10-23"      # set by the fetch
 download_date: "2026-10-24"    # set by the fetch (UTC date)
 rates: {source: fred, series: DTB3}
-cross_check: {source: nasdaq, close_tol: 0.005}
+# cross_check: Nasdaq serves ten years of prices (min_span_days: 9.4 years) and dividends of Nasdaq-listed symbols only
+cross_check: {source: nasdaq, close_tol: 0.005, dividend_tickers: [QQQ], min_span_days: 3450}
 corrections: configs/etf/corrections.yaml   # reviewed fixes and accepted cross-check differences

@@ -63,7 +63,8 @@ class FakeSources:
         xd = self.data.xdividends[ticker]
         rows = None if xd is None else [{"exOrEffDate": self._us(r.day_ms), "type": "Cash",
                                          "amount": f"${r.dividend!r}"} for r in xd.itertuples()]
-        return self._got(json.dumps({"data": {"dividends": {"rows": rows}}}).encode(), "nasdaq")
+        message = "Dividend History for Non-Nasdaq symbols is not available" if xd is None else None
+        return self._got(json.dumps({"data": {"dividends": {"rows": rows}}, "message": message}).encode(), "nasdaq")
 
     def kwargs(self):
         return {"yahoo": self.yahoo, "fred": self.fred, "nasdaq_history": self.nasdaq_history,
@@ -116,11 +117,21 @@ def test_fetch_applies_corrections_and_records_them(env):
                       xprices={**data.xprices, "SPY": x}, xdividends=data.xdividends)
     day = day_iso(x["day_ms"].iloc[10])
     new_open = float(x.loc[10, "open"])
-    high = max(new_open, float(data.prices["SPY"].loc[10, "high"]))
+    yahoo = data.prices["SPY"].set_index("day_ms").loc[x["day_ms"].iloc[10]]
+    old_open, old_high = float(yahoo["open"]), float(yahoo["high"])
+    high = max(new_open, old_high)
     assert not run_fetch(CFG, today=TODAY, **FakeSources(data).kwargs()).ok
-    Path("configs/etf/corrections.yaml").write_text(
-        f'prices:\n  - {{ticker: SPY, date: "{day}", open: {new_open!r}, high: {high!r}, reason: stale}}\n'
-        "dividends: []\naccepted: []\n", encoding="utf-8")
+
+    def fix(was_open):
+        Path("configs/etf/corrections.yaml").write_text(
+            f'prices:\n  - {{ticker: SPY, date: "{day}", open: {new_open!r}, high: {high!r}, '
+            f"was: {{open: {was_open!r}, high: {old_high!r}}}, reason: stale}}\n"
+            "dividends: []\naccepted: []\n", encoding="utf-8")
+
+    fix(old_open * 1.01)  # reviewed against another Yahoo value: the fix is stale and refused
+    with pytest.raises(ValueError, match="stale price fix"):
+        run_fetch(CFG, today=TODAY, **FakeSources(data).kwargs())
+    fix(old_open)
     out = run_fetch(CFG, today=TODAY, **FakeSources(data).kwargs())
     assert out.ok
     assert out.manifest["corrections"]["prices"][0]["date"] == day
@@ -143,11 +154,12 @@ def test_failed_validation_writes_nothing(env, capsys):
     assert Path(CFG).read_text(encoding="utf-8") == before
 
 
-def test_fetch_refuses_another_download_date_before_downloading(env):
+def test_fetch_refuses_an_existing_store_before_downloading(env):
     run_fetch(CFG, today=TODAY, **FakeSources().kwargs())
     src = FakeSources()
-    with pytest.raises(StoreRefused, match="--refetch"):
-        run_fetch(CFG, today=date(2018, 2, 2), **src.kwargs())
+    for day in (TODAY, date(2018, 2, 2)):  # the same download day too: the stored snapshot may be frozen
+        with pytest.raises(StoreRefused, match="--refetch"):
+            run_fetch(CFG, today=day, **src.kwargs())
     assert src.calls == []
     out = run_fetch(CFG, today=date(2018, 2, 2), refetch=True, **src.kwargs())
     assert out.ok and Path("data/etf/_old/2018-02-01/manifest.json").is_file()
@@ -181,3 +193,35 @@ def test_cli_validate_without_a_store(env, capsys):
     assert main(["etf", "validate"]) == 1
     assert "etf fetch" in capsys.readouterr().err
     assert main(["etf", "validate", "--config", "missing.yaml"]) == 2
+
+
+def test_validate_refuses_a_config_that_does_not_match_the_store(env, capsys):
+    run_fetch(CFG, today=TODAY, **FakeSources().kwargs())
+    from perpbt.etf.fetch import set_fetch_dates
+    set_fetch_dates(CFG, download_date="2018-02-03", holdout_end="2018-01-31")
+    assert main(["etf", "validate"]) == 1
+    assert "download_date" in capsys.readouterr().err
+
+
+def test_validate_refuses_a_tampered_parquet(env, capsys):
+    run_fetch(CFG, today=TODAY, **FakeSources().kwargs())
+    path = Path("data/etf/SPY/prices.parquet")
+    path.write_bytes(path.read_bytes() + b"\0")
+    assert main(["etf", "validate"]) == 1
+    assert "differs from its manifest hash" in capsys.readouterr().err
+
+
+def test_a_nasdaq_error_reply_fails_the_fetch(env):
+    src = FakeSources()
+    src.nasdaq_dividends = lambda t: src._got(b'{"data": null, "status": {"rCode": 400}}', "nasdaq")
+    with pytest.raises(SourceError, match="no data"):
+        run_fetch(CFG, today=TODAY, **src.kwargs())
+
+
+def test_a_missing_required_dividend_history_fails_validation(env):
+    data = make_data(end=END)
+    data = type(data)(prices=data.prices, actions=data.actions, rates=data.rates, xprices=data.xprices,
+                      xdividends={**data.xdividends, "QQQ": None})
+    out = run_fetch(CFG, today=TODAY, **FakeSources(data).kwargs())
+    assert not out.ok
+    assert "QQQ: no cross-check dividend history, but QQQ is in cross_check.dividend_tickers" in out.results[5].failures

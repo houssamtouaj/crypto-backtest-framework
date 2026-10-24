@@ -148,7 +148,10 @@ def parse_yahoo_csv(raw: bytes, ticker: str) -> tuple[pd.DataFrame, pd.DataFrame
         raise SourceError(f"yahoo {ticker}: unreadable CSV: {e}") from e
     if tuple(frame.columns) != YAHOO_COLUMNS:
         raise SourceError(f"yahoo {ticker}: expected columns {list(YAHOO_COLUMNS)}, got {list(frame.columns)}")
-    day = np.array([date_ms(d) for d in frame["Date"]], dtype=np.int64)
+    try:
+        day = np.array([date_ms(d) for d in frame["Date"]], dtype=np.int64)
+    except (TypeError, ValueError) as e:
+        raise SourceError(f"yahoo {ticker}: bad date: {e}") from e
     num = frame[list(YAHOO_COLUMNS[1:])].astype("float64")
     prices = pd.DataFrame({"day_ms": day, "open": num["Open"], "high": num["High"], "low": num["Low"],
                            "close": num["Close"], "volume": num["Volume"], "adj_close": num["Adj Close"]},
@@ -258,10 +261,15 @@ def parse_nasdaq_history(raw: bytes, ticker: str) -> pd.DataFrame:
 def parse_nasdaq_dividends(raw: bytes, ticker: str) -> pd.DataFrame | None:
     """``day_ms, dividend`` of the cash dividends by ex-date, oldest first; None when Nasdaq serves no history."""
     what = f"nasdaq dividends {ticker}"
-    data = _json(raw, what).get("data") or {}
+    body = _json(raw, what)
+    data = body.get("data")
+    if not isinstance(data, dict):
+        raise SourceError(f"{what}: no data (an error reply?): {body.get('status')}")
     rows = (data.get("dividends") or {}).get("rows")
     if rows is None:
-        return None
+        if "not available" in str(body.get("message") or "").lower():
+            return None  # "Dividend History for Non-Nasdaq symbols is not available"
+        raise SourceError(f"{what}: no rows and no 'not available' message: {body.get('message')!r}")
     cash = [r for r in rows if str(r.get("type", "")).lower() == "cash"]
     out = pd.DataFrame({
         "day_ms": np.array([_us_date(r.get("exOrEffDate"), what) for r in cash], dtype=np.int64),

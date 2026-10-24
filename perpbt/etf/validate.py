@@ -61,10 +61,15 @@ _CLOSED_BY_YEAR = {
 NYSE_CLOSED = frozenset(f"{y}-{md}" for y, mds in _CLOSED_BY_YEAR.items() for md in mds)
 CLOSED_LIST_END = f"{max(_CLOSED_BY_YEAR)}-12-31"
 
-# ticker -> the first calendar year checked for 4 +- 1 dividends; QQQ paid annually until 2004 and twice in 2005
+# ticker -> the first calendar year checked; QQQ paid annually until 2004 and twice in 2005
 QUARTERLY_FROM = {"SPY": 2005, "QQQ": 2006, "IWM": 2005}
 NON_PAYERS = ("GLD",)
-DIVIDENDS_PER_YEAR = (3, 5)  # 4 +- 1 (special distributions happen)
+# dividends per full calendar year, tighter than the spec's 4 +- 1 (the review of 2026-10-24): rule 5 cannot see a
+# dividend missing from both of Yahoo's columns, and SPY and IWM have no independent dividend source. QQQ pays a
+# year-end special in some years (2011, 2014, 2023).
+DIVIDENDS_PER_YEAR = {"SPY": (4, 4), "IWM": (4, 4), "QQQ": (4, 5)}
+MAX_DIVIDEND_GAP_DAYS = 120  # between ex-dates, and from the last one to the last price day (2004-2026 max: 111)
+DUPLICATE_DAYS = 10  # two equal dividends this close are a duplicate
 MAX_MOVE = 0.25  # day-over-day close move without a split
 PRICE_NOISE = 1e-6  # relative slack on low <= open/close <= high: Yahoo's prices carry float32 noise
 ADJ_TOL = 0.0005  # rule 5: |total return - Adj Close return| on ADJ_SHARE of the days ...
@@ -205,10 +210,20 @@ def _rule_dividends(data: EtfData) -> RuleResult:
             fails.append(f"{t}: no dividend expectation for this ticker")
             continue
         years = pd.Series([_d(d).year for d in paid], dtype="int64").value_counts()
-        last_full = _d(data.prices[t]["day_ms"].iloc[-1]).year - 1
-        counts[t] = {str(y): int(years.get(y, 0)) for y in range(QUARTERLY_FROM[t], last_full + 1)}
-        lo, hi = DIVIDENDS_PER_YEAR
+        last_day = _d(data.prices[t]["day_ms"].iloc[-1])
+        counts[t] = {str(y): int(years.get(y, 0)) for y in range(QUARTERLY_FROM[t], last_day.year)}
+        lo, hi = DIVIDENDS_PER_YEAR[t]
         fails += [f"{t} {y}: {n} dividends, expected {lo}..{hi}" for y, n in counts[t].items() if not lo <= n <= hi]
+        dates = [_d(d) for d in paid if _d(d).year >= QUARTERLY_FROM[t]]
+        for a, b in zip(dates, dates[1:] + [last_day]):
+            if (b - a).days > MAX_DIVIDEND_GAP_DAYS:
+                fails.append(f"{t} {a}..{b}: {(b - a).days} days without a dividend, expected <= "
+                             f"{MAX_DIVIDEND_GAP_DAYS}")
+        amounts = div[div > 0]
+        for k in range(1, len(paid)):
+            if (paid[k] - paid[k - 1]) <= DUPLICATE_DAYS * 86_400_000 and amounts[k] == amounts[k - 1]:
+                fails.append(f"{t} {day_iso(paid[k])}: the same {amounts[k]} dividend as on "
+                             f"{day_iso(paid[k - 1])}, a likely duplicate")
     return RuleResult("4 dividends", tuple(fails), {"per_year": counts})
 
 
@@ -271,7 +286,11 @@ def _rule_cross_check(data: EtfData, cfg: EtfDataConfig, basis: Mapping[str, str
         yahoo_days = set(f["day_ms"].tolist())
         fails += [f"{t} {day_iso(d)}: a cross-check day Yahoo does not have" for d in x["day_ms"]
                   if d not in yahoo_days]
-        span = f[(f["day_ms"] >= x["day_ms"].iloc[0]) & (f["day_ms"] <= x["day_ms"].iloc[-1])]
+        x0, x1 = x["day_ms"].iloc[0], x["day_ms"].iloc[-1]
+        if x1 != hi or (x1 - x0) // 86_400_000 < cfg.cross_check.min_span_days:
+            fails.append(f"{t}: the cross-check spans {day_iso(x0)}..{day_iso(x1)}; it must end on {day_iso(hi)} "
+                         f"and span at least {cfg.cross_check.min_span_days} days")
+        span = f[(f["day_ms"] >= x0) & (f["day_ms"] <= x1)]
         coverage = float(span["day_ms"].isin(x["day_ms"]).mean())
         if coverage < XCHECK_MIN_COVERAGE:
             fails.append(f"{t}: the cross-check has {coverage:.2%} of Yahoo's days in its span, "
@@ -285,6 +304,9 @@ def _rule_cross_check(data: EtfData, cfg: EtfDataConfig, basis: Mapping[str, str
             odiff = np.abs(m["open_x"] / m["open"] - 1).to_numpy()
             for k in np.flatnonzero(np.isfinite(odiff) & (odiff > tol)):
                 differ(t, m["day_ms"].iloc[k], "open", f"open differs by {odiff[k]:.4%} (raw basis)")
+            missing_open = int((~np.isfinite(m["open_x"].to_numpy())).sum())
+            if missing_open:
+                fails.append(f"{t}: {missing_open} cross-check opens are not finite")
             open_info = {"open_days": int(np.isfinite(odiff).sum()), "open_max": float(np.nanmax(odiff))
                          if np.isfinite(odiff).any() else None}
         else:
@@ -306,13 +328,18 @@ def _rule_cross_check(data: EtfData, cfg: EtfDataConfig, basis: Mapping[str, str
                    "share_over_0.1pct": float(np.mean(ok > XCHECK_REPORT)) if len(ok) else None,
                    "max": float(ok.max()) if len(ok) else None, **open_info}
         xd = data.xdividends[t]
+        required = t in cfg.cross_check.dividend_tickers
         if xd is None:
             info[t]["dividends"] = "no independent source (Nasdaq serves none for this symbol)"
+            if required:
+                fails.append(f"{t}: no cross-check dividend history, but {t} is in cross_check.dividend_tickers")
             continue
         ydiv = f.loc[f["dividend"] > 0, ["day_ms", "dividend"]]
         xd = xd[(xd["day_ms"] >= lo) & (xd["day_ms"] <= hi)]
         if not len(xd):
             info[t]["dividends"] = "no independent dividends inside the Yahoo span"
+            if required:
+                fails.append(f"{t}: the cross-check dividend history is empty inside the Yahoo span")
             continue
         ywin = ydiv[(ydiv["day_ms"] >= xd["day_ms"].iloc[0]) & (ydiv["day_ms"] <= xd["day_ms"].iloc[-1])]
         yd = dict(zip(ywin["day_ms"].tolist(), ywin["dividend"].tolist()))
@@ -388,6 +415,11 @@ def validate_store(store: EtfStore, cfg: EtfDataConfig) -> tuple[list[RuleResult
     manifest = store.manifest()
     if manifest is None:
         raise StoreRefused(f"no manifest under {store.root}; run `perpbt etf fetch` first")
+    for key in ("download_date", "holdout_end"):
+        if getattr(cfg, key) != manifest.get(key):
+            raise StoreRefused(f"the config's {key} {getattr(cfg, key)} is not the store's {manifest.get(key)}")
+    if not isinstance(manifest.get("cross_check_basis"), dict):
+        raise StoreRefused("the manifest records no cross-check basis")
     corrections = load_corrections(cfg.corrections)
     if corrections_hash(corrections) != manifest.get("corrections_hash"):
         raise StoreRefused(f"{cfg.corrections} changed since the fetch; re-fetch to apply it")

@@ -5,7 +5,12 @@
 
 - ``prices``: replace some of a day's open, high, low, close (a stale Yahoo
   bar: the previous close copied into the open and one extreme);
-- ``dividends``: set a day's cash dividend (one Yahoo lacks);
+- ``dividends``: set a day's cash dividend (one Yahoo lacks), or 0 to remove
+  one (a duplicate);
+
+Every fix records in ``was`` the Yahoo value it replaces; ``apply`` refuses
+a fix whose ``was`` no longer matches (a re-fetch changed Yahoo's value), so
+a fix cannot go stale silently either.
 - ``accepted``: a cross-check difference (``open``, ``close`` or
   ``dividend``) reviewed and left as Yahoo has it.
 
@@ -29,6 +34,8 @@ from perpbt.data.store import date_ms
 from perpbt.etf.store import ACTION_COLUMNS, EtfData
 
 CHECKS = ("open", "close", "dividend")
+PRICE_FIELDS = ("open", "high", "low", "close")
+WAS_TOL = 1e-6  # relative: Yahoo's float32 noise; a re-fetch that changed the value by more is a stale fix
 
 __all__ = ["CHECKS", "Accepted", "Corrections", "DividendFix", "PriceFix", "apply", "corrections_hash",
            "load_corrections"]
@@ -49,17 +56,26 @@ class PriceFix(_Config):
     ticker: str
     date: str
     reason: str
+    was: dict[str, float]  # Yahoo's value of every field set here; apply refuses when Yahoo no longer has it
     open: float | None = None  # None: keep Yahoo's
     high: float | None = None
     low: float | None = None
     close: float | None = None
 
+    def fields_set(self) -> dict[str, float]:
+        return {k: getattr(self, k) for k in PRICE_FIELDS if getattr(self, k) is not None}
+
     def _validate(self) -> None:
         _check_iso_date(self.date, "PriceFix.date")
-        if all(getattr(self, k) is None for k in ("open", "high", "low", "close")):
+        if not self.fields_set():
             raise ConfigError(f"PriceFix {self.ticker} {self.date}: sets no price")
-        for k in ("open", "high", "low", "close"):
+        for k in PRICE_FIELDS:
             _positive(getattr(self, k), f"PriceFix.{k}")
+        if sorted(self.was) != sorted(self.fields_set()):
+            raise ConfigError(f"PriceFix {self.ticker} {self.date}: was must give Yahoo's value of exactly "
+                              f"{sorted(self.fields_set())}, got {sorted(self.was)}")
+        for k, v in self.was.items():
+            _positive(v, f"PriceFix.was[{k!r}]")
         _reason(self.reason, "PriceFix")
 
 
@@ -67,12 +83,18 @@ class PriceFix(_Config):
 class DividendFix(_Config):
     ticker: str
     date: str
-    amount: float
+    amount: float  # 0 removes Yahoo's dividend (a duplicate)
+    was: float  # Yahoo's dividend that day, 0 when it has none; apply refuses when Yahoo no longer has it
     reason: str
 
     def _validate(self) -> None:
         _check_iso_date(self.date, "DividendFix.date")
-        _positive(self.amount, "DividendFix.amount")
+        for name in ("amount", "was"):
+            v = getattr(self, name)
+            if not (math.isfinite(v) and v >= 0):
+                raise ConfigError(f"DividendFix.{name}: must be finite and >= 0, got {v!r}")
+        if self.amount == self.was:
+            raise ConfigError(f"DividendFix {self.ticker} {self.date}: amount equals was; nothing to fix")
         _reason(self.reason, "DividendFix")
 
 
@@ -121,8 +143,16 @@ def corrections_hash(corrections: Corrections) -> str:
     return config_hash(corrections)
 
 
+def _same(a: float, b: float) -> bool:
+    return abs(a - b) <= WAS_TOL * max(abs(a), abs(b), 1e-12)
+
+
 def apply(data: EtfData, corrections: Corrections) -> EtfData:
-    """``data`` with the price and dividend fixes applied; a fix for an unknown ticker or day raises ValueError."""
+    """``data`` with the price and dividend fixes applied.
+
+    Raises ValueError for a fix on an unknown ticker or day, and for a stale fix: Yahoo's value is no longer the
+    ``was`` the fix was reviewed against (a re-fetch changed it), so the fix must be reviewed again.
+    """
     prices = {t: f.copy() for t, f in data.prices.items()}
     actions = {t: f.copy() for t, f in data.actions.items()}
     for fix in corrections.prices:
@@ -132,9 +162,11 @@ def apply(data: EtfData, corrections: Corrections) -> EtfData:
         rows = np.flatnonzero(f["day_ms"].to_numpy() == date_ms(fix.date))
         if len(rows) != 1:
             raise ValueError(f"corrections: {fix.ticker} has no price row on {fix.date}")
-        for k in ("open", "high", "low", "close"):
-            if getattr(fix, k) is not None:
-                f.loc[rows[0], k] = getattr(fix, k)
+        for k, value in fix.fields_set().items():
+            if not _same(float(f.loc[rows[0], k]), fix.was[k]):
+                raise ValueError(f"corrections: stale price fix {fix.ticker} {fix.date}: Yahoo's {k} is "
+                                 f"{f.loc[rows[0], k]!r}, the fix was reviewed against {fix.was[k]!r}")
+            f.loc[rows[0], k] = value
     for fix in corrections.dividends:
         if fix.ticker not in actions:
             raise ValueError(f"corrections: dividend fix for unknown ticker {fix.ticker}")
@@ -143,8 +175,13 @@ def apply(data: EtfData, corrections: Corrections) -> EtfData:
             raise ValueError(f"corrections: {fix.ticker} has no price row on {fix.date}")
         a = actions[fix.ticker]
         hit = a["day_ms"] == day
+        current = float(a.loc[hit, "dividend"].iloc[0]) if hit.any() else 0.0
+        if not _same(current, fix.was):
+            raise ValueError(f"corrections: stale dividend fix {fix.ticker} {fix.date}: Yahoo's dividend is "
+                             f"{current!r}, the fix was reviewed against {fix.was!r}")
         if hit.any():
             a.loc[hit, "dividend"] = fix.amount
+            a = a[(a[["dividend", "split", "capital_gain"]] != 0).any(axis=1)].reset_index(drop=True)
         else:
             a = pd.concat([a, pd.DataFrame([{"day_ms": day, "dividend": fix.amount, "split": 0.0,
                                              "capital_gain": 0.0}], columns=list(ACTION_COLUMNS))])

@@ -39,8 +39,12 @@ class RatesSource(_Config):
 class CrossCheckSource(_Config):
     source: str  # "nasdaq" (Stooq serves a bot check since 2026; Phase 0 §0.9)
     close_tol: float  # every common day within this, on levels or on returns
+    dividend_tickers: tuple[str, ...]  # must have an independent dividend history (rule 6 fails without one)
+    min_span_days: int  # the cross-check prices must span at least this many calendar days, ending with Yahoo's
 
     def _validate(self) -> None:
+        if self.min_span_days < 1:
+            raise ConfigError(f"CrossCheckSource.min_span_days: must be >= 1, got {self.min_span_days}")
         if self.source not in CROSS_CHECK_SOURCES:
             raise ConfigError(
                 f"CrossCheckSource.source: expected one of {list(CROSS_CHECK_SOURCES)}, got {self.source!r}"
@@ -71,6 +75,9 @@ class EtfDataConfig(_Config):
                 raise ConfigError(f"EtfDataConfig.tickers: expected upper-case tickers, got {t!r}")
         if len(set(self.tickers)) != len(self.tickers):
             raise ConfigError(f"EtfDataConfig.tickers: duplicates in {list(self.tickers)}")
+        if not set(self.cross_check.dividend_tickers) <= set(self.tickers):
+            raise ConfigError(f"CrossCheckSource.dividend_tickers: {list(self.cross_check.dividend_tickers)} are not "
+                              f"all in tickers {list(self.tickers)}")
         names = ("warmup_start", "insample_start", "insample_end", "holdout_start")
         for name in names:
             _check_iso_date(getattr(self, name), f"EtfDataConfig.{name}")

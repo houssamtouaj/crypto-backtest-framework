@@ -83,7 +83,7 @@ def run_fetch(config_path: str | Path, *, refetch: bool = False, today: date | N
     download_date = (today or datetime.now(timezone.utc).date()).isoformat()
     store = EtfStore(cfg.data_dir)
     old = store.manifest()
-    if old is not None and old.get("download_date") != download_date and not refetch:
+    if old is not None and not refetch:
         raise StoreRefused(f"{store.root} holds the {old.get('download_date')} download; pass --refetch to replace it")
 
     provenance: dict[str, FileSource] = {}

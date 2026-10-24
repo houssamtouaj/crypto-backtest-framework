@@ -581,7 +581,7 @@ def _etf_fetch(args: argparse.Namespace) -> int:
     except StoreRefused as e:
         print(f"perpbt etf fetch: refused: {e}", file=sys.stderr)
         return 1
-    except SourceError as e:
+    except (SourceError, ValueError) as e:  # ValueError: a corrections fix that does not apply (stale, unknown day)
         print(f"perpbt etf fetch: {e}", file=sys.stderr)
         return 1
     print(format_table(out.results), flush=True)

@@ -84,12 +84,21 @@ def test_loads_need_a_manifest_and_listed_files(written, tmp_path):
         store.load("SPY", "2005-02-01", "2005-01-01")
 
 
-def test_rewrite_same_date_and_refusal_for_another(written):
+def test_any_rewrite_needs_refetch(written):
     store, data, _ = written
-    _write(store, data)  # the same download date: allowed
-    with pytest.raises(StoreRefused, match="--refetch"):
-        _write(store, data, date="2026-11-01")
+    for date in ("2026-10-24", "2026-11-01"):  # the same download date too: the snapshot may be frozen
+        with pytest.raises(StoreRefused, match="--refetch"):
+            _write(store, data, date=date)
     assert store.manifest()["download_date"] == "2026-10-24"
+
+
+def test_a_changed_parquet_is_refused(written):
+    store, _, _ = written
+    path = store.root / prices_file("SPY")
+    path.write_bytes(path.read_bytes() + b"\0")
+    with pytest.raises(StoreRefused, match="manifest hash"):
+        store.load("SPY", "2005-01-01", "2005-02-01")
+    assert len(store.load("QQQ", "2005-01-01", "2005-02-01")) > 0
 
 
 def test_refetch_moves_the_old_store(written):
@@ -103,6 +112,25 @@ def test_refetch_moves_the_old_store(written):
                                    encoding="utf-8")
     with pytest.raises(StoreRefused, match="exists"):
         _write(store, data, date="2026-12-01", refetch=True)
+
+
+def test_an_interrupted_retire_leaves_no_manifest(written, monkeypatch):
+    store, data, _ = written
+    import shutil as shutil_mod
+
+    real_move = shutil_mod.move
+    moved = []
+
+    def flaky(src, dst):
+        moved.append(src)
+        if len(moved) == 2:
+            raise PermissionError("locked")
+        return real_move(src, dst)
+
+    monkeypatch.setattr(shutil_mod, "move", flaky)
+    with pytest.raises(PermissionError):
+        _write(store, data, date="2026-11-01", refetch=True)
+    assert moved[0].endswith(MANIFEST) and store.manifest() is None  # nothing half-moved loads
 
 
 def test_write_needs_provenance_for_every_file(tmp_path):

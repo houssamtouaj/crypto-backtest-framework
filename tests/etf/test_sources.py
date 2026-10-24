@@ -133,6 +133,10 @@ def test_parse_nasdaq_dividends():
     assert len(d) == 3 and d["day_ms"].is_monotonic_increasing
     assert d["day_ms"].iloc[-1] == date_ms("2026-09-21") and d["dividend"].iloc[-1] == 0.75143
     assert parse_nasdaq_dividends(_bytes("nasdaq_dividends_SPY.json"), "SPY") is None  # not Nasdaq-listed
+    with pytest.raises(SourceError, match="no data"):  # an error reply is not "no history"
+        parse_nasdaq_dividends(b'{"data": null, "message": null, "status": {"rCode": 400}}', "QQQ")
+    with pytest.raises(SourceError, match="not available"):
+        parse_nasdaq_dividends(b'{"data": {"dividends": {"rows": null}}, "message": "busy"}', "QQQ")
 
 
 def test_http_get_is_the_default_and_no_test_touches_the_network(monkeypatch):

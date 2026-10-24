@@ -85,7 +85,8 @@ def make_data(*, dividend_yield: float = 0.004, end: date = END) -> EtfData:
 def make_config(**over) -> EtfDataConfig:
     base = dict(data_dir="data/etf", tickers=list(TICKERS), warmup_start="2004-11-18", insample_start="2005-08-01",
                 insample_end="2017-12-31", holdout_start="2018-01-01", holdout_end=None, download_date=None,
-                rates={"source": "fred", "series": "DTB3"}, cross_check={"source": "nasdaq", "close_tol": 0.005},
+                rates={"source": "fred", "series": "DTB3"},
+                cross_check={"source": "nasdaq", "close_tol": 0.005, "dividend_tickers": ["QQQ"], "min_span_days": 300},
                 corrections="configs/etf/corrections.yaml")
     base.update(over)
     return EtfDataConfig(**base)

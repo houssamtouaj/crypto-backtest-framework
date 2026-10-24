@@ -11,9 +11,10 @@ exchange date at 00:00 UTC, int64 ms)::
     manifest.json                 per file: source, url, params, download time, rows, first/last date, hashes
 
 The manifest is the source of truth: it is written last, a file it does not
-list is not loaded, and a store without one loads nothing. ``write`` never
-replaces a store whose manifest has a different ``download_date`` unless
-``refetch`` is given; the old store then moves to ``_old/<download_date>/``.
+list is not loaded, a file whose sha256 differs from its entry is refused,
+and a store without one loads nothing. ``write`` never replaces a store
+unless ``refetch`` is given (stricter than the spec, which allowed a
+same-day overwrite); the old store then moves to ``_old/<download_date>/``.
 
 The holdout guard (Phase 0 §0.5): every load ending on or after
 ``ETF_HOLDOUT_START`` needs the ``allow_holdout`` flag. The date is this module's
@@ -193,7 +194,7 @@ class EtfStore:
         if missing:
             raise ValueError(f"EtfStore.write: no provenance for {missing}")
         old = self.manifest()
-        if old is not None and old.get("download_date") != download_date:
+        if old is not None:
             if not refetch:
                 raise StoreRefused(
                     f"{self.root} holds the {old.get('download_date')} download; pass --refetch to replace it "
@@ -226,6 +227,7 @@ class EtfStore:
         if dest.exists():
             raise StoreRefused(f"{dest} exists; move it away before re-fetching")
         dest.mkdir(parents=True)
+        shutil.move(str(self.manifest_path), str(dest / MANIFEST))  # first: an interrupted move leaves no manifest
         for entry in sorted(self.root.iterdir()):
             if entry.name != OLD_DIR:
                 shutil.move(str(entry), str(dest / entry.name))
@@ -233,9 +235,13 @@ class EtfStore:
     # --- loads ----------------------------------------------------------------------
 
     def _read(self, rel: str, columns: tuple[str, ...], manifest: dict) -> pd.DataFrame:
+        """A listed file whose sha256 is the manifest's (the parquet files are not committed; the manifest is)."""
         if rel not in manifest["files"]:
             raise StoreRefused(f"{rel} is not in {self.manifest_path}")
-        return _typed(pd.read_parquet(self.root / rel), columns, rel)
+        path = self.root / rel
+        if _sha256_file(path) != manifest["files"][rel]["sha256"]:
+            raise StoreRefused(f"{path} differs from its manifest hash; the snapshot was changed")
+        return _typed(pd.read_parquet(path), columns, rel)
 
     @staticmethod
     def _guard(end: str, allow_holdout: bool, what: str) -> None:

@@ -146,9 +146,12 @@ implementation notes. Tests green, the carry guard included.
 
 ## 0.9 Implementation notes (2026-10-24, branch `etf/0-data`)
 
-**Fetched once for real** on 2026-10-24 (UTC): `download_date` 2026-10-24, `holdout_end` 2026-10-23 (both now
-in `configs/etf/data.yaml`). `data/etf/manifest.json` sha256 `501d5f25b1cdf707746529fc34b48b574c864aa897f9ecf45093f67ea44119f3`
-(the file is pinned to LF in `.gitattributes`, so the hash survives a checkout). yfinance 1.7.0.
+**Fetched for real** on 2026-10-24 (UTC), then re-fetched with `--refetch` the same day after the final review
+changed the corrections (the first store is in `data/etf/_old/2026-10-24/`; between the two downloads only
+Yahoo's `adj_close` moved, by about 1e-6 relative; open, high, low, close, volume and dividends were identical).
+`download_date` 2026-10-24, `holdout_end` 2026-10-23 (both in `configs/etf/data.yaml`). `data/etf/manifest.json`
+sha256 `308f5012c5a274b62ee2d5f29e4b299cd225be3fa0cf2b02ff60a73f88c60658` (pinned to LF in `.gitattributes`, so the
+hash survives a checkout). yfinance 1.7.0.
 
 **Validation table** (`perpbt etf validate`, every rule passes):
 
@@ -157,9 +160,9 @@ in `configs/etf/data.yaml`). `data/etf/manifest.json` sha256 `501d5f25b1cdf70774
 | 1 calendar | all four tickers on the same 5,517 days, 2004-11-18..2026-10-23; every missing weekday is a listed NYSE closure and the list equals the weekdays Yahoo lacks |
 | 2 prices | pass |
 | 3 splits | one: IWM 2:1 on 2005-06-09 (in the warmup); the split-adjusted close is continuous |
-| 4 dividends | SPY and IWM: exactly 4 in every year 2005–2025. QQQ: 4 or 5 a year 2006–2025 (5 in 2010, 2011, 2014, 2023). GLD: none. No capital gains |
-| 5 adj close | share of days within 0.0005: SPY, IWM, GLD 100%; QQQ 99.98% (one day, 2020-09-21, the added dividend Yahoo's Adj Close lacks: 0.0015) |
-| 6 cross-check | Nasdaq, raw basis for all four, 2016-10-24..2026-10-23 (2,514 days, coverage 100%). Closes: max difference 0.20% (SPY), 0.08% (IWM), 0.00% (QQQ), 0.87% (GLD, the accepted stale Nasdaq bar); share over 0.1%: 0.04% of days for SPY and GLD, 0 for the others. Opens: max 0.47% (SPY, after the corrections), 1.02% (IWM, accepted), 0.19% (QQQ), 0.63% (GLD, accepted). Dividends: QQQ 58 of 58 Nasdaq dividends (2012-06-15..2026-09-21) agree after the correction; SPY, IWM: no independent source |
+| 4 dividends | SPY and IWM: exactly 4 in every year 2005–2025 (now required). QQQ: 4 or 5 a year 2006–2025 (5 in 2011, 2014, 2023: year-end specials, the 2014 and 2023 ones confirmed by Nasdaq). No ex-date gap over 120 days (max 111, IWM 2023); no equal dividend repeated within 10 days. GLD: none. No capital gains |
+| 5 adj close | share of days within 0.0005: SPY, IWM, GLD 100%; QQQ 99.96% (two days: 2020-09-21, the added dividend, and 2010-06-25, the removed duplicate, where Yahoo's Adj Close follows Yahoo's own dividend list; max 0.0020) |
+| 6 cross-check | Nasdaq, raw basis for all four, 2016-10-24..2026-10-23 (2,514 days, coverage 100%). Closes: max difference 0.20% (SPY), 0.08% (IWM), 0.00% (QQQ), 0.87% (GLD, the accepted stale Nasdaq bar); share over 0.1%: 0.04% of days for SPY and GLD, 0 for the others. Opens: max 0.47% (SPY, after the corrections), 1.02% (IWM, accepted), 0.19% (QQQ), 0.63% (GLD, accepted). Dividends: QQQ 58 of 58 Nasdaq dividends (2012-06-15..2026-09-21) agree after the correction (QQQ must have this source: `cross_check.dividend_tickers`); SPY, IWM: no independent source |
 | 7 rates | DTB3 2004-11-01..2026-10-22, 5,498 published days, no gap over 5 business days |
 
 | Store file | Rows | First | Last |
@@ -187,20 +190,33 @@ in `configs/etf/data.yaml`). `data/etf/manifest.json` sha256 `501d5f25b1cdf70774
    - SPY 2016-11-07 (open, low) and 2017-05-17 (open, high): Yahoo copied the previous close into the open and
      one extreme (a stale print); Nasdaq's values are used.
    - QQQ 2020-09-21: Yahoo lacks the 0.38824 dividend; added from Nasdaq.
+   - QQQ 2010-06-25: a duplicate of the 2010-06-18 dividend (0.089 both, a week apart); removed. Found by the
+     final review; no source covers 2010, so this is a judgement (a duplicate would add about 0.2% to QQQ's
+     in-sample total return).
    - Accepted, Yahoo kept: QQQ dividends 2012-09-21 and 2012-12-21 (missing from Nasdaq's history), IWM opens
      2017-12-05 and 2017-12-07 (1.0% and 0.65% apart, neither bar stale, no third source), GLD 2026-04-20 open
      and close (Nasdaq's bar is the previous close on all four prices, no volume).
+   Every fix records the Yahoo value it replaces (`was`); the fetch refuses a fix whose `was` no longer matches.
    The fetch applies the fixes before validation; rule 6 lists the accepted differences and fails on one that no
    longer occurs. The manifest records the corrections and the hash of their parsed content (comments and line
    endings do not count); `perpbt etf validate` refuses a corrections file changed since the fetch.
-4. **Rule 4:** QQQ is checked from 2006 (it paid once in 2004 and twice in 2005, then quarterly).
+4. **Rule 4:** QQQ is checked from 2006 (it paid once in 2004 and twice in 2005, then quarterly). Tighter than
+   the spec's 4 ± 1 (final review): SPY and IWM exactly 4 a year, QQQ 4–5; at most 120 days between ex-dates and
+   from the last one to the last price day (so the partial last year counts); an equal dividend within 10 days
+   fails as a likely duplicate. Rule 5 cannot catch these: Yahoo's Adj Close is built from its own dividend list.
 5. **Rule 7:** the rates must reach the trading day before `holdout_end` (the last rate any cash day uses, Phase 1
    §1.3), since FRED publishes a day late; values in [−1, 10], since DTB3 printed −0.01 to −0.05 on eight days
    in 2015 and March 2020. Phase 1 uses those negative rates as they are.
 6. **Rule 1 extras:** each ticker's first date must be `warmup_start`; prices on a listed closure are an error; the
    closure list runs to 2027 and the rule fails past it.
 7. **Capital gains** are kept in `actions.parquet` (`capital_gain`) and must be zero (none in the data).
-8. **A failed validation writes nothing** (not the store, not the data.yaml dates).
+8. **A failed validation writes nothing** (not the store, not the data.yaml dates). **Any existing store needs
+   `--refetch`**, the same download day included (the spec allowed a same-day overwrite; the snapshot may be
+   frozen). Every load checks each parquet file's sha256 against the manifest (the parquet files are not
+   committed). `perpbt etf validate` also refuses a config whose dates differ from the manifest's.
+8a. **Rule 6 extras:** the cross-check prices must end on Yahoo's last day and span `min_span_days` (3,450);
+   missing cross-check opens fail like missing closes; a Nasdaq error reply raises instead of reading as "no
+   dividend history".
 9. **The rates load is guarded** like the prices (`end ≥ 2018-01-01` needs `allow_holdout`).
 10. **`yfinance==1.7.0` is an optional extra** (`pip install .[etf]`), imported only inside the fetch.
 11. **FRED needs a plain user agent** (a browser one times out); Nasdaq needs a browser one.
@@ -212,3 +228,5 @@ in `configs/etf/data.yaml`). `data/etf/manifest.json` sha256 `501d5f25b1cdf70774
   Only the two over 0.5% were corrected; before 2016-10 nothing can be checked. Fills at the open on those days
   carry the error; the `fill_close` exploratory row shows the sensitivity.
 - The holdout's GLD 2026-04-20 bar comes from Yahoo alone.
+- **For Phase 5:** forward runs need data past this snapshot, but `--refetch` retires the frozen store (and its
+  manifest hash, which the prereg pins). Phase 5 needs its own forward-data path that leaves `data/etf/` as frozen.

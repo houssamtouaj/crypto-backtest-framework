@@ -51,15 +51,41 @@ dates). CLI group `perpbt etf {fetch,validate}`.
 
 ## Tasks
 
-- [ ] 1. `etf/config.py` + `configs/etf/data.yaml` + tests.
-- [ ] 2. `etf/sources.py`: retry, parsers (Yahoo CSV, FRED CSV, Nasdaq history and dividends JSON), fetchers +
+- [x] 1. `etf/config.py` + `configs/etf/data.yaml` + tests.
+- [x] 2. `etf/sources.py`: retry, parsers (Yahoo CSV, FRED CSV, Nasdaq history and dividends JSON), fetchers +
   fixture tests.
-- [ ] 3. `etf/store.py`: `EtfData`, atomic writes, manifest, refetch/`_old`, guarded loads + tests.
-- [ ] 4. `etf/validate.py`: NYSE closures, rules 1–7, report table + one failing synthetic case per rule.
-- [ ] 5. `etf/fetch.py` + CLI `perpbt etf fetch|validate` + data.yaml date update + tests with fake sources.
-- [ ] 6. Guards: grep test, carry lock test.
-- [ ] 7. Real fetch, validate, record the notes in spec §0.9.
-- [ ] 8. Carry tests: run against the pre-lock copy of the committed prereg (separate commit, tests only).
-- [ ] 9. Full suite, fresh review, fixes.
+- [x] 3. `etf/store.py`: `EtfData`, atomic writes, manifest, refetch/`_old`, guarded loads + tests.
+- [x] 4. `etf/validate.py`: NYSE closures, rules 1–7, report table + one failing synthetic case per rule.
+- [x] 5. `etf/fetch.py` + CLI `perpbt etf fetch|validate` + data.yaml date update + tests with fake sources.
+- [x] 6. Guards: grep test, carry lock test.
+- [x] 7. Real fetch, validate, record the notes in spec §0.9.
+- [x] 8. Carry tests: run against the pre-lock copy of the committed prereg (separate commit, tests only).
+- [x] 9. Full suite, fresh review, fixes.
 
 ## Progress log
+
+- 2026-10-24, before the code: probes found Stooq behind a bot check, FRED needing a plain user agent, Nasdaq's
+  API serving ten years of prices and QQQ-only dividends (Facts above).
+- First real dry run (into the scratchpad) failed four rules on real data: QQQ paid twice in 2005; negative
+  T-bill prints in 2015/2020; Yahoo lacking QQQ's 2020-09-21 dividend while Nasdaq lacks two 2012 ones; stale
+  Yahoo opens on two SPY days, a stale Nasdaq GLD bar, two undecidable IWM opens. Resolved by calls 4–5 of spec
+  §0.9 and a reviewed `configs/etf/corrections.yaml` (new module `etf/corrections.py`, not in the spec's module
+  list). Stale opens measured: about 1% of Yahoo's days.
+- The corrections hash is over the parsed content, not the bytes: git turns the YAML's LF into CRLF on checkout.
+  `data/etf/manifest.json` is pinned to LF in `.gitattributes` for the same reason (Phase 2 pins its sha256).
+- Real fetch 2026-10-24: every rule passes; `perpbt etf validate` passes; notes in spec §0.9. Commits b066172,
+  aa2d18c.
+- Baseline before this branch: 27 failed + 30 errors, all in `tests/carry/` — the Phase 7 code lock set the
+  committed prereg's forward start and the lock's code fields, and the tests copied those files. Fixed in
+  tests only (`tests/carry/prelock.py`), 48a3584; carry code untouched, carry code version still 7ce43816.
+- `tests/test_holdout.py`'s repo-wide grep now admits `etf/validate.py` (c148ae6).
+- Full suite: 1,555 passed + the grep test fixed after (1 failure before c148ae6).
+- Fresh review (Opus): "merge after fixes"; constraints verified (no locked file touched, guard, nothing written
+  on failure). Fixed: Important 1 (rule 4 exactly 4 a year for SPY/IWM, QQQ 4–5, 120-day gap incl. the partial
+  year, duplicate check), 2 (QQQ 2010-06-25 duplicate removed by a correction), 3 (parquet sha256 checked on
+  every load), 4 (`cross_check.dividend_tickers`; a Nasdaq error reply raises); Minor 5 (`min_span_days`, end
+  on Yahoo's last day), 6 (missing opens fail), 7 (`was` on every fix, stale fixes refused; accepted
+  differences still have no size bound: declined, each is one reviewed day), 8 (validate checks the config
+  dates and a recorded basis), 9 (any existing store needs `--refetch`), 10 (manifest retired first), 11
+  (token-based grep), 12 (CLI catches ValueError). Re-fetched with `--refetch` (only `adj_close` noise moved).
+  The forward-data pointer for Phase 5 is in spec §0.9.
