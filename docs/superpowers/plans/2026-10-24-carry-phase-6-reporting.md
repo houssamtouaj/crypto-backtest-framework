@@ -91,3 +91,8 @@ Summary: the question (overview §1), the rule (V1, V2, hurdle, α, block, B, co
 ## Progress log
 
 Spec: docs/superpowers/specs/2026-10-23-funding-carry/phase-6-reporting.md
+Task 1: complete (5e80cfb; signals.parquet).
+Task 2: complete (9528f0b; figures).
+Task 3: complete (a917839; per-run report, review layout, V2 replicates).
+Task 4: complete (47c0484; summary, carry report CLI, .gitignore, scope tests).
+Task 5: eye check done on the synthetic world (fixes: basis y-limits, date ticks, decomposition legend, V2 CI tint, equity ticks, labels); spec §6.6.

@@ -45,8 +45,10 @@ def _equity_ticks(ax, values: np.ndarray, n: int = 7) -> None:
     v = values[np.isfinite(values) & (values > 0)]
     if len(v) == 0:
         return
-    ticks = sorted({float(f"{x:.3g}") for x in np.geomspace(v.min(), v.max(), n)})
-    ax.yaxis.set_major_locator(FixedLocator(ticks))
+    if v.max() < 10.0 * v.min():  # a narrow range: evenly spaced round values read better than log-spaced ones
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=n - 1))
+    else:
+        ax.yaxis.set_major_locator(FixedLocator(sorted({float(f"{x:.2g}") for x in np.geomspace(v.min(), v.max(), n)})))
     ax.yaxis.set_minor_locator(NullLocator())
     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:,.0f}"))
 
