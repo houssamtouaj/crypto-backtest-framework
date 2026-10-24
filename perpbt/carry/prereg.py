@@ -13,14 +13,20 @@ Exploratory rows are stored merged and may override only ``signal`` and
 after checking the universe against ``configs/trend/universe.json``'s ``um``
 block; ``check_frozen`` is the gate every later step (the screen first)
 passes through.
+
+The code lock (Phase 5 §5.3): ``lock_code`` fills the lock's code fields once with ``carry_code_version()`` (the
+SHA-256 of ``CARRY_CODE_PATHS`` only, so later work elsewhere in the repo is not a carry code change) and sets
+``periods.forward.start`` to the next UTC day in the YAML text (outside the hash).
 """
 from __future__ import annotations
 
 import json
 import math
+import os
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, fields
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +37,18 @@ from perpbt.carry.frames import CARRY_INSAMPLE_END
 from perpbt.config import ConfigError, _check_iso_date, _Config, config_hash, from_dict, read_yaml_unique, to_dict
 from perpbt.data.store import DAY_MS, date_ms
 from perpbt.trend.prereg import LOCK_KEYS, _exact_keys, _iso, _mapping
-from perpbt.version import git_commit
+from perpbt.version import PACKAGE_DIR, files_code_version, git_commit
+
+# The files carry runs execute, relative to perpbt/ ("x/" = every *.py under x): spec §5.3's list made exact by
+# the transitive import test (tests/carry/test_code_lock.py), which adds trend/prereg.py and trend/config.py
+# (the lock helpers), the package __init__ files (they run on import) and experiments/registry_log.py (the
+# registry without the first strategy's modules) in place of experiments/registry.py.
+CARRY_CODE_PATHS = (
+    "__init__.py", "carry/", "trend/__init__.py", "trend/config.py", "trend/daily.py", "trend/prereg.py", "data/",
+    "indicators/__init__.py", "indicators/daily.py", "indicators/atr.py", "stats/__init__.py", "stats/bootstrap.py",
+    "stats/dsr.py", "stats/diagnostics.py", "stats/seeds.py", "experiments/__init__.py",
+    "experiments/registry_log.py", "config.py", "version.py", "checks.py",
+)
 
 TOP_KEYS = (
     "registered_on", "universe", "periods", "signal", "sleeve", "margin", "rebalance", "costs", "exploratory",
@@ -42,8 +59,8 @@ MARKET = "um"
 OVERRIDABLE = {"signal": CarrySignalConfig, "sleeve": SleeveConfig}  # exploratory entries may change these only
 
 __all__ = [
-    "LOCK_KEYS", "CarryPrereg", "check_frozen", "check_universe", "freeze", "load_prereg", "lock_path",
-    "parse_prereg", "read_lock",
+    "CARRY_CODE_PATHS", "LOCK_KEYS", "CarryPrereg", "LockRefused", "carry_code_version", "check_frozen",
+    "check_universe", "freeze", "load_prereg", "lock_code", "lock_path", "parse_prereg", "read_lock",
 ]
 
 
@@ -340,3 +357,71 @@ def check_frozen(prereg_path: str | Path) -> CarryPrereg:
             f"{lock['prereg_hash']}"
         )
     return prereg
+
+
+# --- the code lock (Phase 5 §5.3) ----------------------------------------------------------------
+
+class LockRefused(RuntimeError):
+    """``lock_code`` refused: not frozen, changed since the freeze, or already locked; nothing was written."""
+
+
+def carry_code_version(root: str | Path = PACKAGE_DIR) -> str:
+    """The carry code version: ``version.files_code_version`` over ``CARRY_CODE_PATHS``."""
+    return files_code_version(CARRY_CODE_PATHS, root)
+
+
+_FORWARD_KEY = re.compile(r"^[ \t]*forward:", re.MULTILINE)
+_START_NULL = re.compile(r"\bstart:[ \t]*null\b")
+
+
+def _with_forward_start(text: str, day: str) -> str:
+    """The prereg text with the first ``start: null`` after the ``forward:`` key set to ``day`` (flow or block)."""
+    key = _FORWARD_KEY.search(text)
+    m = _START_NULL.search(text, key.end()) if key else None
+    if m is None:
+        raise LockRefused("lock-code: no `start: null` under periods.forward in the pre-registration text")
+    return text[:m.start()] + f"start: {day}" + text[m.end():]
+
+
+def _replace_text(path: Path, text: str) -> None:
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def lock_code(prereg_path: str | Path, *, today: date | None = None, code_version: str | None = None) -> dict:
+    """Lock the carry code once: the lock's ``code_version``, ``code_locked_on``, ``code_git_commit``, and
+    ``periods.forward.start`` = the next UTC day (spec §5.3). Run immediately before the in-sample primary run.
+
+    Refuses (LockRefused, nothing written) unless the prereg is frozen and unchanged, the lock has no code version
+    and the forward start is null. The new YAML text is checked before anything is written: same hash, the new
+    forward start. Both files are replaced whole (``os.replace``), the prereg first.
+    """
+    prereg_path = Path(prereg_path)
+    try:
+        prereg = check_frozen(prereg_path)
+    except ConfigError as e:
+        raise LockRefused(f"lock-code: {e}") from e
+    path = lock_path(prereg_path)
+    lock = read_lock(path)
+    if lock["code_version"] is not None or lock["code_locked_on"] is not None:
+        raise LockRefused(f"lock-code: the code is already locked ({lock['code_locked_on']}, {lock['code_version']})")
+    if prereg.periods.forward_start is not None:
+        raise LockRefused(f"lock-code: periods.forward.start is already set ({prereg.periods.forward_start})")
+    today = today or datetime.now(timezone.utc).date()
+    start = (today + timedelta(days=1)).isoformat()
+    text = _with_forward_start(prereg_path.read_text(encoding="utf-8"), start)
+    check = prereg_path.with_name(prereg_path.name + ".check")
+    try:
+        check.write_text(text, encoding="utf-8", newline="\n")
+        after = load_prereg(check)
+    finally:
+        check.unlink(missing_ok=True)
+    if after.prereg_hash() != lock["prereg_hash"] or after.periods.forward_start != start:
+        raise LockRefused("lock-code: setting periods.forward.start would change the pre-registration's content")
+    new_lock = {**lock, "code_version": code_version or carry_code_version(), "code_locked_on": today.isoformat(),
+                "code_git_commit": git_commit()}
+    _replace_text(prereg_path, text)
+    _replace_text(path, json.dumps(new_lock, indent=2) + "\n")
+    return new_lock

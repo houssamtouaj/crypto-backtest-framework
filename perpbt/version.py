@@ -4,12 +4,15 @@
 docs, tests, or configs do not change ``variant_id`` and the run cache stays
 valid. ``perpbt/report/`` is left out: it only reads the run outputs, so a
 report or summary edit neither invalidates the runs nor counts as a holdout
-code change. ``git_commit`` is recorded alongside, best effort.
+code change. ``files_code_version`` hashes a listed subset the same way (the
+carry strategy's scoped code version). ``git_commit`` is recorded alongside,
+best effort.
 """
 from __future__ import annotations
 
 import hashlib
 import subprocess
+from collections.abc import Sequence
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -36,6 +39,35 @@ def code_version(root: Path | str = PACKAGE_DIR, *, exclude: tuple[str, ...] = E
         h.update(rel.encode("utf-8"))
         h.update(b"\0")
         h.update(path.read_bytes())
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+def files_code_version(paths: Sequence[str], root: Path | str = PACKAGE_DIR) -> str:
+    """``code_version`` restricted to the listed entries of ``root`` (a strategy's scoped code version).
+
+    An entry is a file (``"config.py"``) or, with a final ``/``, every ``*.py`` under a directory
+    (``"carry/"``), relative to ``root``. The resolved files are hashed exactly as ``code_version`` hashes a
+    tree (sorted POSIX relative paths; path, NUL, bytes, NUL), so the order of the entries does not matter. A
+    missing entry, a directory listed without ``/`` or a file listed with one raises FileNotFoundError.
+    """
+    root = Path(root)
+    files: dict[str, Path] = {}
+    for entry in paths:
+        path = root / entry.rstrip("/")
+        if entry.endswith("/"):
+            if not path.is_dir():
+                raise FileNotFoundError(f"files_code_version: {entry} is not a directory under {root}")
+            files.update((p.relative_to(root).as_posix(), p) for p in path.rglob("*.py") if p.is_file())
+        else:
+            if not path.is_file():
+                raise FileNotFoundError(f"files_code_version: {entry} is not a file under {root}")
+            files[path.relative_to(root).as_posix()] = path
+    h = hashlib.sha256()
+    for rel in sorted(files):
+        h.update(rel.encode("utf-8"))
+        h.update(b"\0")
+        h.update(files[rel].read_bytes())
         h.update(b"\0")
     return h.hexdigest()
 
