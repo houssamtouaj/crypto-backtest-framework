@@ -83,6 +83,14 @@ def _period_status(kind: str, period: str, f: RunFolder | None, done: Mapping | 
     return "descriptive review" if f.is_review else "run"
 
 
+V2_HEADERS = ("Excess over the hurdle", "95% CI (excess)", "V2 reading")
+
+
+def _v2_cells(v2: Mapping) -> tuple[str, str, str]:
+    """The excess over the hurdle, its CI and the three-way reading that CI decides (overview §3)."""
+    return fpct(v2["ann_excess"], 2), fpci(*v2["ann_excess_ci"]), v2_reading_text(v2["reading"])
+
+
 def _period_table(folders: Sequence[RunFolder], root: Path, prereg: CarryPrereg, done: Mapping | None) -> list[str]:
     p = prereg.periods
     dates = {"insample": f"{p.insample_start} to {p.insample_end}", "holdout": f"{p.holdout_start} to {p.holdout_end}"}
@@ -93,17 +101,16 @@ def _period_table(folders: Sequence[RunFolder], root: Path, prereg: CarryPrereg,
                 else dates.get(period, "from the forward start"))
         status = _period_status(kind, period, f, done)
         if f is None:
-            rows.append((PERIOD_LABELS[period], span, status, NA, NA, NA, NA, NA, NA, NA))
+            rows.append((PERIOD_LABELS[period], span, status, NA, NA, NA, NA, NA, NA, NA, NA))
         elif f.is_review:
-            rows.append((PERIOD_LABELS[period], span, status, "descriptive", NA, NA,
-                         fpct(f.stats["annual"]["ann_return"], 2), NA, NA, _link(f, root)))
+            rows.append((PERIOD_LABELS[period], span, status, "descriptive", NA, NA, NA, NA, NA,
+                         fpct(f.stats["annual"]["ann_return"], 2), _link(f, root)))
         else:
             v1, v2 = f.stats["v1"], f.stats["v2"]
             rows.append((PERIOD_LABELS[period], span, status, reading_text(f.stats["reading"]), fp(v1["p"]),
-                         fp(v2["p"]), fpct(v2["ann_return"], 2), fpci(*v2["ann_return_ci"]),
-                         v2_reading_text(v2["reading"]), _link(f, root)))
-    return [table(["Period", "Dates", "Status", "Verdict", "p (V1)", "p (V2)", "Annualised net return", "95% CI",
-                   "V2 reading", "Report"], rows), ""]
+                         fp(v2["p"]), *_v2_cells(v2), fpct(v2["ann_return"], 2), _link(f, root)))
+    return [table(["Period", "Dates", "Status", "Verdict", "p (V1)", "p (V2)", *V2_HEADERS, "Annualised net return",
+                   "Report"], rows), ""]
 
 
 def _sentences(folders: Sequence[RunFolder]) -> list[str]:
@@ -131,13 +138,12 @@ def _exploratory(folders: Sequence[RunFolder], root: Path) -> list[str]:
     any_rows = False
     for kind, period in PERIOD_ROWS[:2]:
         rows = [(f.row, reading_text(f.stats["reading"]), fp(f.stats["v1"]["p"]), fp(f.stats["v2"]["p"]),
-                 fpct(f.stats["v2"]["ann_return"], 2), fpci(*f.stats["v2"]["ann_return_ci"]),
-                 v2_reading_text(f.stats["v2"]["reading"]), _link(f, root))
+                 *_v2_cells(f.stats["v2"]), fpct(f.stats["v2"]["ann_return"], 2), _link(f, root))
                 for f in folders if f.kind == kind and f.period == period and f.is_portfolio and f.row != "primary"]
         if rows:
             any_rows = True
             lines += [f"**{PERIOD_LABELS[period]}**", "",
-                      table(["Row", "Would read", "p (V1)", "p (V2)", "Annualised net return", "95% CI", "V2 reading",
+                      table(["Row", "Would read", "p (V1)", "p (V2)", *V2_HEADERS, "Annualised net return",
                              "Report"], rows), ""]
     if not any_rows:
         lines += ["None has run yet.", ""]

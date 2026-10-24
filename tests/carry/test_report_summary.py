@@ -108,3 +108,14 @@ def test_refuses_an_unfrozen_prereg(carry_world, tmp_path, capsys):
     shutil.copyfile(carry_world.prereg_path, tmp_path / "prereg.yaml")
     assert report_cli(tmp_path / "prereg.yaml", carry_world.runs) == 1
     assert "refused" in capsys.readouterr().err
+
+
+def test_summary_ci_columns_are_the_excess_ci(summary):
+    w, text = summary
+    periods = parse_tables(text)[0]
+    assert periods[0][6:9] == ["Excess over the hurdle", "95% CI (excess)", "V2 reading"]
+    f = next(f for f in scan(w.root) if f.kind == "run" and f.is_primary)
+    lo, hi = f.stats["v2"]["ann_excess_ci"]
+    assert periods[1][7] == f"{100 * lo:.2f}% to {100 * hi:.2f}%"
+    for explo in parse_tables(text)[1:]:
+        assert explo[0][4:7] == ["Excess over the hurdle", "95% CI (excess)", "V2 reading"]

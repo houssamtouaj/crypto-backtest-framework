@@ -105,3 +105,24 @@ both forward reviews; CCCUSDT delisted as EOSUSDT); the report tests check every
 `stats.json`, the byte-identical rerun and the linked figures. Its reports were rendered and looked at by eye
 (every figure of the in-sample primary, the holdout `always_on` funding panels with the delisted pair, the 12-month
 review).
+
+**Review fixes (fresh reviewer, 2026-10-24: "merge with fixes"; 0 Critical, 1 Important, 8 Minor; all fixed or
+noted).**
+- (Important) The summary's period and exploratory tables and the reports' "Per-pair rows" showed the net-return CI
+  beside a V2 reading that refers to the excess CI, so a "not proven" row could print a CI that visibly excludes 0.
+  They now show the excess over the hurdle, its CI ("95% CI (excess)") and the V2 reading together (overview §3);
+  the per-pair table gained the V2 reading.
+- (Minor) The 36-month report's per-pair section says the forward reviews run the portfolio primary only, instead
+  of listing every pair as not run; a holdout per-pair variant listed in `DONE["failed"]` is marked "failed".
+- (Minor) The equity prose names `always_on`'s own perp leverage (it is not `lev_1`'s).
+- (Minor) Hedged shading covered k − 1 days of a k-day run (`fill_between` with `step="post"`); `figures.shade_mask`
+  extends each run by one day.
+- (Minor) The equity table joins the row and `always_on` by label, not by position.
+- (Minor) An unknown `stats.json` schema refuses before any report is written.
+- (Minor) Tests: `tests/carry/test_report_text.py` renders the headline sentence and table for every reading
+  (edge, positive below the hurdle with not proven and with proven below, no edge both ways) and checks each headline
+  row against its `stats.json` key; the headline numbers are checked to half a unit of the printed digit.
+- (Minor) Wording: the 12-month review says the share on is not annualised; the hurdle note prints the hurdle as the
+  table does.
+- (Noted) Phase 7 will commit about 10-15 MB of PNGs (ten pairs make the per-pair panels larger), as the first
+  strategy committed its figures.

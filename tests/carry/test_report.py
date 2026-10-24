@@ -11,7 +11,7 @@ from perpbt.report.carry.report import (
     HOLDOUT_CAVEAT, REPORT_FILE, REVIEW_SECTIONS, SECTIONS, ReportRefused, scan, v2_replicates, verdict_sentence,
     write_reports,
 )
-from perpbt.report.markdown import parse_tables
+from perpbt.report.markdown import numbers_in, parse_tables
 from tests.test_report import assert_tables_match_stats, stats_numbers
 
 PNG = b"\x89PNG\r\n\x1a\n"
@@ -80,8 +80,8 @@ def test_headline_is_the_verdict_from_stats_json(reports):
         assert sentence in head
         values = stats_numbers(f.stats)
         for tok in DECIMAL.findall(head.replace("95%", "")):
-            v = float(tok.rstrip("%")) / (100 if tok.endswith("%") else 1)
-            assert np.any(np.isclose(values, v, rtol=0, atol=1e-4 if tok.endswith("%") else 6e-3)), (tok, f.path)
+            (v, tol), = numbers_in(tok)  # half a unit of the printed last digit
+            assert np.any(np.abs(values - v) <= tol * (1 + 1e-9)), (tok, f.path)
         reading = {"edge": "edge", "positive_below_hurdle": "positive below the hurdle", "no_edge": "no edge"}
         if f.is_primary:
             assert sentence.startswith(f"**Verdict (") and f": {reading[f.stats['reading']]}.**" in sentence
@@ -135,7 +135,7 @@ def test_holdout_per_pair_table_marks_the_delisted_pair(reports):
     rows = {r[0]: r for r in parse_tables(section((f.path / REPORT_FILE).read_text(encoding="utf-8"),
                                                   "Per-pair rows"))[0][1:]}
     assert set(rows) == {"AAAUSDT", "BBBUSDT", "CCCUSDT"}
-    assert rows["CCCUSDT"][6].startswith("not run") and rows["AAAUSDT"][1].endswith("%")
+    assert rows["CCCUSDT"][5].startswith("not run") and rows["AAAUSDT"][1].endswith("%")
 
 
 def test_linked_figures_exist(reports):
@@ -180,3 +180,41 @@ def test_refuses_another_prereg(reports):
     other = replace(prereg, hurdle=replace(prereg.hurdle, annual=0.06))
     with pytest.raises(ReportRefused, match="another prereg hash"):
         write_reports(w.root, other)
+
+
+def test_per_pair_rows_show_the_excess_ci_and_the_v2_reading(reports):
+    w, prereg, folders, paths = reports
+    f = next(f for f in folders if f.kind == "run" and f.is_primary)
+    tab = parse_tables(section((f.path / REPORT_FILE).read_text(encoding="utf-8"), "Per-pair rows"))[0]
+    assert tab[0] == ["Pair", "Annualised net return", "Excess over the hurdle", "95% CI (excess)", "p (V2)",
+                      "V2 reading", "Sharpe", "p (V1)", "Reading", "Share on"]
+    pair = next(g for g in folders if g.kind == "run" and g.row == "primary" and g.scope == "AAAUSDT")
+    lo, hi = pair.stats["v2"]["ann_excess_ci"]
+    assert tab[1][3] == f"{100 * lo:.2f}% to {100 * hi:.2f}%"
+
+
+def test_forward_per_pair_section_says_primary_only(reports):
+    w, prereg, folders, paths = reports
+    f = next(f for f in folders if f.period == "forward_36m")
+    text = section((f.path / REPORT_FILE).read_text(encoding="utf-8"), "Per-pair rows")
+    assert "run the portfolio primary only" in text and not parse_tables(text)
+
+
+def test_lev_1_equity_prose_names_always_on_leverage(reports):
+    w, prereg, folders, paths = reports
+    f = next(f for f in folders if f.kind == "run" and f.row == "lev_1" and f.is_portfolio)
+    text = section((f.path / REPORT_FILE).read_text(encoding="utf-8"), "Equity")
+    assert "perp leverage 2" in text and "the same sleeves" not in text
+
+
+def test_an_unknown_schema_refuses_before_writing(reports):
+    w, prereg, folders, paths = reports
+    first = paths[0]
+    first.unlink()
+    bad = [*folders[:-1], replace(folders[-1], stats={**folders[-1].stats, "schema": "other/1"})]
+    try:
+        with pytest.raises(ReportRefused, match="schema"):
+            write_reports(w.root, prereg, bad)
+        assert not first.exists()
+    finally:
+        write_reports(w.root, prereg)

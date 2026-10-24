@@ -340,13 +340,15 @@ def _annual_rows(annual: Mapping, *, ci: bool = True) -> list[tuple[str, object]
 
 def _equity(run: RunFolder, ctx: ReportContext, out: Path) -> list[str]:
     ao = ctx.always_on if run.row != "always_on" else None
-    mine = _annual_rows(run.diagnostics["annual"], ci=not run.is_review)
+    ci = not run.is_review
+    mine = _annual_rows(run.diagnostics["annual"], ci=ci)
     lines = ["## Equity", ""]
     if ao is not None:
-        theirs = _annual_rows(ao.diagnostics["annual"])
-        lines += ["The row against `always_on` (the same sleeves held on every live day, no filter) over the same "
-                  "days, both from their own `stats.json`.", "",
-                  table(["Statistic", run.row, "always_on"], [(a, b, d) for (a, b), (_, d) in zip(mine, theirs)]), ""]
+        theirs = dict(_annual_rows(ao.diagnostics["annual"], ci=ci))
+        lines += [f"The row against `always_on` (no filter: sleeves at perp leverage "
+                  f"{ao.variant['sleeve']['perp_leverage']:g} held on every live day) over the same days, both from "
+                  "their own `stats.json`.", "",
+                  table(["Statistic", run.row, "always_on"], [(a, b, theirs.get(a, NA)) for a, b in mine]), ""]
     else:
         lines += [table(["Statistic", run.row], mine), ""]
     hurdle = run.stats["v2"]["hurdle_annual"] if "v2" in run.stats else ctx.prereg.hurdle.annual
@@ -362,7 +364,7 @@ def _hurdles(run: RunFolder) -> list[str]:
              fbool(h["passes"]), v2_reading_text(h["reading"])) for h in run.stats["hurdles"]]
     return ["## Hurdles", "",
             "V2 against other hurdles, descriptive (overview §10.2): the same bootstrap draws as the verdict's V2, so "
-            f"the {fhurdle(run.stats['v2']['hurdle_annual'])} row is the verdict's.", "",
+            f"the {fpct(run.stats['v2']['hurdle_annual'], 1)} row is the verdict's.", "",
             table(["Hurdle", "Excess", "95% CI", "p (one-sided)", "Passes", "Reading"], rows), ""]
 
 
@@ -472,22 +474,28 @@ def _reprice(run: RunFolder, ctx: ReportContext) -> list[str]:
 
 
 def _per_pair(run: RunFolder, ctx: ReportContext) -> list[str]:
+    lines = ["## Per-pair rows", ""]
+    if run.kind == "forward":
+        return lines + ["The forward reviews run the portfolio primary only (Phase 5 §5.5); no pair is run alone.", ""]
+    failed = set((ctx.done or {}).get("failed") or ())
     rows = []
     for pair, f in ctx.pairs:
         if f is None:
-            rows.append((pair, NA, NA, NA, NA, NA, "not run alone in this period (no stats.json)", NA))
+            why = ("failed (see the registry)" if f"{run.row}/{pair}" in failed
+                   else "not run alone in this period (no stats.json)")
+            rows.append((pair, NA, NA, NA, NA, why, NA, NA, NA, NA))
             continue
         st = f.stats
         v1, v2 = st["v1"], st["v2"]
-        rows.append((pair, fpct(v2["ann_return"], 2), fpci(*v2["ann_return_ci"]), fp(v2["p"]), fnum(v1["sharpe"], 2),
-                     fp(v1["p"]), reading_text(st["reading"]),
-                     fpct(st["diagnostics"]["decomposition"]["total"]["share_on"], 1)))
-    return ["## Per-pair rows", "",
-            f"Each pair alone as a one-pair portfolio under the `{run.row}` row, from its own folder's `stats.json`; "
-            "descriptive, no say in the verdict. A pair whose data ends before the period end (a delisting) is "
-            "not run alone; the portfolio closes it by the delisting rule.", "",
-            table(["Pair", "Annualised net return", "95% CI", "p (V2)", "Sharpe", "p (V1)", "Reading", "Share on"],
-                  rows), ""]
+        rows.append((pair, fpct(v2["ann_return"], 2), fpct(v2["ann_excess"], 2), fpci(*v2["ann_excess_ci"]),
+                     fp(v2["p"]), v2_reading_text(v2["reading"]), fnum(v1["sharpe"], 2), fp(v1["p"]),
+                     reading_text(st["reading"]), fpct(st["diagnostics"]["decomposition"]["total"]["share_on"], 1)))
+    return lines + [
+        f"Each pair alone as a one-pair portfolio under the `{run.row}` row, from its own folder's `stats.json`; "
+        "descriptive, no say in the verdict. A pair whose data ends before the period end (a delisting) is not run "
+        "alone; the portfolio closes it by the delisting rule.", "",
+        table(["Pair", "Annualised net return", "Excess over the hurdle", "95% CI (excess)", "p (V2)", "V2 reading",
+               "Sharpe", "p (V1)", "Reading", "Share on"], rows), ""]
 
 
 def _dsr(run: RunFolder) -> list[str]:
@@ -552,7 +560,7 @@ def _review(run: RunFolder) -> list[str]:
             f"**Descriptive only (verdict_rule.forward_12m): no test is made at 12 months.** The first "
             f"{fint(st['n_days'])} days after the code lock, the primary run from flat, never pooled with earlier "
             f"periods. Each metric is set against the range of the in-sample primary's calendar years ({years}), "
-            f"each annualised over its own days; {inside} of {len(rows)} lie inside. The confirmatory V1 and V2 come "
+            f"each annualised over its own days (the share on is a share, not annualised); {inside} of {len(rows)} lie inside. The confirmatory V1 and V2 come "
             "at 36 months.", "",
             table(["Metric", "Forward", "In-sample year min", "In-sample year max", "Inside"], rows), ""]
 
@@ -585,7 +593,11 @@ def write_report(run: RunFolder, ctx: ReportContext) -> Path:
 
 
 def check_prereg(folders: Sequence[RunFolder], prereg: CarryPrereg) -> None:
-    """ReportRefused when a folder's ``stats.json`` was made under another pre-registration."""
+    """ReportRefused, before anything is written, when a folder's ``stats.json`` has an unknown schema or was made
+    under another pre-registration."""
+    unknown = [f.path.as_posix() for f in folders if f.stats.get("schema") not in (SCHEMA, REVIEW_SCHEMA)]
+    if unknown:
+        raise ReportRefused(f"{len(unknown)} run folder(s) have an unknown stats.json schema: {unknown[:3]}")
     h = prereg.prereg_hash()
     other = [f.path.as_posix() for f in folders if f.stats["prereg_hash"] != h]
     if other:

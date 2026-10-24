@@ -97,3 +97,8 @@ def test_missing_inputs_give_placeholders(name, tmp_path):
         "random_timing": lambda: cf.random_timing(None, None, p),
     }[name]()
     assert out == p and is_png(p, 1_000)
+
+
+def test_shading_covers_every_hedged_day():
+    on = np.array([False, True, False, False, True, True, False])
+    assert cf.shade_mask(on).tolist() == [False, True, True, False, True, True, True]

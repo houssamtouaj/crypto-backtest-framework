@@ -96,3 +96,5 @@ Task 2: complete (9528f0b; figures).
 Task 3: complete (a917839; per-run report, review layout, V2 replicates).
 Task 4: complete (47c0484; summary, carry report CLI, .gitignore, scope tests).
 Task 5: eye check done on the synthetic world (fixes: basis y-limits, date ticks, decomposition legend, V2 CI tint, equity ticks, labels); spec §6.6.
+Final review: fresh reviewer (opus): "merge with fixes"; 0 Critical, 1 Important, 8 Minor; all fixed (spec §6.6 "Review fixes"), each with a test that failed first (wording excepted).
+After the review fixes: full suite 1489 passed (6 min 17 s, slow included).

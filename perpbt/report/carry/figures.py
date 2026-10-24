@@ -109,11 +109,18 @@ def _date_ticks(ax, span: pd.Timedelta) -> None:
     ax.xaxis.set_major_formatter(DateFormatter("%Y-%m"))
 
 
+def shade_mask(on: np.ndarray) -> np.ndarray:
+    """``fill_between``'s ``where`` for whole days with ``step="post"``: a region spans ``t[i0] .. t[i1 - 1]``, so
+    each run of ``on`` days is extended by the day after it, to cover its last day's width."""
+    on = np.asarray(on, dtype=bool)
+    return on | np.concatenate(([False], on[:-1]))
+
+
 def _shade(ax, dates: pd.DatetimeIndex, on: np.ndarray) -> None:
     """Shade the ``on`` days over the full height, after the data is drawn (the y limits are kept)."""
     if len(dates) and on.any():
         lim = ax.get_ylim()
-        ax.fill_between(dates, 0, 1, where=on, step="post", transform=ax.get_xaxis_transform(), color=ON_SHADE,
+        ax.fill_between(dates, 0, 1, where=shade_mask(on), step="post", transform=ax.get_xaxis_transform(), color=ON_SHADE,
                         lw=0, zorder=0)
         ax.set_ylim(lim)
 
