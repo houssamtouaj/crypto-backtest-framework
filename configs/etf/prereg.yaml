@@ -1,0 +1,61 @@
+# ETF trend pre-registration (ETF spec Phase 2 §2.1; decisions in 00-overview.md §2, ED1-ED13).
+# Frozen by `perpbt etf prereg freeze` (configs/etf/prereg.lock, tag etf-prereg-v1) before the screen runs.
+# After the freeze only periods.forward.start may change (set by the code lock, Phase 5).
+# The hash covers the normalised content without periods.forward.start; comments and key order do not count.
+registered_on: 2026-10-24
+
+universe:  # ED2; must equal configs/etf/data.yaml's tickers, in order
+  tickers: [SPY, QQQ, IWM, GLD]
+  rule: "fixed list: largest US-listed ETF for the S&P 500, Nasdaq-100, Russell 2000 and gold"
+
+periods:  # ED8; warmup, insample and holdout.end must equal configs/etf/data.yaml
+  warmup:   {start: 2004-11-18}
+  insample: {start: 2005-08-01, end: 2017-12-31}   # returns on these days; decisions on the trading day before each
+  holdout:  {start: 2018-01-01, end: 2026-10-23}   # one shot (Phase 7); not unseen (overview §4)
+  forward:  {start: null, reviews: [12, 36]}       # start set at the code lock; excluded from the hash
+
+data:  # the fetched snapshot (Phase 0 §0.9); every run checks data/etf/manifest.json against this hash
+  download_date: 2026-10-24
+  manifest_sha256: 308f5012c5a274b62ee2d5f29e4b299cd225be3fa0cf2b02ff60a73f88c60658
+
+signal:  # ED1: the crypto rule, lookbacks in US trading days
+  members: [return_sign, ma_filter, donchian]
+  lookbacks: [20, 40, 80, 160]
+  donchian_exit: half
+  direction: long_flat
+
+sizing: {target_vol: 0.15, vol_window: 60, max_weight: 1.0, annualise_days: 252}   # ED3
+
+rebalance: {frequency: daily, weekday: null, drift_band: 0.20, fill: next_open}   # ED5
+
+costs:  # ED6, per side
+  commission: 0.0
+  slippage: {default: 0.0003, SPY: 0.0002, QQQ: 0.0002}
+
+cash: {series: DTB3, day_count: 360}   # ED4
+
+exploratory:  # ED13: reported; no say in the verdict; DSR trials
+  - {name: weekly,        rebalance: {frequency: weekly, weekday: friday}}   # decide on the week's last trading day
+  - {name: fill_close,    rebalance: {fill: next_close}}
+  - {name: no_vol_target, sizing: {target_vol: null}}                        # w* = exposure (cap 1)
+  - {name: no_band,       rebalance: {drift_band: 0.0}}
+
+reprice: {slippage: [0.0, 0.0002, 0.0005, 0.001, 0.002], commission: [0.0, 0.0005]}
+
+stats:
+  alpha: 0.05
+  baseline_runs: 5000
+  shift_margin_days: 60
+  bootstrap_n: 10000
+  block_len_days: 20
+  master_seed: 20261024
+
+screen: {baseline_runs: 1000, stop_if_p_at_least: 0.10}   # Phase 2 §2.3, ED10
+
+verdict_rule:  # ED9
+  t1: "one-sided p of the portfolio net excess Sharpe against the random-days runs < alpha"
+  t2: "one-sided paired block-bootstrap p of (strategy − vol-targeted buy-and-hold) net excess Sharpe < alpha"
+  edge: "t1 and t2 (intersection-union; no multiplicity adjustment)"
+  t3: "reported only: max drawdown at matched vol, paired block bootstrap"
+  reported_for: [insample, holdout, forward_36m]
+  forward_12m: descriptive only

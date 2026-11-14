@@ -1,0 +1,18 @@
+# EtfDataConfig for the ETF trend strategy (ETF spec Phase 0 §0.1).
+# holdout_end and download_date are set by `perpbt etf fetch` (holdout_end: the
+# last full US trading day before the download day). The store refuses loads
+# ending on or after 2018-01-01 without allow_holdout, whatever this file says
+# (the date is a constant in perpbt/etf/store.py).
+# cross_check: Nasdaq, because Stooq serves a JavaScript bot check (Phase 0 §0.9).
+data_dir: data/etf
+tickers: [SPY, QQQ, IWM, GLD]
+warmup_start: "2004-11-18"     # GLD's first trading day; the common start
+insample_start: "2005-08-01"   # after the 160-bar warmup (about 2005-07-13)
+insample_end: "2017-12-31"
+holdout_start: "2018-01-01"
+holdout_end: "2026-10-23"      # set by the fetch
+download_date: "2026-10-24"    # set by the fetch (UTC date)
+rates: {source: fred, series: DTB3}
+# cross_check: Nasdaq serves ten years of prices (min_span_days: 9.4 years) and dividends of Nasdaq-listed symbols only
+cross_check: {source: nasdaq, close_tol: 0.005, dividend_tickers: [QQQ], min_span_days: 3450}
+corrections: configs/etf/corrections.yaml   # reviewed fixes and accepted cross-check differences

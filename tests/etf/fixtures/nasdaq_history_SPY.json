@@ -1,0 +1,65 @@
+{
+ "data": {
+  "symbol": "SPY",
+  "totalRecords": 5,
+  "tradesTable": {
+   "asOf": null,
+   "headers": {
+    "date": "Date",
+    "close": "Close/Last",
+    "volume": "Volume",
+    "open": "Open",
+    "high": "High",
+    "low": "Low"
+   },
+   "rows": [
+    {
+     "date": "10/23/2026",
+     "close": "759.97",
+     "volume": "33,423,220",
+     "open": "759.896",
+     "high": "763.47",
+     "low": "758.68"
+    },
+    {
+     "date": "10/22/2026",
+     "close": "763.96",
+     "volume": "54,117,130",
+     "open": "766.37",
+     "high": "767.71",
+     "low": "761.165"
+    },
+    {
+     "date": "10/21/2026",
+     "close": "773.09",
+     "volume": "31,943,810",
+     "open": "771.17",
+     "high": "774.44",
+     "low": "768.40"
+    },
+    {
+     "date": "10/20/2026",
+     "close": "769.05",
+     "volume": "35,048,370",
+     "open": "765.86",
+     "high": "772.29",
+     "low": "764.25"
+    },
+    {
+     "date": "10/19/2026",
+     "close": "766.48",
+     "volume": "38,680,060",
+     "open": "767.23",
+     "high": "770.46",
+     "low": "765.824"
+    }
+   ]
+  }
+ },
+ "message": null,
+ "status": {
+  "rCode": 200,
+  "bCodeMessage": null,
+  "developerMessage": null
+ }
+}
